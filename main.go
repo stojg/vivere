@@ -5,15 +5,13 @@
 package main
 
 import (
-	"flag"
+	"os"
 	"log"
 	"net/http"
 	"time"
 	"fmt"
 	"encoding/json"
 )
-
-var addr = flag.String("addr", ":8080", "http service address")
 
 func serveHome(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
@@ -34,7 +32,6 @@ type Message struct {
 }
 
 func main() {
-	flag.Parse()
 	go h.run()
 	m := Message{"bunny", 0, time.Now().UnixNano()}
 
@@ -51,7 +48,7 @@ func main() {
 
 	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/ws", serveWs)
-	err := http.ListenAndServe(*addr, nil)
+	err := http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
