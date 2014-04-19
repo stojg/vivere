@@ -1,0 +1,99 @@
+<html>
+<head>
+    <title>Bunny Spinner!</title>
+    <link href="/css/screen.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+    <link href="/css/print.css" media="print" rel="stylesheet" type="text/css"/>
+    <!--[if IE]>
+    <link href="/css/ie.css" media="screen, projection" rel="stylesheet" type="text/css"/>
+    <![endif]-->
+    <script src="js/pixi.js"></script>
+</head>
+<body>
+<script>
+    var conn;
+
+    var commands = new Array();
+
+    // Make the function wait until the connection is made...
+    function waitForSocketConnection(socket, callback) {
+        setTimeout(
+                function () {
+                    if (socket.readyState === 1) {
+                        if (callback != null) {
+                            callback();
+                        }
+                        return;
+                    } else {
+                        waitForSocketConnection(socket, callback);
+                    }
+                }, 5); // wait 5 milisecond for the connection...
+    }
+
+    if (window["WebSocket"]) {
+        conn = new WebSocket("ws://" + window.location.host +"/ws");
+        // connection closed
+        conn.onclose = function (evt) {
+            appendLog("Connection closed.");
+        }
+        // recieving data
+        conn.onmessage = function (evt) {
+            commands.push(evt.data);
+        }
+    } else {
+        alert("Your browser does not support WebSockets.");
+    }
+
+    // Get current screen width
+    var w = window,
+            d = document,
+            e = d.documentElement,
+            g = d.getElementsByTagName('body')[0],
+            screenWidth = w.innerWidth || e.clientWidth || g.clientWidth,
+            screenHeight = w.innerHeight || e.clientHeight || g.clientHeight;
+
+    // create an new instance of a pixi stage
+    var stage = new PIXI.Stage(0x666666);
+
+    // create a renderer instance.
+    var renderer = PIXI.autoDetectRenderer(screenWidth, screenHeight);
+
+    // add the renderer view element to the DOM
+    document.body.appendChild(renderer.view);
+
+    // create a texture from an image path
+    var texture = PIXI.Texture.fromImage("sprites/bunny.png");
+
+    // create a new Sprite using the texture
+    var bunny = new PIXI.Sprite(texture);
+
+    // center the sprites anchor point
+    bunny.anchor.x = 0.5;
+    bunny.anchor.y = 0.5;
+
+    // move the sprite t the center of the screen
+    bunny.position.x = screenWidth / 2;
+    bunny.position.y = screenHeight / 2;
+
+
+    waitForSocketConnection(conn, function(){
+        stage.addChild(bunny);
+    })
+
+    requestAnimFrame(animate);
+    function animate() {
+        while (commands.length > 0) {
+            var command = commands.pop();
+            bunny.rotation = JSON.parse(command).Rotation
+        }
+        requestAnimFrame(animate);
+        // render the stage
+        renderer.render(stage);
+        //waitForSocketConnection(conn, function(){
+        //    conn.send("new tick");
+        //});
+
+    }
+</script>
+
+</body>
+</html>
