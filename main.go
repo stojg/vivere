@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"time"
-	"fmt"
 	"encoding/json"
 )
 
@@ -49,7 +48,7 @@ func main() {
 			m.Time = now.UnixNano()
 			b, _ := json.Marshal(m)
 			h.broadcast <- b
-			fmt.Printf("%s\n",b)
+			//fmt.Printf("%s\n",b)
 		}
 	}()
 
