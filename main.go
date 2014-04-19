@@ -32,6 +32,13 @@ type Message struct {
 }
 
 func main() {
+
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		port = "8080"
+	}
+
 	go h.run()
 	m := Message{"bunny", 0, time.Now().UnixNano()}
 
@@ -48,7 +55,7 @@ func main() {
 
 	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/ws", serveWs)
-	err := http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

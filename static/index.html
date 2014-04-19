@@ -33,7 +33,7 @@
         conn = new WebSocket("ws://" + window.location.host +"/ws");
         // connection closed
         conn.onclose = function (evt) {
-            appendLog("Connection closed.");
+            console.log("Connection closed.");
         }
         // recieving data
         conn.onmessage = function (evt) {
