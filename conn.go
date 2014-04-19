@@ -14,13 +14,10 @@ import (
 const (
 	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
-
 	// Time allowed to read the next pong message from the peer.
 	pongWait = 60 * time.Second
-
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
-
 	// Maximum message size allowed from peer.
 	maxMessageSize = 512
 )
@@ -29,7 +26,6 @@ const (
 type connection struct {
 	// The websocket connection.
 	ws *websocket.Conn
-
 	// Buffered channel of outbound messages.
 	send chan []byte
 }
@@ -55,9 +51,6 @@ func (c *connection) readPump() {
 // write writes a message with the given message type and payload.
 func (c *connection) write(mt int, payload []byte) error {
 	c.ws.SetWriteDeadline(time.Now().Add(writeWait))
-//	if mt == websocket.TextMessage {
-//		return c.ws.WriteJSON(payload)
-//	}
 	return c.ws.WriteMessage(mt, payload)
 }
 
@@ -87,15 +80,15 @@ func (c *connection) writePump() {
 }
 
 // serverWs handles websocket requests from the peer.
-func serveWs(w http.ResponseWriter, r *http.Request) {
+func serveWebsocket(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
 		return
 	}
-	//if r.Header.Get("Origin") != "http://"+r.Host {
-	//	http.Error(w, "Origin not allowed", 403)
-	//	return
-	//}
+	if r.Header.Get("Origin") != "http://"+r.Host {
+		http.Error(w, "Origin not allowed", 403)
+		return
+	}
 	ws, err := websocket.Upgrade(w, r, nil, 1024, 1024)
 	if _, ok := err.(websocket.HandshakeError); ok {
 		http.Error(w, "Not a websocket handshake", 400)

@@ -1,7 +1,3 @@
-// Copyright 2013 Gary Burd. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package main
 
 import (
@@ -10,7 +6,40 @@ import (
 	"net/http"
 	"time"
 	"encoding/json"
+	"./lib/command"
 )
+
+func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	// start the hub
+	go h.run()
+
+	// Create a bunny
+	m := command.Entity{"bunny", 0, time.Now().UnixNano()}
+	go func() {
+		// 60frames a second
+		timer := time.Tick(16 * time.Millisecond)
+		//for now := range timer {
+		for now := range timer {
+			m.Rotation = m.Rotation + 0.01
+			m.Timestamp = now.UnixNano()
+			b, _ := json.Marshal(m)
+			h.broadcast <- b
+		}
+	}()
+
+	// Serve the static site content
+	http.HandleFunc("/", serveHome)
+	// Serve the websocket service
+	http.HandleFunc("/ws", serveWebsocket)
+	err := http.ListenAndServe(":"+port, nil)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
+}
 
 func serveHome(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
@@ -22,43 +51,4 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.ServeFile(w, r, "static/"+r.URL.Path[1:])
-}
-
-type Message struct {
-	Name string
-	Rotation float32
-	Time int64
-}
-
-func main() {
-
-	port := os.Getenv("PORT")
-
-	if port == "" {
-		port = "8080"
-	}
-
-	go h.run()
-	m := Message{"bunny", 0, time.Now().UnixNano()}
-
-	go func() {
-		timer := time.Tick(16 * time.Millisecond)
-		for now := range timer {
-			m.Rotation = m.Rotation + 0.01
-			m.Time = now.UnixNano()
-			b, _ := json.Marshal(m)
-			h.broadcast <- b
-			//fmt.Printf("%s\n",b)
-		}
-	}()
-
-	http.HandleFunc("/", serveHome)
-	http.HandleFunc("/ws", serveWs)
-	err := http.ListenAndServe(":"+port, nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}
-
-
-
 }

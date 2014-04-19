@@ -5,13 +5,10 @@ package main
 type hub struct {
 	// Registered connections.
 	connections map[*connection]bool
-
 	// Inbound messages from the connections.
 	broadcast chan []byte
-
 	// Register requests from the connections.
 	register chan *connection
-
 	// Unregister requests from connections.
 	unregister chan *connection
 }
