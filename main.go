@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 	"encoding/json"
-	"./lib/command"
 )
 
 func main() {
@@ -18,7 +17,7 @@ func main() {
 	go h.run()
 
 	// Create a bunny
-	m := command.Entity{"bunny", 0, time.Now().UnixNano()}
+	m := Entity{"bunny", 0, time.Now().UnixNano()}
 	go func() {
 		// 60frames a second
 		timer := time.Tick(16 * time.Millisecond)
