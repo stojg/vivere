@@ -13,18 +13,27 @@ require(["screen", "websocket", 'pixi', 'entity', "ui"], function(screen, websoc
     // add the renderer view element to the DOM
     document.body.appendChild(renderer.view);
 
-    var bunny = entity.create(screen.size.width/2,  screen.size.height/2);
+    var entities = new Array();
 
     var conn = websocket.connect(commands);
 
     websocket.afterConnect(conn, function(){
         ui.clearMessage(stage);
-        stage.addChild(bunny);
+
         requestAnimFrame(animate);
         function animate() {
             while (commands.length > 0) {
                 var command = commands.pop();
-                bunny.rotation = JSON.parse(command).Rotation
+                var message = JSON.parse(command);
+                if(!entities[message.Id]) {
+                    console.log(message);
+                    entities[message.Id] = entity.create();
+                    stage.addChild(entities[message.Id]);
+                }
+                entities[message.Id].rotation = message.Rotation
+                entities[message.Id].position.x = message.Position.X
+                entities[message.Id].position.y = message.Position.Y
+                //console.log(JSON.parse(command));
             }
             requestAnimFrame(animate);
             renderer.render(stage);

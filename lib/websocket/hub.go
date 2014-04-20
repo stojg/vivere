@@ -13,6 +13,10 @@ type hub struct {
 	unregister chan *connection
 }
 
+func Send(m []byte) {
+	H.Broadcast <- m
+}
+
 var H = hub{
 	Broadcast:   make(chan []byte),
 	register:    make(chan *connection),

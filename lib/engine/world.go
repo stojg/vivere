@@ -1,18 +1,22 @@
 package engine
 
 import (
-	"encoding/json"
-	"github.com/stojg/vivere/lib/entity"
 	"github.com/stojg/vivere/lib/websocket"
+	"math/rand"
 	"time"
 )
 
 type World struct {
-	entities [1024]entity.Entity
+	entities [10]Entity
 }
 
 func (w *World) Init() {
-	w.entities[0] = entity.Entity{"bunny", 0, time.Now()}
+	rand.Seed(42)
+	for i := 0; i < 10; i++ {
+		pos := Position{rand.Float32() * 1000, rand.Float32() * 600}
+		w.entities[i] = Entity{Id: i, Name: "bunny", Rotation: 0, Position: pos}
+		websocket.Send(w.entities[i].ToMessage())
+	}
 }
 
 func (w *World) ProcessInput() {
@@ -20,11 +24,14 @@ func (w *World) ProcessInput() {
 }
 
 func (w *World) Update(elapsed time.Duration) {
-	w.entities[0].Rotation += 0.1
+	for index := range w.entities {
+		w.entities[index].Rotation += 0.1
+		w.entities[index].Position.X += 0.1
+	}
 }
 
 func (w *World) Render(now time.Time) {
-	w.entities[0].Timestamp = now
-	b, _ := json.Marshal(w.entities[0])
-	websocket.H.Broadcast <- b
+	for _, element := range w.entities {
+		websocket.Send(element.ToMessage())
+	}
 }

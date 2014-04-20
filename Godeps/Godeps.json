@@ -1,5 +1,5 @@
 {
-	"ImportPath": "vivere",
+	"ImportPath": "github.com/stojg/vivere",
 	"GoVersion": "go1.2",
 	"Deps": [
 		{
