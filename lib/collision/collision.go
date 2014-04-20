@@ -2,7 +2,6 @@ package collision
 
 import (
 	"math"
-	// http://godoc.org/github.com/ungerik/go3d/float64/vec2
 	"github.com/ungerik/go3d/vec2"
 )
 
