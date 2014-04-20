@@ -2,7 +2,6 @@ package collision
 
 import (
 	"math"
-	"github.com/ungerik/go3d/vec2"
 )
 
 /* Point */
