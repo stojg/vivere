@@ -5,7 +5,7 @@ define(function (){
 
     my.connect = function(commands) {
         if (window["WebSocket"]) {
-            conn = new WebSocket("wss://" + window.location.host +"/ws");
+            conn = new WebSocket("ws://" + window.location.host +"/ws");
             // connection closed
             conn.onclose = function (evt) {
                 console.log("Connection closed.");

@@ -2,12 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package websocket
 
 import (
 	"github.com/gorilla/websocket"
-	"log"
-	"net/http"
 	"time"
 )
 
@@ -33,7 +31,7 @@ type connection struct {
 // readPump pumps messages from the websocket connection to the hub.
 func (c *connection) readPump() {
 	defer func() {
-		h.unregister <- c
+		H.unregister <- c
 		c.ws.Close()
 	}()
 	c.ws.SetReadLimit(maxMessageSize)
@@ -44,7 +42,7 @@ func (c *connection) readPump() {
 		if err != nil {
 			break
 		}
-		h.broadcast <- message
+		H.Broadcast <- message
 	}
 }
 
@@ -79,26 +77,4 @@ func (c *connection) writePump() {
 	}
 }
 
-// serverWs handles websocket requests from the peer.
-func serveWebsocket(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", 405)
-		return
-	}
-	if r.Header.Get("Origin") != "http://"+r.Host {
-		http.Error(w, "Origin not allowed", 403)
-		return
-	}
-	ws, err := websocket.Upgrade(w, r, nil, 1024, 1024)
-	if _, ok := err.(websocket.HandshakeError); ok {
-		http.Error(w, "Not a websocket handshake", 400)
-		return
-	} else if err != nil {
-		log.Println(err)
-		return
-	}
-	c := &connection{send: make(chan []byte, 256), ws: ws}
-	h.register <- c
-	go c.writePump()
-	c.readPump()
-}
+
