@@ -2,11 +2,12 @@ package collision
 
 import (
 	"math"
+	"github.com/ungerik/go3d/vec2"
 )
 
 /* Point */
 type Point struct {
-	x, y float32
+	X, Y float32
 }
 
 type Shape interface {
@@ -15,18 +16,18 @@ type Shape interface {
 
 /* Circle */
 type Circle struct {
-	x, y, r float32
+	X, Y, R float32
 }
 
 func (c *Circle) Area() float32 {
-	return float32(c.r*c.r) * math.Pi
+	return float32(c.R*c.R) * math.Pi
 }
 
 func (c *Circle) Intersect(p *Point) bool {
-	a := vec2.T{c.x, c.y}
-	b := vec2.T{p.x, p.y}
+	a := vec2.T{c.X, c.Y}
+	b := vec2.T{p.X, p.Y}
 	// return a.Sub(&b).Length() < c1.r + c2.r
-	return a.Sub(&b).Length() < c.r
+	return a.Sub(&b).Length() < c.R
 }
 
 /* Rectangle */

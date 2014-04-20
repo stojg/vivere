@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/stojg/vivere/lib/collision"
 	"github.com/stojg/vivere/lib/websocket"
 	"math/rand"
 	"time"
@@ -24,9 +25,15 @@ func (w *World) ProcessInput() {
 }
 
 func (w *World) Update(elapsed time.Duration) {
+
 	for index := range w.entities {
-		w.entities[index].Rotation += 0.1
-		w.entities[index].Position.X += 0.1
+		circle := collision.Circle{w.entities[index].Position.X, w.entities[index].Position.Y, 10}
+		point := collision.Point{w.entities[index].Position.X, 1000}
+
+		if !circle.Intersect(&point) {
+			w.entities[index].Rotation += 0.1
+			w.entities[index].Position.X += 0.1
+		}
 	}
 }
 
