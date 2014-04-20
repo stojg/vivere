@@ -1,9 +1,9 @@
 package engine
 
 import (
-	"github.com/stojg/vivere/lib/websocket"
-	"github.com/stojg/vivere/lib/entity"
 	"encoding/json"
+	"github.com/stojg/vivere/lib/entity"
+	"github.com/stojg/vivere/lib/websocket"
 	"time"
 )
 

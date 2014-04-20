@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/stojg/vivere/lib/engine"
 	"github.com/stojg/vivere/lib/webserver"
 	"github.com/stojg/vivere/lib/websocket"
-	"github.com/stojg/vivere/lib/engine"
 	"log"
 	"net/http"
 	"os"
@@ -36,8 +36,7 @@ func main() {
 	w := new(engine.World)
 	w.Init()
 
-
-	previous := time.Now();
+	previous := time.Now()
 	c := time.Tick(time.Second / FRAMES_PER_SECOND)
 	for now := range c {
 		elapsed := now.Sub(previous)
@@ -47,5 +46,3 @@ func main() {
 		w.Render(now)
 	}
 }
-
-
