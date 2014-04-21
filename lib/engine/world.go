@@ -1,3 +1,6 @@
+// Package engine is the "router". It has the Update and the Render functions and
+// takes care of sending all necessary information to the client about the state of
+// the world
 package engine
 
 import (
@@ -7,6 +10,8 @@ import (
 	"time"
 )
 
+// World is the basic struct for the game world. It coordinates and have a list of all entities
+// that exists in it
 type World struct {
 	Type     string
 	entities [10]*Entity
@@ -15,6 +20,7 @@ type World struct {
 	events   chan interface{}
 }
 
+// NewWorld setups a new world and initializes the pub / sub on events from the client
 func NewWorld() *World {
 	w := new(World)
 	w.Type = "World"
@@ -33,6 +39,34 @@ func NewWorld() *World {
 	return w
 }
 
+// ProcessInput recieves the commands from the client and passes that on to the
+// relevant entities in the world
+// @todo This might be moved to the the listen function?
+func (w *World) ProcessInput() {}
+
+// Update walks through all the entities and calls Update on them
+func (w *World) Update(elapsed time.Duration) {
+	for index := range w.entities {
+		w.entities[index].Update(elapsed)
+	}
+}
+
+// Render sends all updated entities to all clients
+func (w *World) Render(now time.Time) {
+	for _, element := range w.entities {
+		websocket.Broadcast(element)
+	}
+}
+
+// Message returns a websocket.Message that is used for sending over the websocket
+func (w World) Message() *websocket.Message {
+	message := new(websocket.Message)
+	message.Event = "World"
+	message.Message = w
+	return message
+}
+
+// listen checks for new Events on the event channel
 func (world *World) listen() {
 	for {
 		event := <-world.events
@@ -40,25 +74,4 @@ func (world *World) listen() {
 			websocket.Broadcast(world)
 		}
 	}
-}
-
-func (w *World) ProcessInput() {}
-
-func (w *World) Update(elapsed time.Duration) {
-	for index := range w.entities {
-		w.entities[index].Update(elapsed)
-	}
-}
-
-func (w *World) Render(now time.Time) {
-	for _, element := range w.entities {
-		websocket.Broadcast(element)
-	}
-}
-
-func (w World) Message() *websocket.Message {
-	message := new(websocket.Message)
-	message.Event = "World"
-	message.Message = w
-	return message
 }
