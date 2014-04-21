@@ -14,7 +14,7 @@ import (
 // that exists in it
 type World struct {
 	Type     string
-	entities [30]*Entity
+	entities [10]*Entity
 	Width    int
 	Height   int
 	events   chan interface{}
@@ -28,7 +28,7 @@ func NewWorld(width int, height int) *World {
 	w.Height = height
 	w.events = make(chan interface{})
 	rand.Seed(243)
-	for i := 0; i < 30; i++ {
+	for i := 0; i < 10; i++ {
 		x := rand.Float32() * float32(w.Width)
 		y := rand.Float32() * float32(w.Height)
 		rot := rand.Float32() * 360

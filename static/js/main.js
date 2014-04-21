@@ -30,10 +30,14 @@ require(["screen", "websocket", 'pixi', 'entity', "ui"], function(screen, websoc
                 if(message.Event === "Entity") {
                     updateEntity(message.Message);
                 } else if(message.Event === "World") {
-                    // create a renderer instance.
-                    renderer = pixi.autoDetectRenderer(message.Message.Width,  message.Message.Height);
-                    // add the renderer view element to the DOM
-                    document.body.appendChild(renderer.view);
+
+                    var canvas = document.getElementsByTagName('canvas');
+                    if(!canvas.length) {
+                        // create a renderer instance.
+                        renderer = pixi.autoDetectRenderer(message.Message.Width,  message.Message.Height);
+                        // add the renderer view element to the DOM
+                        document.body.appendChild(renderer.view);
+                    }
                 } else {
                     console.log(message);
                 }

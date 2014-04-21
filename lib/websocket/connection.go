@@ -41,7 +41,7 @@ func (c *connection) readPump() {
 	c.ws.SetReadDeadline(time.Now().Add(pongWait))
 	c.ws.SetPongHandler(func(string) error { c.ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
-		_, message, err := c.ws.ReadMessage()
+		_, message, err := c.ws.j()
 		if err != nil {
 			break
 		}
