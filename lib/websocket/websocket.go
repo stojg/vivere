@@ -25,7 +25,7 @@ func Serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c := &connection{send: make(chan []byte, 256), ws: ws}
-	H.register <- c
+	h.register <- c
 	go c.writePump()
 	c.readPump()
 }

@@ -38,15 +38,3 @@ func (e Entity) Message() *websocket.Message {
 func (e *Entity) Update(elapsed time.Duration) {
 	e.Rotation += 0.01
 }
-
-// Example commands:
-//
-// - CreateEntity
-// - UpdateEntity
-// - DestroyEntity
-// - WorldInit
-// - Ping
-//
-// Example Entities
-// Creature
-// Obstacle

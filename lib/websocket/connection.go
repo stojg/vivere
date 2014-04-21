@@ -34,7 +34,7 @@ type connection struct {
 // readPump pumps messages from the websocket connection to the hub.
 func (c *connection) readPump() {
 	defer func() {
-		H.unregister <- c
+		h.unregister <- c
 		c.ws.Close()
 	}()
 	c.ws.SetReadLimit(maxMessageSize)
@@ -45,14 +45,13 @@ func (c *connection) readPump() {
 		if err != nil {
 			break
 		}
-
 		var msg Message
 		json.Unmarshal(message, &msg)
+		log.Printf("Client message recieved: \"%s\"\n", message)
 		if msg.Event == "World" {
-			log.Println("World state requested")
 			observer.Publish(msg.Event, msg)
 		} else {
-			H.Broadcast <- message
+			h.Broadcast <- message
 		}
 	}
 }

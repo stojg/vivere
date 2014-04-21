@@ -20,7 +20,7 @@ func main() {
 	}
 
 	// start the hub
-	go websocket.H.Run()
+	go websocket.Hub().Run()
 
 	go func() {
 		// Serve the static site content

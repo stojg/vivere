@@ -3,7 +3,6 @@ package engine
 import (
 	"github.com/stojg/vivere/lib/observer"
 	"github.com/stojg/vivere/lib/websocket"
-	"log"
 	"math/rand"
 	"time"
 )
@@ -37,16 +36,13 @@ func NewWorld() *World {
 func (world *World) listen() {
 	for {
 		event := <-world.events
-		log.Printf("World recieved %v\n", event)
 		if event.(websocket.Message).Message == "getState" {
 			websocket.Broadcast(world)
 		}
 	}
 }
 
-func (w *World) ProcessInput() {
-	//
-}
+func (w *World) ProcessInput() {}
 
 func (w *World) Update(elapsed time.Duration) {
 	for index := range w.entities {
