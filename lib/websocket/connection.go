@@ -5,7 +5,10 @@
 package websocket
 
 import (
+	"encoding/json"
 	"github.com/gorilla/websocket"
+	"github.com/stojg/vivere/lib/observer"
+	"log"
 	"time"
 )
 
@@ -42,13 +45,22 @@ func (c *connection) readPump() {
 		if err != nil {
 			break
 		}
-		H.Broadcast <- message
+
+		var msg Message
+		json.Unmarshal(message, &msg)
+		if msg.Event == "World" {
+			log.Println("World state requested")
+			observer.Publish(msg.Event, msg)
+		} else {
+			H.Broadcast <- message
+		}
 	}
 }
 
 // write writes a message with the given message type and payload.
 func (c *connection) write(mt int, payload []byte) error {
 	c.ws.SetWriteDeadline(time.Now().Add(writeWait))
+
 	return c.ws.WriteMessage(mt, payload)
 }
 

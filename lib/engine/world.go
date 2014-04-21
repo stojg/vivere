@@ -1,44 +1,68 @@
 package engine
 
 import (
-	"github.com/stojg/vivere/lib/collision"
+	"github.com/stojg/vivere/lib/observer"
 	"github.com/stojg/vivere/lib/websocket"
+	"log"
 	"math/rand"
 	"time"
 )
 
 type World struct {
-	entities [10]Entity
+	Type     string
+	entities [10]*Entity
+	Width    int
+	Height   int
+	events   chan interface{}
 }
 
-func (w *World) Init() {
-	rand.Seed(42)
+func NewWorld() *World {
+	w := new(World)
+	w.Type = "World"
+	w.Width = 1000
+	w.Height = 600
+	w.events = make(chan interface{})
+	rand.Seed(243)
 	for i := 0; i < 10; i++ {
-		pos := Position{rand.Float32() * 1000, rand.Float32() * 600}
-		w.entities[i] = Entity{Id: i, Name: "bunny", Rotation: 0, Position: pos}
-		websocket.Send(w.entities[i].ToMessage())
+		x := rand.Float32() * float32(w.Width)
+		y := rand.Float32() * float32(w.Height)
+		rot := rand.Float32() * 360
+		w.entities[i] = NewEntity(i, x, y, rot)
+	}
+	observer.Subscribe("World", w.events)
+	go w.listen()
+	return w
+}
+
+func (world *World) listen() {
+	for {
+		event := <-world.events
+		log.Printf("World recieved %v\n", event)
+		if event.(websocket.Message).Message == "getState" {
+			websocket.Broadcast(world)
+		}
 	}
 }
 
 func (w *World) ProcessInput() {
-
+	//
 }
 
 func (w *World) Update(elapsed time.Duration) {
-
 	for index := range w.entities {
-		circle := collision.Circle{w.entities[index].Position.X, w.entities[index].Position.Y, 10}
-		point := collision.Point{w.entities[index].Position.X, 1000}
-
-		if !circle.Intersect(&point) {
-			w.entities[index].Rotation += 0.1
-			w.entities[index].Position.X += 0.1
-		}
+		w.entities[index].Update(elapsed)
 	}
 }
 
 func (w *World) Render(now time.Time) {
 	for _, element := range w.entities {
-		websocket.Send(element.ToMessage())
+		websocket.Broadcast(element)
 	}
+}
+
+func (w World) Message() *websocket.Message {
+	message := new(websocket.Message)
+	message.Event = "World"
+	message.Message = w
+	return message
 }

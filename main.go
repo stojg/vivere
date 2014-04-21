@@ -33,8 +33,7 @@ func main() {
 		}
 	}()
 
-	w := new(engine.World)
-	w.Init()
+	w := engine.NewWorld()
 
 	previous := time.Now()
 	c := time.Tick(time.Second / FRAMES_PER_SECOND)

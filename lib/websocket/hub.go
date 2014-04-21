@@ -1,5 +1,7 @@
 package websocket
 
+//import "log"
+
 // hub maintains the set of active connections and broadcasts messages to the
 // connections.
 type hub struct {
@@ -13,8 +15,8 @@ type hub struct {
 	unregister chan *connection
 }
 
-func Send(m []byte) {
-	H.Broadcast <- m
+func Broadcast(m Messenger) {
+	H.Broadcast <- m.Message().JSON()
 }
 
 var H = hub{
