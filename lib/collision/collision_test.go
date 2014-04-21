@@ -11,7 +11,7 @@ func TestRectangleArea(t *testing.T) {
 }
 
 func TestCircleArea(t *testing.T) {
-	shape := Circle{r: 10}
+	shape := Circle{R: 10}
 	out := 314
 	if x := int(shape.Area()); x != out {
 		t.Errorf("shape.Area() = %v, want %v", x, out)
