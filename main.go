@@ -11,7 +11,7 @@ import (
 	//"fmt"
 )
 
-const FRAMES_PER_SECOND = 30
+const FRAMES_PER_SECOND = 24
 
 func main() {
 	port := os.Getenv("PORT")
@@ -33,7 +33,7 @@ func main() {
 		}
 	}()
 
-	w := engine.NewWorld()
+	w := engine.NewWorld(1000, 600)
 
 	previous := time.Now()
 	c := time.Tick(time.Second / FRAMES_PER_SECOND)

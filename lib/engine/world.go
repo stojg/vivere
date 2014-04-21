@@ -14,21 +14,21 @@ import (
 // that exists in it
 type World struct {
 	Type     string
-	entities [10]*Entity
+	entities [30]*Entity
 	Width    int
 	Height   int
 	events   chan interface{}
 }
 
 // NewWorld setups a new world and initializes the pub / sub on events from the client
-func NewWorld() *World {
+func NewWorld(width int, height int) *World {
 	w := new(World)
 	w.Type = "World"
-	w.Width = 1000
-	w.Height = 600
+	w.Width = width
+	w.Height = height
 	w.events = make(chan interface{})
 	rand.Seed(243)
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 30; i++ {
 		x := rand.Float32() * float32(w.Width)
 		y := rand.Float32() * float32(w.Height)
 		rot := rand.Float32() * 360
