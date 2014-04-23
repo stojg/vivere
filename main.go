@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -15,12 +16,17 @@ const (
 )
 
 func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	http.Handle("/ws/", websocket.Handler(wsHandler))
 	http.HandleFunc("/", serveStatic)
 	go func() {
-		log.Fatal(http.ListenAndServe(":8080", nil))
+		log.Fatal(http.ListenAndServe(":"+port, nil))
 	}()
 
 	ticker := time.NewTicker(time.Duration(int(1e9) / FRAMES_PER_SECOND))
