@@ -1,47 +1,93 @@
+// http://www.gamedev.net/page/resources/_/technical/game-programming/multiplayer-pong-with-go-websockets-and-webgl-r3112
 package main
 
 import (
-	"github.com/stojg/vivere/lib/engine"
+	"bytes"
+	"code.google.com/p/go.net/websocket"
 	"github.com/stojg/vivere/lib/webserver"
-	"github.com/stojg/vivere/lib/websocket"
 	"log"
+	"math/rand"
 	"net/http"
-	"os"
 	"time"
-	//"fmt"
 )
 
-const FRAMES_PER_SECOND = 24
+const (
+	FRAMES_PER_SECOND = 30
+)
 
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	rand.Seed(time.Now().UTC().UnixNano())
 
-	// start the hub
-	go websocket.Hub().Run()
-
+	http.Handle("/ws/", websocket.Handler(wsHandler))
+	http.HandleFunc("/", webserver.ServeStatic)
 	go func() {
-		// Serve the static site content
-		http.HandleFunc("/", webserver.ServeStatic)
-		// Serve the websocket service
-		http.HandleFunc("/ws", websocket.Serve)
-		err := http.ListenAndServe(":"+port, nil)
-		if err != nil {
-			log.Fatal("ListenAndServe: ", err)
-		}
+		log.Fatal(http.ListenAndServe(":8080", nil))
 	}()
 
-	w := engine.NewWorld(1000, 600)
+	ticker := time.NewTicker(time.Duration(int(1e9) / FRAMES_PER_SECOND))
+	//main loop
+	for {
+		select {
+		// Every game tick
+		case <-ticker.C:
+			getClientInputs()
+			processInput()
+			update()
+			render()
+		// On every new connection
+		case cl := <-newConn:
+			id := newId()
+			clients[id] = cl
+			login(id)
+			buf := &bytes.Buffer{}
+			state.Serialize(buf, true)
+			if buf.Len() > 0 {
+				websocket.Message.Send(cl.ws, buf.Bytes())
+			}
 
-	previous := time.Now()
-	c := time.Tick(time.Second / FRAMES_PER_SECOND)
-	for now := range c {
-		elapsed := now.Sub(previous)
-		previous = now
-		w.ProcessInput()
-		w.Update(elapsed)
-		w.Render(now)
+		}
+	}
+}
+
+var removeList = make([]PlayerId, 0)
+
+// Send to clients
+func render() {
+	buf := &bytes.Buffer{}
+	state.Serialize(buf, false)
+	if buf.Len() == 0 {
+		return
+	}
+	// trunc the removeList
+	removeList = removeList[0:0]
+	for id, cl := range clients {
+		err := websocket.Message.Send(cl.ws, buf.Bytes())
+		if err != nil {
+			removeList = append(removeList, id)
+			log.Printf("render: Error - '%s'\n", err)
+		}
+	}
+	for _, id := range removeList {
+		delete(clients, id)
+		disconnect(id)
+	}
+	copyState()
+}
+
+// Update the state of all entities
+func update() {
+	for e := state.entities.Front(); e != nil; e = e.Next() {
+		e.Value.(*Entity).Update()
+	}
+}
+
+func processInput() {
+	for index, playerId := range state.players {
+		if active(state.players[index], ACTION_UP) {
+			log.Println(playerId, " pressed up")
+		}
+		if active(state.players[index], ACTION_DOWN) {
+			log.Println(playerId, " pressed down")
+		}
 	}
 }

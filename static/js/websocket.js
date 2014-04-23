@@ -1,41 +1,37 @@
-define(function (){
+define(["datastream", "entity"], function (DataStream, entity){
 
     var my = {},
         conn;
 
-    my.connect = function(commands) {
+    my.connect = function(afterconnect, onMessage) {
         if (window["WebSocket"]) {
-            conn = new WebSocket("ws://" + window.location.host +"/ws");
-            // connection closed
-            conn.onclose = function (evt) {
-                console.log("Connection closed.");
+            // Let us open a web socket
+            conn = new WebSocket("ws://"+document.location.host+"/ws/");
+            conn.binaryType = "arraybuffer";
+            conn.onopen = function() {
+                console.log("connection open");
+                afterconnect();
             }
-            // recieving data
-            conn.onmessage = function (evt) {
-                commands.push(evt.data);
+            conn.onerror = function() {
+                console.log("connection error");
             }
-
+            conn.onmessage = onMessage;
+            conn.onclose = function() {
+                console.log("Connection was closed");
+            };
         } else {
-            alert("Your browser does not support WebSockets.");
+            alert("Your browser does not support WebSockets. :'|");
         }
+    }
 
-        return conn;
+    my.send = function(message) {
+        if (conn.readyState != WebSocket.OPEN) {
+            return false;
+        }
+        conn.send(message);
+        return true;
     }
 
     // Make the function wait until the connection is made...
-    my.afterConnect = function(socket, callback) {
-        setTimeout(function () {
-            if (socket.readyState === 1) {
-                if (callback != null) {
-                    callback();
-                }
-                return;
-            } else {
-                my.afterConnect(socket, callback);
-            }
-        }, 5);
-
-    }
-
     return my;
 });

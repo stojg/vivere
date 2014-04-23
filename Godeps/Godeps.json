@@ -3,20 +3,9 @@
 	"GoVersion": "go1.2",
 	"Deps": [
 		{
-			"ImportPath": "github.com/barnex/fmath",
-			"Rev": "da8ae57d43c6606c727fffd88db75fbe94f5c72d"
-		},
-		{
-			"ImportPath": "github.com/gorilla/websocket",
-			"Rev": "03206ef31ebe44a6db9e66f3b466e05a31790631"
-		},
-		{
-			"ImportPath": "github.com/ungerik/go3d/generic",
-			"Rev": "301d4dee5b2a69598b2ad2fba4c5679ab57423a6"
-		},
-		{
-			"ImportPath": "github.com/ungerik/go3d/vec2",
-			"Rev": "301d4dee5b2a69598b2ad2fba4c5679ab57423a6"
+			"ImportPath": "code.google.com/p/go.net/websocket",
+			"Comment": "null-119",
+			"Rev": "cdbc77c5e0064a55bdd9a6decd6e0d8f23c779ef"
 		}
 	]
 }

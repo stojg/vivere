@@ -1,58 +1,129 @@
-require(["screen", "websocket", 'pixi', 'entity', "ui"], function(screen, websocket, pixi, entity, ui) {
+require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(screen, websocket, pixi, entity, ui, commands) {
 
-    var commands = new Array();
-
+    var framesPerSecond = 1000 / 30;
     // create an new instance of a pixi stage
     var stage = new pixi.Stage(0x666666);
 
-    ui.setMessage("Loading...", stage)
-
     var entities = new Array();
 
-    var conn = websocket.connect(commands);
+    var connected = false;
 
-    websocket.afterConnect(conn, function(){
-        ui.clearMessage(stage);
+    var renderLoopInterval = null;
 
-        conn.send(JSON.stringify({
-            Event: "World",
-            Message: "getState"
-        }));
+    var renderer = pixi.autoDetectRenderer(1000, 600);
+    document.body.appendChild(renderer.view);
 
-        var renderer = false;
+    websocket.connect(function() {
+        connected = true;
+        frame();
+    }, getState);
 
-        requestAnimFrame(animate);
+    function sendCmd() {
+        var cmd = new DataStream();
+        cmd.writeUint32(commands.get());
+        connected = websocket.send(cmd.buffer);
+    }
 
-        function animate() {
-            while (commands.length > 0) {
-                var command = commands.pop();
-                var message = JSON.parse(command);
-                if(message.Event === "Entity") {
-                    updateEntity(message.Message);
-                } else if(message.Event === "World") {
-                    // create a renderer instance.
-                    renderer = pixi.autoDetectRenderer(message.Message.Width,  message.Message.Height);
-                    // add the renderer view element to the DOM
-                    document.body.appendChild(renderer.view);
-                } else {
-                    console.log(message);
-                }
+    function frame() {
+        renderLoopInterval = setTimeout(function() {
+            if(!connected) {
+                console.log('Server died, please reload page!');
+                clearInterval(renderLoopInterval);
+                return;
             }
-            requestAnimFrame(animate);
-            if(renderer != false) {
-                renderer.render(stage);
+            window.requestAnimationFrame(frame);
+            renderer.render(stage);
+            sendCmd();
+        }, framesPerSecond);
+    }
+
+    var ents = [];
+
+    function getState(evt) {
+        var buf = new DataStream(evt.data)
+
+        // Number of entities
+        var nEnts =  buf.readUint16();
+
+        for(i = 0; i < nEnts; i++) {
+
+            // get the bitmask
+            var bitMask = buf.readUint8();
+
+            // id
+            var id = buf.readUint16();
+
+            // model
+            if ((bitMask & (1<<0))>0) {
+                var modelId = buf.readUint16();
+                ents[id] = entity.create(modelId);
+                stage.addChild(ents[id]);
+            }
+
+            // rotation
+            if ((bitMask & (1<<1))>0) {
+                ents[id].rotation = buf.readFloat32();
+            }
+
+            // angular velocity
+            if ((bitMask & (1<<2))>0) {
+                ents[id].angularVel = buf.readFloat32();
+            }
+
+            // pos
+            if ((bitMask & (1<<3))>0) {
+                var pos = buf.readFloat64Array(2);
+                ents[id].position.x = pos[0];
+                ents[id].position.y = pos[1];
+            }
+
+            // vel
+            if ((bitMask & (1<<4))>0) {
+                var vel = buf.readFloat64Array(2);
+                ents[id].velocity = {x: vel[0], y: vel[1]};
+            }
+
+            // size
+            if ((bitMask & (1<<5))>0) {
+                var size = buf.readFloat64Array(2);
+                ents[id].size = {x: size[0], y: size[1]};
             }
 
         }
-    })
+        return;
 
-    var updateEntity = function(entityMsg) {
-        if(!entities[entityMsg.Id]) {
-            entities[entityMsg.Id] = entity.create();
-            stage.addChild(entities[entityMsg.Id]);
+        var bitMask = buf.readUint8()
+        for (var i = 0; i<nEnts; i++) {
+            if ((bitMask & (1<<i))>0) {
+                var rotation = buf.readFloat32()
+                ents[i].rotation = rotation
+            }
         }
-        entities[entityMsg.Id].rotation = entityMsg.Rotation
-        entities[entityMsg.Id].position.x = entityMsg.Position.X
-        entities[entityMsg.Id].position.y = entityMsg.Position.Y
+
+
+        var bitMask = buf.readUint8()
+        for (var i = 0; i<nEnts; i++) {
+            if ((bitMask & (1<<i))>0) {
+                var vel = buf.readFloat64Array(2)
+                // do something with the vel
+            }
+
+        }
+        var bitMask = buf.readUint8()
+        for (var i = 0; i<nEnts; i++) {
+            if ((bitMask & (1<<i))>0) {
+                var size = buf.readFloat64Array(2)
+                //ents[i].scale.x = size[0]
+                //ents[i].scale.y = size[1]
+            }
+        }
+
+        var bitMask = buf.readUint8()
+        for (var i = 0; i<2; i++) {
+            if ((bitMask & (1<<i))>0) {
+                var playerid = buf.readUint32()
+               // console.log("Player id #"+playerid);
+            }
+        }
     }
 });
