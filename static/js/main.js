@@ -1,6 +1,6 @@
 require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(screen, websocket, pixi, entity, ui, commands) {
 
-    var framesPerSecond = 1000 / 30;
+    var framesPerSecond = 1000 / 60;
     // create an new instance of a pixi stage
     var stage = new pixi.Stage(0x666666);
 
@@ -87,42 +87,6 @@ require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(sc
             if ((bitMask & (1<<5))>0) {
                 var size = buf.readFloat64Array(2);
                 ents[id].size = {x: size[0], y: size[1]};
-            }
-
-        }
-        return;
-
-        var bitMask = buf.readUint8()
-        for (var i = 0; i<nEnts; i++) {
-            if ((bitMask & (1<<i))>0) {
-                var rotation = buf.readFloat32()
-                ents[i].rotation = rotation
-            }
-        }
-
-
-        var bitMask = buf.readUint8()
-        for (var i = 0; i<nEnts; i++) {
-            if ((bitMask & (1<<i))>0) {
-                var vel = buf.readFloat64Array(2)
-                // do something with the vel
-            }
-
-        }
-        var bitMask = buf.readUint8()
-        for (var i = 0; i<nEnts; i++) {
-            if ((bitMask & (1<<i))>0) {
-                var size = buf.readFloat64Array(2)
-                //ents[i].scale.x = size[0]
-                //ents[i].scale.y = size[1]
-            }
-        }
-
-        var bitMask = buf.readUint8()
-        for (var i = 0; i<2; i++) {
-            if ((bitMask & (1<<i))>0) {
-                var playerid = buf.readUint32()
-               // console.log("Player id #"+playerid);
             }
         }
     }

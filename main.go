@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	FRAMES_PER_SECOND = 30
+	FRAMES_PER_SECOND = 5
 )
 
 func main() {
@@ -29,15 +29,22 @@ func main() {
 		log.Fatal(http.ListenAndServe(":"+port, nil))
 	}()
 
+
 	ticker := time.NewTicker(time.Duration(int(1e9) / FRAMES_PER_SECOND))
 	//main loop
+	current := time.Now()
+
 	for {
 		select {
 		// Every game tick
 		case <-ticker.C:
+			now := time.Now()
+			elapsed := int64(now.Sub(current)/time.Millisecond)
+			current = now
+			state.Tick()
 			getClientInputs()
 			processInput()
-			update()
+			update(elapsed)
 			render()
 		// On every new connection
 		case cl := <-newConn:
@@ -69,7 +76,7 @@ func render() {
 		err := websocket.Message.Send(cl.ws, buf.Bytes())
 		if err != nil {
 			removeList = append(removeList, id)
-			log.Printf("render: Error - '%s'\n", err)
+			log.Printf("[!] ws.Send() for Player %d - '%s'\n", id, err)
 		}
 	}
 	for _, id := range removeList {
@@ -80,9 +87,9 @@ func render() {
 }
 
 // Update the state of all entities
-func update() {
+func update(elapsed int64) {
 	for e := state.entities.Front(); e != nil; e = e.Next() {
-		e.Value.(*Entity).Update()
+		e.Value.(*Entity).Update(elapsed)
 	}
 }
 

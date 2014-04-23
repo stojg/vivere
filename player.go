@@ -32,7 +32,7 @@ func newId() PlayerId {
 }
 
 func login(id PlayerId) {
-	log.Printf("Player %d logged in\n", id)
+	log.Printf("[+] Player %d logged in\n", id)
 	state.players = append(state.players, id)
 }
 
@@ -50,7 +50,7 @@ func disconnect(id PlayerId) {
 		// Shrink the list
 		state.players = state.players[:len(state.players)-1]
 	}
-	log.Printf("Player %d was disconnected \n", id)
+	log.Printf("[-] Player %d was disconnected \n", id)
 }
 
 // Get all the messages from the client and push the latest one to the

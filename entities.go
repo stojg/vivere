@@ -103,12 +103,12 @@ func (e *Entity) Serialize(buf io.Writer, serAll bool) bool {
 
 // Update will call this entity's controller to find an action and then
 // update the internal state
-func (e *Entity) Update() {
-
+func (e *Entity) Update(elapsed int64) {
+	elapsedSecond := float32(elapsed) / 1000
 	//e.angularVel = 0.01
 	// Transform velocity to position
-	e.rotation += e.angularVel
-	e.pos.Add(e.pos, e.vel)
+	e.rotation = e.rotation + (e.angularVel * elapsedSecond);
+	e.pos.Add(e.pos, e.vel.Scale(float64(elapsedSecond), e.vel))
 
 }
 

@@ -28,7 +28,7 @@ func wsHandler(ws *websocket.Conn) {
 	// Create a new UserCommand
 	cmd := UserCommand{}
 
-	log.Println("wsHandler: new client connection")
+	log.Println("[+] New client connected")
 
 	// Push the new connection to the newConn channel
 	newConn <- clientConn
@@ -39,7 +39,7 @@ func wsHandler(ws *websocket.Conn) {
 		n, err := ws.Read(pkt)
 		// Oh noes, client probably disconnected during read
 		if err != nil {
-			log.Printf("wsHandler: Error during read '%s'\n", err)
+			log.Printf("[-] ws.Read() - error during read '%s'\n", err)
 			break
 		}
 		// Reassign all packets into the pkt buffer
@@ -48,7 +48,7 @@ func wsHandler(ws *websocket.Conn) {
 		err = binary.Read(buf, binary.LittleEndian, &cmd)
 		// Oh noes, couldn't read the user command
 		if err != nil {
-			log.Printf("wsHandler: error '%s'\n", err)
+			log.Printf("[-] binary.Read() - Error during read '%s'\n", err)
 			break
 		}
 		// Push the cmd to the clientCommand channel
