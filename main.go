@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	FRAMES_PER_SECOND = 5
+	FRAMES_PER_SECOND = 60
 )
 
 func main() {
@@ -29,7 +29,6 @@ func main() {
 		log.Fatal(http.ListenAndServe(":"+port, nil))
 	}()
 
-
 	ticker := time.NewTicker(time.Duration(int(1e9) / FRAMES_PER_SECOND))
 	//main loop
 	current := time.Now()
@@ -43,7 +42,7 @@ func main() {
 			current = now
 			state.Tick()
 			getClientInputs()
-			processInput()
+			//processInput()
 			update(elapsed)
 			render()
 		// On every new connection
@@ -93,15 +92,36 @@ func update(elapsed int64) {
 	}
 }
 
-func processInput() {
-	for index, playerId := range state.players {
-		if active(state.players[index], ACTION_UP) {
-			log.Println(playerId, " pressed up")
+type Controller interface {
+	GetAction() Action
+}
+
+type PlayerController struct {}
+
+func (p *PlayerController) GetAction() Action {
+
+	for index, _ := range state.players {
+
+		if ActiveCommand(state.players[index], ACTION_UP) {
+			ClearCommand(state.players[index])
+			return ACTION_UP
 		}
-		if active(state.players[index], ACTION_DOWN) {
-			log.Println(playerId, " pressed down")
+		if ActiveCommand(state.players[index], ACTION_DOWN) {
+			ClearCommand(state.players[index])
+			return ACTION_DOWN
+		}
+
+		if ActiveCommand(state.players[index], ACTION_LEFT) {
+			ClearCommand(state.players[index])
+			return ACTION_LEFT
+		}
+
+		if ActiveCommand(state.players[index], ACTION_RIGHT) {
+			ClearCommand(state.players[index])
+			return ACTION_RIGHT
 		}
 	}
+	return ACTION_NONE
 }
 
 func serveStatic(w http.ResponseWriter, r *http.Request) {

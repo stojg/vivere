@@ -13,9 +13,17 @@ define(function () {
         if (key_code == 87) {
             actions |= 1<<0
         }
-        // set bit one
+        // set bit two
         if (key_code == 83) {
             actions |= 1<<1
+        }
+        // set bit three
+        if (key_code == 68) {
+            actions |= 1<<2
+        }
+        // set bit four
+        if (key_code == 65) {
+            actions |= 1<<3
         }
     }
     window.document.onkeyup = function(event){
@@ -29,6 +37,16 @@ define(function () {
         if (key_code == 83) {
             actions &= ~(1<<1)
         }
+        // set bit three
+        if (key_code == 68) {
+            actions &= ~(1<<2)
+        }
+        // set bit four
+        if (key_code == 65) {
+            actions &= ~(1<<3)
+        }
+
+
     }
 
     var my = {};

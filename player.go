@@ -4,16 +4,17 @@ import (
 	"log"
 )
 
-// List all the available actions here
+// List all the available actions here (bitwise position)
 const (
 	ACTION_UP   Action = 0
 	ACTION_DOWN Action = 1
+	ACTION_RIGHT Action = 2
+	ACTION_LEFT Action = 3
+	ACTION_NONE Action = 32
 )
 
 // An integer representing the Player ID
 type PlayerId uint32
-
-// An integer representation of user actions
 type Action uint32
 
 // UserCommand represent a recieved command (Action) from the user
@@ -70,10 +71,18 @@ func getClientInputs() {
 }
 
 // Check if this player have sent a command
-func active(id PlayerId, action Action) bool {
-	// This user has a command that is anything else than 0
-	if (clients[id].currentCmd.Actions & (1 << action)) > 0 {
+func ActiveCommand(id PlayerId, action Action) bool {
+
+	cmd := clients[id].currentCmd.Actions
+	if cmd == 0 {
+		return false
+	}
+	if cmd & (1 << action) > 0 {
 		return true
 	}
 	return false
+}
+
+func ClearCommand(id PlayerId) {
+	clients[id].currentCmd = UserCommand{}
 }

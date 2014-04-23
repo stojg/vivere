@@ -23,6 +23,7 @@ type Entity struct {
 	vel        *Vec
 	size       *Vec
 	prev       *Entity
+	controller Controller
 }
 
 func NewEntity(id Id) *Entity {
@@ -36,6 +37,7 @@ func NewEntity(id Id) *Entity {
 	e.prev.pos = NewVec(0, 0)
 	e.prev.vel = NewVec(0, 0)
 	e.prev.size = NewVec(0, 0)
+	e.controller = &PlayerController{}
 	return e
 }
 
@@ -105,6 +107,21 @@ func (e *Entity) Serialize(buf io.Writer, serAll bool) bool {
 // update the internal state
 func (e *Entity) Update(elapsed int64) {
 	elapsedSecond := float32(elapsed) / 1000
+
+	action := e.controller.GetAction()
+
+	if action == ACTION_UP {
+		e.vel.Set(0,-100)
+	} else if action == ACTION_DOWN {
+		e.vel.Set(0,100)
+	} else if action == ACTION_RIGHT {
+		e.vel.Set(100,0)
+	} else if action == ACTION_LEFT {
+		e.vel.Set(-100,0)
+	} else {
+		e.vel.Set(0,0)
+	}
+
 	//e.angularVel = 0.01
 	// Transform velocity to position
 	e.rotation = e.rotation + (e.angularVel * elapsedSecond);

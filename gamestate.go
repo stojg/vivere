@@ -28,11 +28,11 @@ func NewGameState() *GameState {
 func init() {
 	state = NewGameState()
 	stateOld = NewGameState()
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 1; i++ {
 		ent := NewEntity(Id(i + 3))
 		ent.model = ENTITY_BUNNY
 		ent.rotation = 0.0
-		ent.angularVel = (rand.Float32() - 0.5) * 12.56;
+		ent.angularVel = 0.0
 		ent.pos = NewVec(rand.Float64()*1000, rand.Float64()*600)
 		ent.size = NewVec(20, 40)
 		state.entities.PushBack(ent)
