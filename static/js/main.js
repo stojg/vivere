@@ -17,7 +17,7 @@ require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(sc
     websocket.connect(function() {
         connected = true;
         frame();
-    }, getState);
+    }, recieveState);
 
     function sendCmd() {
         if(commands.get() == 0) {
@@ -30,7 +30,6 @@ require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(sc
     }
 
     var current = Date.now();
-
     function frame() {
         renderLoopInterval = setTimeout(function() {
 
@@ -55,7 +54,7 @@ require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(sc
         }, framesPerSecond);
     }
 
-    function getState(evt) {
+    function recieveState(evt) {
         var buf = new DataStream(evt.data)
 
         gameTick = buf.readUint32();

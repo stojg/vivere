@@ -24,6 +24,7 @@ func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	http.Handle("/ws/", websocket.Handler(wsHandler))
 	http.HandleFunc("/", serveStatic)
+
 	go func() {
 		log.Fatal(http.ListenAndServe(":"+port, nil))
 	}()
@@ -38,10 +39,9 @@ func main() {
 			elapsed := int64(now.Sub(current) / time.Millisecond)
 			current = now
 			state.Tick()
-			getClientInputs()
-			//processInput()
-			update(elapsed)
-			render()
+			GetUpdates()
+			Update(elapsed)
+			SendUpdates()
 		// On every new connection
 		case cl := <-newConn:
 			login(cl)
@@ -50,66 +50,48 @@ func main() {
 			if buf.Len() > 0 {
 				websocket.Message.Send(cl.ws, buf.Bytes())
 			}
-
 		}
 	}
 }
 
-var removeList = make([]Id, 0)
-
 // Send to clients
-func render() {
+func SendUpdates() {
 	buf := &bytes.Buffer{}
 	state.Serialize(buf, false)
 	if buf.Len() == 0 {
 		return
 	}
-	// trunc the removeList
-	removeList = removeList[0:0]
 	for _, player := range state.players {
 		err := websocket.Message.Send(player.conn.ws, buf.Bytes())
 		if err != nil {
-			removeList = append(removeList, player.id)
 			log.Printf("[!] ws.Send() for Player %d - '%s'\n", player.id, err)
+			disconnect(player)
 		}
 	}
-	for _, id := range removeList {
-		disconnect(id)
-	}
-	copyState()
+	state.UpdatePrev()
 }
 
 // Update the state of all entities
-func update(elapsed int64) {
+func Update(elapsed int64) {
 	for e := state.entities.Front(); e != nil; e = e.Next() {
 		e.Value.(*Entity).Update(elapsed)
 	}
 }
 
-type Controller interface {
-	GetAction(e *Entity) Action
-}
-
-type PlayerController struct {
-	player *Player
-}
-
-// GetAction
-func (p *PlayerController) GetAction(e *Entity) Action {
-	if ActiveCommand(p.player, ACTION_UP) {
-		e.vel[1] = -100
+// Get all the messages from the client and push the latest one to the
+// clientConnection.currentCMD
+func GetUpdates() {
+	for _, player := range state.players {
+		for {
+			select {
+			case cmd := <-player.conn.cmdBuf:
+				player.conn.currentCmd = cmd
+			default:
+				goto done
+			}
+		}
+	done:
 	}
-	if ActiveCommand(p.player, ACTION_DOWN) {
-		e.vel[1] = 100
-	}
-	if ActiveCommand(p.player, ACTION_LEFT) {
-		e.vel[0] = -100
-	}
-	if ActiveCommand(p.player, ACTION_RIGHT) {
-		e.vel[0] = 100
-	}
-	ClearCommand(p.player)
-	return ACTION_NONE
 }
 
 func serveStatic(w http.ResponseWriter, r *http.Request) {

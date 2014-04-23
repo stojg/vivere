@@ -28,8 +28,33 @@ type UserCommand struct {
 	Actions uint32
 }
 
-func login(conn *ClientConn) {
+type Controller interface {
+	GetAction(e *Entity) Action
+}
 
+type PlayerController struct {
+	player *Player
+}
+
+// GetAction
+func (p *PlayerController) GetAction(e *Entity) Action {
+	if ActiveCommand(p.player, ACTION_UP) {
+		e.vel[1] = -100
+	}
+	if ActiveCommand(p.player, ACTION_DOWN) {
+		e.vel[1] = 100
+	}
+	if ActiveCommand(p.player, ACTION_LEFT) {
+		e.vel[0] = -100
+	}
+	if ActiveCommand(p.player, ACTION_RIGHT) {
+		e.vel[0] = 100
+	}
+	ClearCommand(p.player)
+	return ACTION_NONE
+}
+
+func login(conn *ClientConn) {
 	p := &Player{}
 	p.id = state.NextPlayerId()
 	p.conn = conn
@@ -42,45 +67,19 @@ func login(conn *ClientConn) {
 	ent.size = NewVec(20, 40)
 	ent.controller = &PlayerController{player: p}
 
-	ent.element = state.entities.PushBack(ent)
+	state.AddEntity(ent)
+
 	p.entity = ent
-	state.players = append(state.players, p)
+
+	state.AddPlayer(p)
+
 	log.Printf("[+] Player %d logged in\n", p.id)
 }
 
-func disconnect(id Id) {
-	indexPosition := -1
-	for index, player := range state.players {
-		if player.id == id {
-			indexPosition = index
-			//state.RemoveEntity(player.entity);
-			break
-		}
-	}
-
-	if indexPosition != -1 {
-		// Copy the last entry to the PlayerID position
-		state.players[indexPosition] = state.players[len(state.players)-1]
-		// Shrink the list
-		state.players = state.players[:len(state.players)-1]
-	}
-	log.Printf("[-] Player %d was disconnected \n", id)
-}
-
-// Get all the messages from the client and push the latest one to the
-// clientConnection.currentCMD
-func getClientInputs() {
-	for _, player := range state.players {
-		for {
-			select {
-			case cmd := <-player.conn.cmdBuf:
-				player.conn.currentCmd = cmd
-			default:
-				goto done
-			}
-		}
-	done:
-	}
+func disconnect(p *Player) {
+	state.RemoveEntity(p.entity)
+	state.RemovePlayer(p)
+	log.Printf("[-] Player %d was disconnected \n", p.id)
 }
 
 // Check if this player have sent a command

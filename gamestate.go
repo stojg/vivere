@@ -5,7 +5,6 @@ import (
 	"container/list"
 	"encoding/binary"
 	"io"
-	"log"
 )
 
 type GameState struct {
@@ -13,9 +12,10 @@ type GameState struct {
 	players      []*Player
 	tick         uint32
 	nextPlayerId Id
+	prevState	*GameState
 }
 
-var state, stateOld *GameState
+var state *GameState
 
 func NewGameState() *GameState {
 	st := &GameState{}
@@ -26,6 +26,7 @@ func NewGameState() *GameState {
 	return st
 }
 
+// NextPlayerId returns the next id
 func (gs *GameState) NextPlayerId() Id {
 	gs.nextPlayerId += 1
 	return gs.nextPlayerId
@@ -33,21 +34,45 @@ func (gs *GameState) NextPlayerId() Id {
 
 func init() {
 	state = NewGameState()
-	stateOld = NewGameState()
-	copyState()
+	state.prevState = NewGameState()
+	state.UpdatePrev()
+}
+
+func(gs *GameState) AddPlayer(p *Player) {
+	gs.players = append(state.players, p)
+}
+
+func(gs *GameState) RemovePlayer(p *Player) {
+	for index, pInList := range state.players {
+		if p.id != pInList.id {
+			continue;
+		}
+		p.conn.Close()
+		// Copy the last entry to the PlayerID position
+		gs.players[index] = gs.players[len(gs.players)-1]
+		// Shrink the list
+		gs.players = gs.players[:len(gs.players)-1]
+		return
+	}
 }
 
 // Copy all existing entities to the previous state
-func copyState() {
-	stateOld.players = state.players
+func (gs *GameState)UpdatePrev() {
+	state.prevState.entities = state.entities
+	state.prevState.players = state.players
+	state.prevState.tick = state.tick
+	state.nextPlayerId = state.nextPlayerId
 	for e := state.entities.Front(); e != nil; e = e.Next() {
 		e.Value.(*Entity).UpdatePrev()
 	}
 }
 
+func (gs *GameState) AddEntity(e *Entity) {
+	e.element = state.entities.PushBack(e	)
+}
+
 func (gs *GameState) RemoveEntity(e *Entity) {
-	log.Printf("Scheduling #%v for deletion", e.id);
-	e.model = ENTITY_DELETE
+	state.entities.Remove(e.element);
 }
 
 // Serialize the game state
