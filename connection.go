@@ -12,46 +12,51 @@ type ClientConn struct {
 	ws         *websocket.Conn
 	inBuf      [1500]byte
 	currentCmd UserCommand
+	tick       uint32
 	cmdBuf     chan UserCommand
 }
 
 var newConn = make(chan *ClientConn)
 
-var clients = make(map[PlayerId]*ClientConn)
+var clients = make(map[Id]*ClientConn)
 
 func wsHandler(ws *websocket.Conn) {
 	clientConn := &ClientConn{}
 	clientConn.ws = ws
-	// keep 5 User commands in the buffer
+
 	clientConn.cmdBuf = make(chan UserCommand, 5)
 
 	// Create a new UserCommand
 	cmd := UserCommand{}
 
-	log.Println("[+] New client connected")
-
 	// Push the new connection to the newConn channel
 	newConn <- clientConn
 
-	// Infinite loop that reads UserCommands from the client
+	// Read messages from the client
 	for {
 		pkt := clientConn.inBuf[0:]
+
 		n, err := ws.Read(pkt)
-		// Oh noes, client probably disconnected during read
 		if err != nil {
 			log.Printf("[-] ws.Read() - error during read '%s'\n", err)
 			break
 		}
-		// Reassign all packets into the pkt buffer
+
 		pkt = pkt[0:n]
 		buf := bytes.NewBuffer(pkt)
-		err = binary.Read(buf, binary.LittleEndian, &cmd)
-		// Oh noes, couldn't read the user command
+
+		err = binary.Read(buf, binary.LittleEndian, &clientConn.tick)
 		if err != nil {
-			log.Printf("[-] binary.Read() - Error during read '%s'\n", err)
+			log.Printf("[-] binary.Read() - Couldn't read tick '%s'\n", err)
 			break
 		}
-		// Push the cmd to the clientCommand channel
+
+		err = binary.Read(buf, binary.LittleEndian, &cmd)
+		if err != nil {
+			log.Printf("[-] binary.Read() - Couldn't read command '%s'\n", err)
+			break
+		}
+
 		clientConn.cmdBuf <- cmd
 	}
 }

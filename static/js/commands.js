@@ -45,8 +45,6 @@ define(function () {
         if (key_code == 65) {
             actions &= ~(1<<3)
         }
-
-
     }
 
     var my = {};

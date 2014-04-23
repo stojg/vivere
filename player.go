@@ -2,49 +2,62 @@ package main
 
 import (
 	"log"
+	"math/rand"
 )
 
 // List all the available actions here (bitwise position)
 const (
-	ACTION_UP   Action = 0
-	ACTION_DOWN Action = 1
+	ACTION_UP    Action = 0
+	ACTION_DOWN  Action = 1
 	ACTION_RIGHT Action = 2
-	ACTION_LEFT Action = 3
-	ACTION_NONE Action = 32
+	ACTION_LEFT  Action = 3
+	ACTION_NONE  Action = 32
 )
 
 // An integer representing the Player ID
-type PlayerId uint32
 type Action uint32
+
+type Player struct {
+	id     Id
+	entity *Entity
+	conn   *ClientConn
+}
 
 // UserCommand represent a recieved command (Action) from the user
 type UserCommand struct {
 	Actions uint32
 }
 
-// a list of users
-//var players = make([]PlayerId, 0)
+func login(conn *ClientConn) {
 
-var maxId = PlayerId(0)
+	p := &Player{}
+	p.id = state.NextPlayerId()
+	p.conn = conn
 
-func newId() PlayerId {
-	maxId++
-	return maxId
+	ent := NewEntity(p.id)
+	ent.model = ENTITY_BUNNY
+	ent.rotation = 0.0
+	ent.angularVel = 0.0
+	ent.pos = NewVec(rand.Float64()*1000, rand.Float64()*600)
+	ent.size = NewVec(20, 40)
+	ent.controller = &PlayerController{player: p}
+
+	ent.element = state.entities.PushBack(ent)
+	p.entity = ent
+	state.players = append(state.players, p)
+	log.Printf("[+] Player %d logged in\n", p.id)
 }
 
-func login(id PlayerId) {
-	log.Printf("[+] Player %d logged in\n", id)
-	state.players = append(state.players, id)
-}
-
-func disconnect(id PlayerId) {
+func disconnect(id Id) {
 	indexPosition := -1
-	for index, playerid := range state.players {
-		if playerid == id {
+	for index, player := range state.players {
+		if player.id == id {
 			indexPosition = index
+			//state.RemoveEntity(player.entity);
 			break
 		}
 	}
+
 	if indexPosition != -1 {
 		// Copy the last entry to the PlayerID position
 		state.players[indexPosition] = state.players[len(state.players)-1]
@@ -57,11 +70,11 @@ func disconnect(id PlayerId) {
 // Get all the messages from the client and push the latest one to the
 // clientConnection.currentCMD
 func getClientInputs() {
-	for _, cl := range clients {
+	for _, player := range state.players {
 		for {
 			select {
-			case cmd := <-cl.cmdBuf:
-				cl.currentCmd = cmd
+			case cmd := <-player.conn.cmdBuf:
+				player.conn.currentCmd = cmd
 			default:
 				goto done
 			}
@@ -71,18 +84,17 @@ func getClientInputs() {
 }
 
 // Check if this player have sent a command
-func ActiveCommand(id PlayerId, action Action) bool {
-
-	cmd := clients[id].currentCmd.Actions
+func ActiveCommand(p *Player, action Action) bool {
+	cmd := p.conn.currentCmd.Actions
 	if cmd == 0 {
 		return false
 	}
-	if cmd & (1 << action) > 0 {
+	if cmd&(1<<action) > 0 {
 		return true
 	}
 	return false
 }
 
-func ClearCommand(id PlayerId) {
-	clients[id].currentCmd = UserCommand{}
+func ClearCommand(p *Player) {
+	p.conn.currentCmd = UserCommand{}
 }

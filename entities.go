@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"container/list"
 	"encoding/binary"
 	"io"
 )
@@ -10,6 +11,7 @@ type Model uint16
 type Id uint16
 
 const (
+	ENTITY_DELETE Model = 0
 	ENTITY_WORLD Model = 1
 	ENTITY_BUNNY Model = 2
 )
@@ -24,6 +26,7 @@ type Entity struct {
 	size       *Vec
 	prev       *Entity
 	controller Controller
+	element    *list.Element
 }
 
 func NewEntity(id Id) *Entity {
@@ -39,6 +42,26 @@ func NewEntity(id Id) *Entity {
 	e.prev.size = NewVec(0, 0)
 	e.controller = &PlayerController{}
 	return e
+}
+
+// Update will call this entity's controller to find an action and then
+// update the internal state
+func (e *Entity) Update(elapsed int64) {
+	elapsedSecond := float32(elapsed) / 1000
+
+	e.controller.GetAction(e)
+
+	e.rotation = e.rotation + (e.angularVel * elapsedSecond)
+	e.pos.Add(e.pos, e.vel.Scale(float64(elapsedSecond), e.vel))
+}
+
+func (e *Entity) UpdatePrev() {
+	e.prev.model = e.model
+	e.prev.rotation = e.rotation
+	e.prev.angularVel = e.angularVel
+	e.prev.pos.Copy(e.pos)
+	e.prev.vel.Copy(e.vel)
+	e.prev.size.Copy(e.size)
 }
 
 // Serialize writes a binary representation of this object into a writer
@@ -101,39 +124,4 @@ func (e *Entity) Serialize(buf io.Writer, serAll bool) bool {
 		return true
 	}
 	return false
-}
-
-// Update will call this entity's controller to find an action and then
-// update the internal state
-func (e *Entity) Update(elapsed int64) {
-	elapsedSecond := float32(elapsed) / 1000
-
-	action := e.controller.GetAction()
-
-	if action == ACTION_UP {
-		e.vel.Set(0,-100)
-	} else if action == ACTION_DOWN {
-		e.vel.Set(0,100)
-	} else if action == ACTION_RIGHT {
-		e.vel.Set(100,0)
-	} else if action == ACTION_LEFT {
-		e.vel.Set(-100,0)
-	} else {
-		e.vel.Set(0,0)
-	}
-
-	//e.angularVel = 0.01
-	// Transform velocity to position
-	e.rotation = e.rotation + (e.angularVel * elapsedSecond);
-	e.pos.Add(e.pos, e.vel.Scale(float64(elapsedSecond), e.vel))
-
-}
-
-func (e *Entity) UpdatePrev() {
-	e.prev.model = e.model
-	e.prev.rotation = e.rotation
-	e.prev.angularVel = e.angularVel
-	e.prev.pos.Copy(e.pos)
-	e.prev.vel.Copy(e.vel)
-	e.prev.size.Copy(e.size)
 }

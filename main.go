@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	FRAMES_PER_SECOND = 60
+	FRAMES_PER_SECOND = 30
 )
 
 func main() {
@@ -22,7 +22,6 @@ func main() {
 	}
 
 	rand.Seed(time.Now().UTC().UnixNano())
-
 	http.Handle("/ws/", websocket.Handler(wsHandler))
 	http.HandleFunc("/", serveStatic)
 	go func() {
@@ -30,15 +29,13 @@ func main() {
 	}()
 
 	ticker := time.NewTicker(time.Duration(int(1e9) / FRAMES_PER_SECOND))
-	//main loop
 	current := time.Now()
-
 	for {
 		select {
 		// Every game tick
 		case <-ticker.C:
 			now := time.Now()
-			elapsed := int64(now.Sub(current)/time.Millisecond)
+			elapsed := int64(now.Sub(current) / time.Millisecond)
 			current = now
 			state.Tick()
 			getClientInputs()
@@ -47,9 +44,7 @@ func main() {
 			render()
 		// On every new connection
 		case cl := <-newConn:
-			id := newId()
-			clients[id] = cl
-			login(id)
+			login(cl)
 			buf := &bytes.Buffer{}
 			state.Serialize(buf, true)
 			if buf.Len() > 0 {
@@ -60,7 +55,7 @@ func main() {
 	}
 }
 
-var removeList = make([]PlayerId, 0)
+var removeList = make([]Id, 0)
 
 // Send to clients
 func render() {
@@ -71,15 +66,14 @@ func render() {
 	}
 	// trunc the removeList
 	removeList = removeList[0:0]
-	for id, cl := range clients {
-		err := websocket.Message.Send(cl.ws, buf.Bytes())
+	for _, player := range state.players {
+		err := websocket.Message.Send(player.conn.ws, buf.Bytes())
 		if err != nil {
-			removeList = append(removeList, id)
-			log.Printf("[!] ws.Send() for Player %d - '%s'\n", id, err)
+			removeList = append(removeList, player.id)
+			log.Printf("[!] ws.Send() for Player %d - '%s'\n", player.id, err)
 		}
 	}
 	for _, id := range removeList {
-		delete(clients, id)
 		disconnect(id)
 	}
 	copyState()
@@ -93,34 +87,28 @@ func update(elapsed int64) {
 }
 
 type Controller interface {
-	GetAction() Action
+	GetAction(e *Entity) Action
 }
 
-type PlayerController struct {}
+type PlayerController struct {
+	player *Player
+}
 
-func (p *PlayerController) GetAction() Action {
-
-	for index, _ := range state.players {
-
-		if ActiveCommand(state.players[index], ACTION_UP) {
-			ClearCommand(state.players[index])
-			return ACTION_UP
-		}
-		if ActiveCommand(state.players[index], ACTION_DOWN) {
-			ClearCommand(state.players[index])
-			return ACTION_DOWN
-		}
-
-		if ActiveCommand(state.players[index], ACTION_LEFT) {
-			ClearCommand(state.players[index])
-			return ACTION_LEFT
-		}
-
-		if ActiveCommand(state.players[index], ACTION_RIGHT) {
-			ClearCommand(state.players[index])
-			return ACTION_RIGHT
-		}
+// GetAction
+func (p *PlayerController) GetAction(e *Entity) Action {
+	if ActiveCommand(p.player, ACTION_UP) {
+		e.vel[1] = -100
 	}
+	if ActiveCommand(p.player, ACTION_DOWN) {
+		e.vel[1] = 100
+	}
+	if ActiveCommand(p.player, ACTION_LEFT) {
+		e.vel[0] = -100
+	}
+	if ActiveCommand(p.player, ACTION_RIGHT) {
+		e.vel[0] = 100
+	}
+	ClearCommand(p.player)
 	return ACTION_NONE
 }
 

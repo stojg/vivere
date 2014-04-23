@@ -24,6 +24,7 @@ require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(sc
             return false;
         }
         var cmd = new DataStream();
+        cmd.writeUint32(gameTick);
         cmd.writeUint32(commands.get());
         connected = websocket.send(cmd.buffer);
     }
@@ -57,6 +58,8 @@ require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(sc
     function getState(evt) {
         var buf = new DataStream(evt.data)
 
+        gameTick = buf.readUint32();
+
         // Number of entities
         var nEnts =  buf.readUint16();
 
@@ -71,8 +74,19 @@ require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(sc
             // model
             if ((bitMask & (1<<0))>0) {
                 var modelId = buf.readUint16();
-                entities[id] = entity.create(modelId);
-                stage.addChild(entities[id]);
+                if(modelId == 0) {
+                    if(typeof entities[id] !== 'undefined') {
+                        stage.removeChild(entities[id]);
+                        delete entities[id];
+                    }
+                } else if(typeof entities[id] === 'undefined') {
+                    entities[id] = entity.create(modelId);
+                    stage.addChild(entities[id]);
+                }
+            }
+
+            if(typeof entities[id] === 'undefined') {
+                continue;
             }
 
             // rotation
