@@ -26,7 +26,7 @@ func NewGameState() *GameState {
 func init() {
 	state = NewGameState()
 	stateOld = NewGameState()
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		ent := NewEntity(Id(i + 3))
 		ent.model = ENTITY_BUNNY
 		ent.rotation = 0.0
