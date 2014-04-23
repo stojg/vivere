@@ -14,19 +14,20 @@ type ClientConn struct {
 	currentCmd UserCommand
 	tick       uint32
 	cmdBuf     chan UserCommand
+	open       bool
 }
 
 func (cc *ClientConn) Close() {
 	cc.ws.Close()
+	cc.open = false
 }
 
 var newConn = make(chan *ClientConn)
 
-var clients = make(map[Id]*ClientConn)
-
 func wsHandler(ws *websocket.Conn) {
 	clientConn := &ClientConn{}
 	clientConn.ws = ws
+	clientConn.open = true
 	clientConn.cmdBuf = make(chan UserCommand, 5)
 
 	// Create a new UserCommand

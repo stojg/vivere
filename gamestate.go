@@ -5,6 +5,7 @@ import (
 	"container/list"
 	"encoding/binary"
 	"io"
+	"log"
 )
 
 type GameState struct {
@@ -12,7 +13,7 @@ type GameState struct {
 	players      []*Player
 	tick         uint32
 	nextPlayerId Id
-	prevState	*GameState
+	prevState    *GameState
 }
 
 var state *GameState
@@ -38,26 +39,28 @@ func init() {
 	state.UpdatePrev()
 }
 
-func(gs *GameState) AddPlayer(p *Player) {
+func (gs *GameState) AddPlayer(p *Player) {
+	log.Printf("[+] Player %d logged in\n", p.id)
 	gs.players = append(state.players, p)
 }
 
-func(gs *GameState) RemovePlayer(p *Player) {
+func (gs *GameState) RemovePlayer(p *Player) {
 	for index, pInList := range state.players {
 		if p.id != pInList.id {
-			continue;
+			continue
 		}
 		p.conn.Close()
 		// Copy the last entry to the PlayerID position
 		gs.players[index] = gs.players[len(gs.players)-1]
 		// Shrink the list
 		gs.players = gs.players[:len(gs.players)-1]
+		log.Printf("[-] Player %d was disconnected \n", p.id)
 		return
 	}
 }
 
 // Copy all existing entities to the previous state
-func (gs *GameState)UpdatePrev() {
+func (gs *GameState) UpdatePrev() {
 	state.prevState.entities = state.entities
 	state.prevState.players = state.players
 	state.prevState.tick = state.tick
@@ -68,11 +71,13 @@ func (gs *GameState)UpdatePrev() {
 }
 
 func (gs *GameState) AddEntity(e *Entity) {
-	e.element = state.entities.PushBack(e	)
+	e.element = state.entities.PushBack(e)
+	log.Printf("[+] Entity #%v added", e.id)
 }
 
 func (gs *GameState) RemoveEntity(e *Entity) {
-	state.entities.Remove(e.element);
+	state.entities.Remove(e.element)
+	log.Printf("[-] Entity #%v removed", e.id)
 }
 
 // Serialize the game state
@@ -82,11 +87,11 @@ func (gs *GameState) Serialize(buf io.Writer, serAll bool) {
 
 	for e := state.entities.Front(); e != nil; e = e.Next() {
 		if e.Value.(*Entity).Serialize(bufTemp, true) {
-//			if e.Value.(*Entity).model == ENTITY_DELETE {
-//				log.Printf("Deleting %v", e.Value.(*Entity).id)
-//				gs.entities.Remove(e.Value.(*Entity).element)
-//			}
 			updated++
+			if e.Value.(*Entity).action == ACTION_DIE {
+				state.RemoveEntity(e.Value.(*Entity))
+			}
+
 		}
 	}
 

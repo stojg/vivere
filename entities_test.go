@@ -27,6 +27,7 @@ func TestSerialization(t *testing.T) {
 	e.pos = NewVec(20, 30)
 	e.vel = NewVec(4, 2)
 	e.size = NewVec(1, 2)
+	e.action = ACTION_DIE
 
 	buf := &bytes.Buffer{}
 	e.Serialize(buf, true)
@@ -40,6 +41,7 @@ func TestSerialization(t *testing.T) {
 	var pos Vec
 	var vel Vec
 	var size Vec
+	var action Action
 
 	binary.Read(buf, binary.LittleEndian, &bitmask)
 
@@ -107,6 +109,16 @@ func TestSerialization(t *testing.T) {
 	binary.Read(buf, binary.LittleEndian, &size)
 	if e.size[0] != size[0] {
 		t.Errorf("Expected %v, but got %v", e.size[0], size[0])
+	}
+
+	// action
+	eBitmask = bitmask & (1 << 6)
+	if eBitmask != 64 {
+		t.Errorf("Expected bitmask %v, but got %v", 64, eBitmask)
+	}
+	binary.Read(buf, binary.LittleEndian, &action)
+	if e.action != action {
+		t.Errorf("Expected %v, but got %v", e.action, action)
 	}
 }
 

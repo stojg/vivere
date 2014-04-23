@@ -12,8 +12,8 @@ type Id uint16
 
 const (
 	ENTITY_DELETE Model = 0
-	ENTITY_WORLD Model = 1
-	ENTITY_BUNNY Model = 2
+	ENTITY_WORLD  Model = 1
+	ENTITY_BUNNY  Model = 2
 )
 
 type Entity struct {
@@ -26,6 +26,7 @@ type Entity struct {
 	size       *Vec
 	prev       *Entity
 	controller Controller
+	action     Action
 	element    *list.Element
 }
 
@@ -35,12 +36,15 @@ func NewEntity(id Id) *Entity {
 	e.pos = NewVec(0, 0)
 	e.vel = NewVec(0, 0)
 	e.size = NewVec(0, 0)
+	e.controller = &PlayerController{}
+	e.action = ACTION_NONE
+
 	e.prev = &Entity{}
 	e.prev.id = id
 	e.prev.pos = NewVec(0, 0)
 	e.prev.vel = NewVec(0, 0)
 	e.prev.size = NewVec(0, 0)
-	e.controller = &PlayerController{}
+	e.prev.action = ACTION_NONE
 	return e
 }
 
@@ -48,9 +52,7 @@ func NewEntity(id Id) *Entity {
 // update the internal state
 func (e *Entity) Update(elapsed int64) {
 	elapsedSecond := float32(elapsed) / 1000
-
-	e.controller.GetAction(e)
-
+	e.action = e.controller.GetAction(e)
 	e.rotation = e.rotation + (e.angularVel * elapsedSecond)
 	e.pos.Add(e.pos, e.vel.Scale(float64(elapsedSecond), e.vel))
 }
@@ -62,6 +64,7 @@ func (e *Entity) UpdatePrev() {
 	e.prev.pos.Copy(e.pos)
 	e.prev.vel.Copy(e.vel)
 	e.prev.size.Copy(e.size)
+	e.prev.action = e.action
 }
 
 // Serialize writes a binary representation of this object into a writer
@@ -111,6 +114,12 @@ func (e *Entity) Serialize(buf io.Writer, serAll bool) bool {
 		for i := range e.size {
 			binary.Write(bufTemp, binary.LittleEndian, &e.size[i])
 		}
+	}
+
+	bitMask[0] |= 0 << uint(6)
+	if serAll || e.action != e.prev.action {
+		bitMask[0] |= 1 << uint(6)
+		binary.Write(bufTemp, binary.LittleEndian, e.action)
 	}
 
 	// Only write if something changed

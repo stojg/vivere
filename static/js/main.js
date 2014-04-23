@@ -45,8 +45,17 @@ require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(sc
 
             window.requestAnimationFrame(frame);
 
-            for (key in entities) {
+            for(var i = 0; i < entities.length; i++) {
                 // @todo some clever lerp:ing
+                if(typeof(entities[i]) === 'undefined') {
+                    continue;
+                }
+                //console.log('Deleting '+id);
+                if(entities[i].action == 4) {
+                    stage.removeChild(entities[i]);
+                    delete(entities[i]);
+                }
+
             }
 
             renderer.render(stage);
@@ -84,10 +93,6 @@ require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(sc
                 }
             }
 
-            if(typeof entities[id] === 'undefined') {
-                continue;
-            }
-
             // rotation
             if ((bitMask & (1<<1))>0) {
                 entities[id].rotation = buf.readFloat32();
@@ -115,6 +120,11 @@ require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(sc
             if ((bitMask & (1<<5))>0) {
                 var size = buf.readFloat64Array(2);
                 entities[id].size = {x: size[0], y: size[1]};
+            }
+
+            // action
+            if ((bitMask & (1<<6))>0) {
+                entities[id].action = buf.readUint16();
             }
         }
     }
