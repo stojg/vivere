@@ -1,4 +1,4 @@
-package collision
+package main
 
 import "testing"
 

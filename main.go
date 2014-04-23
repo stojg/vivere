@@ -4,7 +4,6 @@ package main
 import (
 	"bytes"
 	"code.google.com/p/go.net/websocket"
-	"github.com/stojg/vivere/lib/webserver"
 	"log"
 	"math/rand"
 	"net/http"
@@ -19,7 +18,7 @@ func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	http.Handle("/ws/", websocket.Handler(wsHandler))
-	http.HandleFunc("/", webserver.ServeStatic)
+	http.HandleFunc("/", serveStatic)
 	go func() {
 		log.Fatal(http.ListenAndServe(":8080", nil))
 	}()
@@ -90,4 +89,16 @@ func processInput() {
 			log.Println(playerId, " pressed down")
 		}
 	}
+}
+
+func serveStatic(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", 405)
+		return
+	}
+	if r.URL.Path[1:] == "" {
+		http.ServeFile(w, r, "static/index.html")
+		return
+	}
+	http.ServeFile(w, r, "static/"+r.URL.Path[1:])
 }

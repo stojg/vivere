@@ -1,4 +1,4 @@
-package collision
+package main
 
 import (
 	"github.com/ungerik/go3d/vec2"
