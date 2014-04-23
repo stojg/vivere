@@ -50,7 +50,6 @@ require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(sc
                 if(typeof(entities[i]) === 'undefined') {
                     continue;
                 }
-                //console.log('Deleting '+id);
                 if(entities[i].action == 4) {
                     stage.removeChild(entities[i]);
                     delete(entities[i]);
