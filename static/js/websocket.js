@@ -6,7 +6,7 @@ define(["datastream", "entity"], function (DataStream, entity){
     my.connect = function(afterconnect, onMessage) {
         if (window["WebSocket"]) {
             // Let us open a web socket
-            conn = new WebSocket("ws://"+document.location.host+"/ws/");
+            conn = new WebSocket("wss://"+document.location.host+"/ws/");
             conn.binaryType = "arraybuffer";
             conn.onopen = function() {
                 console.log("connection open");
