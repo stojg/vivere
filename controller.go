@@ -35,8 +35,10 @@ func (p *NPController) GetAction(e *Entity) Action {
 		}
 	}
 	if p.lastAction == ACTION_RIGHT {
+		e.angularVel = 1.0
 		e.vel[0] = 5
 	} else if p.lastAction == ACTION_LEFT {
+		e.angularVel = -1.0
 		e.vel[0] = -5
 	}
 	return p.lastAction

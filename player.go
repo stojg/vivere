@@ -44,7 +44,7 @@ func login(conn *ClientConn) {
 	p.id = state.NextPlayerId()
 	p.conn = conn
 
-	ent := NewEntity(state.nextEntityId)
+	ent := NewEntity(state.NextEntityID())
 	ent.model = ENTITY_BUNNY
 	ent.rotation = 0.0
 	ent.angularVel = 0.0

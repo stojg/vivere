@@ -9,20 +9,20 @@ define(function () {
     window.document.onkeydown = function(event) {
         var key_press = String.fromCharCode(event.keyCode);
         var key_code = event.keyCode;
-        // set bit one
-        if (key_code == 87) {
+        // Up
+        if (key_code == 87 || key_code == 38) {
             actions |= 1<<0
         }
-        // set bit two
-        if (key_code == 83) {
+        // Down
+        if (key_code == 83 || key_code == 40) {
             actions |= 1<<1
         }
-        // set bit three
-        if (key_code == 68) {
+        // Right
+        if (key_code == 68 || key_code == 39) {
             actions |= 1<<2
         }
-        // set bit four
-        if (key_code == 65) {
+        // Left
+        if (key_code == 65 || key_code == 37) {
             actions |= 1<<3
         }
     }
@@ -30,19 +30,19 @@ define(function () {
         var key_press = String.fromCharCode(event.keyCode);
         var key_code = event.keyCode;
         // unset bit one
-        if (key_code == 87) {
+        if (key_code == 87 || key_code == 38) {
             actions &= ~(1<<0)
         }
         // unset bit two
-        if (key_code == 83) {
+        if (key_code == 83 || key_code == 40) {
             actions &= ~(1<<1)
         }
         // set bit three
-        if (key_code == 68) {
+        if (key_code == 68 || key_code == 39) {
             actions &= ~(1<<2)
         }
         // set bit four
-        if (key_code == 65) {
+        if (key_code == 65 || key_code == 37) {
             actions &= ~(1<<3)
         }
     }

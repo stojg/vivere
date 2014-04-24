@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	FRAMES_PER_SECOND = 5
+	FRAMES_PER_SECOND = 60
 )
 
 func main() {
