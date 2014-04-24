@@ -25,6 +25,6 @@ func TestDeSerialization(t *testing.T) {
 	nextCmd, _ := cc.ReadMessage(buf)
 
 	if nextCmd != cmd {
-		t.Errorf("cmd sent and recieved mismatch %v != %v", nextCmd )
+		t.Errorf("cmd sent and recieved mismatch %v != %v", nextCmd)
 	}
 }

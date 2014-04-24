@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"code.google.com/p/go.net/websocket"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"log"
-	"fmt"
 )
 
 // ClientConn is the current connection and the current command

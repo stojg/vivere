@@ -36,7 +36,7 @@ func NewEntity(id Id) *Entity {
 	e.pos = NewVec(0, 0)
 	e.vel = NewVec(0, 0)
 	e.size = NewVec(0, 0)
-	e.controller = &PlayerController{}
+	e.controller = &PController{}
 	e.action = ACTION_NONE
 
 	e.prev = &Entity{}
@@ -53,6 +53,7 @@ func NewEntity(id Id) *Entity {
 func (e *Entity) Update(elapsed int64) {
 	elapsedSecond := float32(elapsed) / 1000
 	e.action = e.controller.GetAction(e)
+
 	e.rotation = e.rotation + (e.angularVel * elapsedSecond)
 	e.pos.Add(e.pos, e.vel.Scale(float64(elapsedSecond), e.vel))
 }

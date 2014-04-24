@@ -35,39 +35,8 @@ type Player struct {
 
 // UserCommand represent a recieved command (Action) from the user
 type UserCommand struct {
-	Actions uint32
+	Actions  uint32
 	Sequence uint32
-}
-
-type Controller interface {
-	GetAction(e *Entity) Action
-}
-
-type PlayerController struct {
-	player *Player
-}
-
-// GetAction
-func (p *PlayerController) GetAction(e *Entity) Action {
-
-	if !p.player.conn.open {
-		return ACTION_DIE
-	}
-
-	if ActiveCommand(p.player, ACTION_UP) {
-		e.vel[1] = -100
-	}
-	if ActiveCommand(p.player, ACTION_DOWN) {
-		e.vel[1] = 100
-	}
-	if ActiveCommand(p.player, ACTION_LEFT) {
-		e.vel[0] = -100
-	}
-	if ActiveCommand(p.player, ACTION_RIGHT) {
-		e.vel[0] = 100
-	}
-	ClearCommand(p.player)
-	return ACTION_NONE
 }
 
 func login(conn *ClientConn) {
@@ -75,13 +44,13 @@ func login(conn *ClientConn) {
 	p.id = state.NextPlayerId()
 	p.conn = conn
 
-	ent := NewEntity(p.id)
+	ent := NewEntity(state.nextEntityId)
 	ent.model = ENTITY_BUNNY
 	ent.rotation = 0.0
 	ent.angularVel = 0.0
 	ent.pos = NewVec(rand.Float64()*1000, rand.Float64()*600)
 	ent.size = NewVec(20, 40)
-	ent.controller = &PlayerController{player: p}
+	ent.controller = &PController{player: p}
 
 	state.AddPlayer(p)
 	state.AddEntity(ent)

@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"io"
 	"log"
+	"math/rand"
 )
 
 type GameState struct {
@@ -13,6 +14,7 @@ type GameState struct {
 	players      []*Player
 	tick         uint32
 	nextPlayerId Id
+	nextEntityId Id
 	prevState    *GameState
 }
 
@@ -24,6 +26,7 @@ func NewGameState() *GameState {
 	st.players = make([]*Player, 0)
 	st.tick = 0
 	st.nextPlayerId = 0
+	st.nextEntityId = 0
 	return st
 }
 
@@ -36,7 +39,24 @@ func (gs *GameState) NextPlayerId() Id {
 func init() {
 	state = NewGameState()
 	state.prevState = NewGameState()
+	createWorld(state)
 	state.UpdatePrev()
+}
+
+func createWorld(state *GameState) {
+
+	for a := 0; a < 10; a++ {
+		e := NewEntity(state.NextEntityID())
+		e.model = ENTITY_BUNNY
+		e.pos = NewVec(rand.Float64()*1000, rand.Float64()*600)
+		e.controller = &NPController{}
+		state.AddEntity(e)
+	}
+}
+
+func (state *GameState) NextEntityID() Id {
+	state.nextEntityId += 1
+	return state.nextEntityId
 }
 
 func (gs *GameState) AddPlayer(p *Player) {
