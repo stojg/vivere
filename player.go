@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"math/rand"
 )
 
@@ -37,6 +36,7 @@ type Player struct {
 // UserCommand represent a recieved command (Action) from the user
 type UserCommand struct {
 	Actions uint32
+	Sequence uint32
 }
 
 type Controller interface {
@@ -51,7 +51,6 @@ type PlayerController struct {
 func (p *PlayerController) GetAction(e *Entity) Action {
 
 	if !p.player.conn.open {
-		log.Println("Action %v", ACTION_DIE)
 		return ACTION_DIE
 	}
 

@@ -22,6 +22,7 @@ func main() {
 	}
 
 	rand.Seed(time.Now().UTC().UnixNano())
+
 	http.Handle("/ws/", websocket.Handler(wsHandler))
 	http.HandleFunc("/", serveStatic)
 

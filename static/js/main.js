@@ -9,6 +9,9 @@ require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(sc
     var connected = false;
 
     var gameTick = 0;
+
+    var commandTick = 0;
+
     var renderLoopInterval = null;
 
     var renderer = pixi.autoDetectRenderer(1000, 600);
@@ -19,14 +22,20 @@ require(["screen", "websocket", 'pixi', 'entity', "ui", "commands"], function(sc
         frame();
     }, recieveState);
 
+    /**
+     *
+     * @returns {boolean} if data was sent
+     */
     function sendCmd() {
         if(commands.get() == 0) {
             return false;
         }
         var cmd = new DataStream();
         cmd.writeUint32(gameTick);
+        cmd.writeUint32(++commandTick);
         cmd.writeUint32(commands.get());
-        connected = websocket.send(cmd.buffer);
+        return websocket.send(cmd.buffer);
+
     }
 
     var current = Date.now();

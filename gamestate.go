@@ -91,7 +91,6 @@ func (gs *GameState) Serialize(buf io.Writer, serAll bool) {
 			if e.Value.(*Entity).action == ACTION_DIE {
 				state.RemoveEntity(e.Value.(*Entity))
 			}
-
 		}
 	}
 

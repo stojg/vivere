@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"code.google.com/p/go.net/websocket"
 	"encoding/binary"
+	"io"
 	"log"
+	"fmt"
 )
 
 // ClientConn is the current connection and the current command
@@ -17,12 +19,42 @@ type ClientConn struct {
 	open       bool
 }
 
+var newConn = make(chan *ClientConn)
+
 func (cc *ClientConn) Close() {
 	cc.ws.Close()
 	cc.open = false
 }
 
-var newConn = make(chan *ClientConn)
+// ReadMessage picks the current message from the inbuffer and
+func (cc *ClientConn) ReadMessage(reader io.Reader) (cmd UserCommand, err error) {
+
+	pkt := cc.inBuf[0:]
+
+	n, err := reader.Read(pkt)
+	if err != nil {
+		return cmd, fmt.Errorf("ws.Read() - error during read: '%s'", err)
+	}
+
+	pkt = pkt[0:n]
+	buffer := bytes.NewBuffer(pkt)
+
+	err = binary.Read(buffer, binary.LittleEndian, &cc.tick)
+	if err != nil {
+		return cmd, fmt.Errorf("binary.Read() - Couldn't read tick: '%s'", err)
+	}
+
+	err = binary.Read(buffer, binary.LittleEndian, &cmd.Sequence)
+	if err != nil {
+		return cmd, fmt.Errorf("binary.Read() - Couldn't read sequence: '%s'", err)
+	}
+
+	err = binary.Read(buffer, binary.LittleEndian, &cmd.Actions)
+	if err != nil {
+		return cmd, fmt.Errorf("binary.Read() - Couldn't read command: '%s'", err)
+	}
+	return cmd, nil
+}
 
 func wsHandler(ws *websocket.Conn) {
 	clientConn := &ClientConn{}
@@ -30,37 +62,16 @@ func wsHandler(ws *websocket.Conn) {
 	clientConn.open = true
 	clientConn.cmdBuf = make(chan UserCommand, 5)
 
-	// Create a new UserCommand
-	cmd := UserCommand{}
-
 	// Push the new connection to the newConn channel
 	newConn <- clientConn
 
 	// Read messages from the client
 	for {
-		pkt := clientConn.inBuf[0:]
-
-		n, err := ws.Read(pkt)
+		cmd, err := clientConn.ReadMessage(ws)
 		if err != nil {
-			log.Printf("[-] ws.Read() - error during read '%s'\n", err)
+			log.Printf("[!] connection: %s", err)
 			break
 		}
-
-		pkt = pkt[0:n]
-		buf := bytes.NewBuffer(pkt)
-
-		err = binary.Read(buf, binary.LittleEndian, &clientConn.tick)
-		if err != nil {
-			log.Printf("[-] binary.Read() - Couldn't read tick '%s'\n", err)
-			break
-		}
-
-		err = binary.Read(buf, binary.LittleEndian, &cmd)
-		if err != nil {
-			log.Printf("[-] binary.Read() - Couldn't read command '%s'\n", err)
-			break
-		}
-
 		clientConn.cmdBuf <- cmd
 	}
 }
