@@ -9,6 +9,8 @@ import (
 	"math/rand"
 )
 
+var state *GameState
+
 type GameState struct {
 	entities     *list.List
 	players      []*Player
@@ -17,8 +19,6 @@ type GameState struct {
 	nextEntityId Id
 	prevState    *GameState
 }
-
-var state *GameState
 
 func NewGameState() *GameState {
 	st := &GameState{}
@@ -31,16 +31,9 @@ func NewGameState() *GameState {
 }
 
 // NextPlayerId returns the next id
-func (gs *GameState) NextPlayerId() Id {
+func (gs *GameState) NextPlayerId() (nextPlayerId Id) {
 	gs.nextPlayerId += 1
 	return gs.nextPlayerId
-}
-
-func init() {
-	state = NewGameState()
-	state.prevState = NewGameState()
-	createWorld(state)
-	state.UpdatePrev()
 }
 
 func createWorld(state *GameState) {
@@ -54,7 +47,7 @@ func createWorld(state *GameState) {
 	}
 }
 
-func (state *GameState) NextEntityID() Id {
+func (state *GameState) NextEntityID() (nextEntityId Id) {
 	state.nextEntityId += 1
 	return state.nextEntityId
 }

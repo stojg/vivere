@@ -10,7 +10,7 @@ func TestNewGameState(t *testing.T) {
 	}
 }
 
-func TestNextID(t *testing.T) {
+func TestNextIdentityID(t *testing.T) {
 	state = &GameState{}
 	id := state.NextEntityID()
 	if id != 1 {

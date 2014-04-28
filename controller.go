@@ -1,11 +1,18 @@
 package main
 
 import (
+	//	"log"
 	"time"
 )
 
 type Controller interface {
-	GetAction(e *Entity) Action
+	GetAction(e *Entity) *Input
+}
+
+type Input struct {
+	action   Action
+	force    *Vec
+	rotation float32
 }
 
 type NPController struct {
@@ -14,15 +21,16 @@ type NPController struct {
 	lastAction Action
 }
 
+// All good
 func NewNPController(p *Perception) *NPController {
 	c := &NPController{}
-	c.perception = p
+	c.perception = (p)
 	c.timer = time.Now()
 	c.lastAction = ACTION_NONE
 	return c
 }
 
-func (p *NPController) GetAction(e *Entity) Action {
+func (p *NPController) GetAction(e *Entity) *Input {
 
 	elapsed := time.Now().Sub(p.timer)
 
@@ -34,14 +42,20 @@ func (p *NPController) GetAction(e *Entity) Action {
 			p.lastAction = ACTION_RIGHT
 		}
 	}
+
+	input := &Input{}
+	input.force = &Vec{0, 0}
+
 	if p.lastAction == ACTION_RIGHT {
 		e.angularVel = 1.0
-		e.vel[0] = 5
+		input.force.Add(&Vec{0.5, 0})
+		input.action = ACTION_RIGHT
 	} else if p.lastAction == ACTION_LEFT {
 		e.angularVel = -1.0
-		e.vel[0] = -5
+		input.action = ACTION_LEFT
+		input.force.Add(&Vec{-0.5, 0})
 	}
-	return p.lastAction
+	return input
 }
 
 type PController struct {
@@ -49,24 +63,40 @@ type PController struct {
 }
 
 // GetAction
-func (p *PController) GetAction(e *Entity) Action {
+func (c *PController) GetAction(e *Entity) *Input {
 
-	if !p.player.conn.open {
-		return ACTION_DIE
+	if !c.player.conn.open {
+		return &Input{ACTION_DIE, &Vec{0, 0}, 0}
 	}
 
-	if ActiveCommand(p.player, ACTION_UP) {
-		e.vel[1] = -100
+	cmd := c.player.conn.currentCmd
+	if cmd.Actions == 0 {
+		return &Input{ACTION_NONE, &Vec{0, 0}, 0}
 	}
-	if ActiveCommand(p.player, ACTION_DOWN) {
-		e.vel[1] = 100
+
+	input := &Input{}
+	input.force = &Vec{0, 0}
+
+	// max velocity
+	if cmd.Actions&(1<<ACTION_UP) > 0 {
+		input.action = ACTION_UP
+		input.force.Add(&Vec{0, -1})
 	}
-	if ActiveCommand(p.player, ACTION_LEFT) {
-		e.vel[0] = -100
+
+	if cmd.Actions&(1<<ACTION_DOWN) > 0 {
+		input.action = ACTION_DOWN
+		input.force.Add(&Vec{0, 1})
 	}
-	if ActiveCommand(p.player, ACTION_RIGHT) {
-		e.vel[0] = 100
+
+	if cmd.Actions&(1<<ACTION_LEFT) > 0 {
+		input.action = ACTION_LEFT
+		input.force.Add(&Vec{-1, 0})
 	}
-	ClearCommand(p.player)
-	return ACTION_NONE
+
+	if cmd.Actions&(1<<ACTION_RIGHT) > 0 {
+		input.action = ACTION_RIGHT
+		input.force.Add(&Vec{1, 0})
+	}
+	ClearCommand(c.player)
+	return input
 }

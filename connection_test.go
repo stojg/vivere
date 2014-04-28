@@ -9,16 +9,20 @@ import (
 
 func TestDeSerialization(t *testing.T) {
 
-	// Add the tick
 	buf := &bytes.Buffer{}
-	binary.Write(buf, binary.LittleEndian, uint32(5))
 
 	// Add the user command
 	cmd := UserCommand{}
 	cmd.Actions |= 1 << ACTION_DIE
 	cmd.Sequence = 12
-	// Add the command number
+	cmd.Msec = 50
+	// Add the game tick
+	binary.Write(buf, binary.LittleEndian, uint32(5))
+	// Add the sequence number
 	binary.Write(buf, binary.LittleEndian, cmd.Sequence)
+	// Add the msec the command was run for
+	binary.Write(buf, binary.LittleEndian, cmd.Msec)
+	// Send the actions
 	binary.Write(buf, binary.LittleEndian, cmd.Actions)
 
 	cc := &ClientConn{}

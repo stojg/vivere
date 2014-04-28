@@ -33,12 +33,6 @@ type Player struct {
 	conn *ClientConn
 }
 
-// UserCommand represent a recieved command (Action) from the user
-type UserCommand struct {
-	Actions  uint32
-	Sequence uint32
-}
-
 func login(conn *ClientConn) {
 	p := &Player{}
 	p.id = state.NextPlayerId()

@@ -2,6 +2,24 @@ package main
 
 import (
 	"errors"
+	"math"
+)
+
+var (
+	// Zero holds a zero vector.
+	VecZero = Vec{}
+
+	// UnitX holds a vector with X set to one.
+	VecUnitX = Vec{1, 0}
+	// UnitY holds a vector with Y set to one.
+	VecUnitY = Vec{0, 1}
+	// UnitXY holds a vector with X and Y set to one.
+	VecUnitXY = Vec{1, 1}
+
+	// MinVal holds a vector with the smallest possible component values.
+	VecMinVal = Vec{-math.MaxFloat64, -math.MaxFloat64}
+	// MaxVal holds a vector with the highest possible component values.
+	VecMaxVal = Vec{+math.MaxFloat64, +math.MaxFloat64}
 )
 
 type Vec [2]float64
@@ -13,27 +31,33 @@ func NewVec(x, y float64) *Vec {
 	return e
 }
 
+func (a *Vec) Normalize() *Vec {
+	length := a.Length()
+	return NewVec(a[0]/length, a[1]/length)
+}
+
+func (a *Vec) Length() float64 {
+	return math.Sqrt(a[0]*a[0] + a[1]*a[1])
+}
+
 func (a *Vec) Set(x, y float64) *Vec {
 	(*a)[0] = x
 	(*a)[1] = y
 	return a
 }
 
-func (res *Vec) Add(a, b *Vec) *Vec {
-	(*res)[0] = (*a)[0] + (*b)[0]
-	(*res)[1] = (*a)[1] + (*b)[1]
-	return res
+func (a *Vec) Add(b *Vec) *Vec {
+	(*a)[0] += (*b)[0]
+	(*a)[1] += (*b)[1]
+	return a
 }
 
 func (a *Vec) Copy(b *Vec) (*Vec, error) {
-
 	if len(a) != len(b) {
 		return a, errors.New("Vec: Can't copy values between two Vec with different size")
 	}
-
 	(*a)[0] = (*b)[0]
 	(*a)[1] = (*b)[1]
-
 	return a, nil
 }
 
@@ -55,15 +79,8 @@ func (a *Vec) Equals(b *Vec) bool {
 	return true
 }
 
-func (res *Vec) Clamp(s *Vec) {
-	for i := range *res {
-		if (*res)[i] > (*s)[i]/2 {
-			(*res)[i] = (*s)[i] / 2
-		}
-		if (*res)[i] < -(*s)[i]/2 {
-			(*res)[i] = -(*s)[i] / 2
-		}
-	}
+func (v *Vec) ClampLength(length float64) *Vec {
+	return v.Normalize().Scale(length)
 }
 
 func Dot(a, b *Vec) float64 {
@@ -74,8 +91,8 @@ func (v *Vec) Nrm2Sq() float64 {
 	return Dot(v, v)
 }
 
-func (res *Vec) Scale(alpha float64, v *Vec) *Vec {
-	(*res)[0] = alpha * (*v)[0]
-	(*res)[1] = alpha * (*v)[1]
-	return res
+func (v *Vec) Scale(alpha float64) *Vec {
+	(*v)[0] = alpha * (*v)[0]
+	(*v)[1] = alpha * (*v)[1]
+	return v
 }

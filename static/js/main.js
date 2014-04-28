@@ -1,9 +1,10 @@
-require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "player"], function (screen, websocket, pixi, entity, gamestate, commands, player) {
+require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simulator"], function (screen, websocket, pixi, entity, gamestate, commands, simulator) {
 
     var main = {};
 
     // Simulation tick time in (1000 / 20hz = 50ms)
     main.tickLength = 50;
+    main.cmdSequence = 0;
     main.connected = false;
     main.stopGameLoop = 0;
     main.lastTick = window.performance.now();
@@ -22,31 +23,12 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "play
     }
 
     /**
-     * Update the internal gamestate
-     *
-     * @param lastTick
-     */
-    main.update = function (lastTick) {
-        for (var i = 0; i < gamestate.entities.length; i++) {
-            // @todo some clever lerp:ing
-            if (typeof(gamestate.entities[i]) === 'undefined') {
-                continue;
-            }
-            if (gamestate.entities[i].action == 4) {
-                this.stages[0].removeChild(gamestate.entities[i]);
-                delete(gamestate.entities[i]);
-            }
-        }
-    }
-
-    /**
      * Render the game
      */
     main.render = function () {
         for(var i = 0; i < this.stages.length; i++) {
-            this.pixi.render(this.stages[i]);
+           this.pixi.render(this.stages[i]);
         }
-        this.sendUpdates();
     }
 
     /**
@@ -54,13 +36,14 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "play
      *
      * @returns bool
      */
-    main.sendUpdates = function() {
+    main.sendUpdates = function(tickLength) {
         if(commands.get() == 0) {
             return false;
         }
         var cmd = new DataStream();
-        cmd.writeUint32(this.lastTick);
-        cmd.writeUint32(++this.commandTick);
+        cmd.writeUint32(gamestate.serverTick);
+        cmd.writeUint32(++main.cmdSequence);
+        cmd.writeUint32(tickLength);
         cmd.writeUint32(commands.get());
         return websocket.send(cmd.buffer);
     }
@@ -89,9 +72,10 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "play
         }
         for (var i = 0; i < numTicks; i++) {
             main.lastTick = main.lastTick + main.tickLength;
-            main.update(main.lastTick);
+            simulator.update(main.lastTick);
         }
         main.render();
+        main.sendUpdates(main.tickLength);
         main.lastRender = tFrame;
     }
 
@@ -104,7 +88,7 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "play
      */
     function onRecieve(evt) {
         var buf = new DataStream(evt.data)
-        var gameTick = buf.readUint32();
+        gamestate.serverTick = buf.readUint32();
         var nEnts = buf.readUint16();
         for (i = 0; i < nEnts; i++) {
             // get the bitmask
@@ -116,42 +100,46 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "play
                 var modelId = buf.readUint16();
                 if (modelId == 0) {
                     if (typeof gamestate.entities[id] !== 'undefined') {
-                        main.stages[0].removeChild(gamestate.entities[id]);
+                        main.stages[0].removeChild(gamestate.entities[id].getSprite());
                         delete gamestate.entities[id];
                     }
                 } else if (typeof gamestate.entities[id] === 'undefined') {
                     gamestate.entities[id] = entity.create(modelId);
-                    main.stages[0].addChild(gamestate.entities[id]);
+                    main.stages[0].addChild(gamestate.entities[id].getSprite());
                 }
             }
+
+            var command = { id: id };
+
             // rotation
             if ((bitMask & (1 << 1)) > 0) {
-                gamestate.entities[id].rotation = buf.readFloat32();
+                command.rotation = buf.readFloat32();
             }
             // angular velocity
             if ((bitMask & (1 << 2)) > 0) {
-                gamestate.entities[id].angularVel = buf.readFloat32();
+                command.angularVel = buf.readFloat32();
             }
             // pos
             if ((bitMask & (1 << 3)) > 0) {
                 var pos = buf.readFloat64Array(2);
-                gamestate.entities[id].position.x = pos[0];
-                gamestate.entities[id].position.y = pos[1];
+                command.position = {x: pos[0], y: pos[1]};
             }
             // vel
             if ((bitMask & (1 << 4)) > 0) {
                 var vel = buf.readFloat64Array(2);
-                gamestate.entities[id].velocity = {x: vel[0], y: vel[1]};
+                command.velocity = {x: vel[0], y: vel[1]};
             }
             // size
             if ((bitMask & (1 << 5)) > 0) {
                 var size = buf.readFloat64Array(2);
-                gamestate.entities[id].size = {x: size[0], y: size[1]};
+                command.size = {x: size[0], y: size[1]};
             }
             // action
             if ((bitMask & (1 << 6)) > 0) {
-                gamestate.entities[id].action = buf.readUint16();
+                command.action = buf.readUint16();
             }
+
+            gamestate.entities[id].serverUpdate(command);
         }
     }
 });

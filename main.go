@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"time"
 )
@@ -20,6 +21,11 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+
+	state = NewGameState()
+	state.prevState = NewGameState()
+	createWorld(state)
+	state.UpdatePrev()
 
 	rand.Seed(time.Now().UTC().UnixNano())
 

@@ -5,6 +5,7 @@ import (
 	"container/list"
 	"encoding/binary"
 	"io"
+	//"log"
 )
 
 type Model uint16
@@ -16,6 +17,41 @@ const (
 	ENTITY_BUNNY  Model = 2
 )
 
+type MassData struct {
+	mass            float64
+	inv_mass        float64
+	inertia         float64
+	inverse_inertia float64
+}
+
+//Rock       Density : 0.6  Restitution : 0.1
+//Wood       Density : 0.3  Restitution : 0.2
+//Metal      Density : 1.2  Restitution : 0.05
+//BouncyBall Density : 0.3  Restitution : 0.8
+//SuperBall  Density : 0.3  Restitution : 0.95
+//Pillow     Density : 0.1  Restitution : 0.2
+//Static     Density : 0.0  Restitution : 0.4
+
+type Material struct {
+	density     float64
+	restitution float64
+}
+
+type Transform struct {
+	position Vec
+	rotation float64
+}
+
+type Body struct {
+	shape        *Shape
+	tx           Transform
+	material     Material
+	mass_data    MassData
+	velocity     Vec
+	force        Vec
+	gravityScale float64
+}
+
 type Entity struct {
 	id         Id
 	model      Model
@@ -24,6 +60,13 @@ type Entity struct {
 	pos        *Vec
 	vel        *Vec
 	size       *Vec
+
+	mass    float64
+	invMass float64
+
+	maxVel    float64
+	maxVelAcc float64
+
 	prev       *Entity
 	controller Controller
 	action     Action
@@ -33,17 +76,21 @@ type Entity struct {
 func NewEntity(id Id) *Entity {
 	e := &Entity{}
 	e.id = id
-	e.pos = NewVec(0, 0)
-	e.vel = NewVec(0, 0)
-	e.size = NewVec(0, 0)
+	e.pos = &Vec{0, 0}
+	e.vel = &Vec{0, 0}
+	e.size = &Vec{0, 0}
+	e.mass = 100
+	e.invMass = 1 / e.mass
+	e.maxVel = 10
+	e.maxVelAcc = 1
 	e.controller = &PController{}
 	e.action = ACTION_NONE
 
 	e.prev = &Entity{}
 	e.prev.id = id
-	e.prev.pos = NewVec(0, 0)
-	e.prev.vel = NewVec(0, 0)
-	e.prev.size = NewVec(0, 0)
+	e.prev.pos = &Vec{0, 0}
+	e.prev.vel = &Vec{0, 0}
+	e.prev.size = &Vec{0, 0}
 	e.prev.action = ACTION_NONE
 	return e
 }
@@ -52,10 +99,17 @@ func NewEntity(id Id) *Entity {
 // update the internal state
 func (e *Entity) Update(elapsed int64) {
 	elapsedSecond := float32(elapsed) / 1000
-	e.action = e.controller.GetAction(e)
+	input := e.controller.GetAction(e)
+
+	//log.Println(input.force)
+
+	// Symplectic Euler
+	//	velocity := input.force.Scale(e.invMass).Scale(float64(elapsed))
+	velocity := input.force.Scale(e.invMass).Scale(float64(elapsed))
+	e.pos.Add(velocity.Scale(float64(elapsed)))
 
 	e.rotation = e.rotation + (e.angularVel * elapsedSecond)
-	e.pos.Add(e.pos, e.vel.Scale(float64(elapsedSecond), e.vel))
+	//	e.pos = e.pos.Add(e.vel)
 }
 
 func (e *Entity) UpdatePrev() {

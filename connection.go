@@ -9,18 +9,26 @@ import (
 	"log"
 )
 
+var newConn = make(chan *ClientConn)
+
 // ClientConn is the current connection and the current command
 type ClientConn struct {
 	ws         *websocket.Conn
+	cmdBuf     chan UserCommand
 	inBuf      [1500]byte
 	currentCmd UserCommand
 	tick       uint32
-	cmdBuf     chan UserCommand
 	open       bool
 }
 
-var newConn = make(chan *ClientConn)
+// UserCommand represent a recieved command (Action) from the user
+type UserCommand struct {
+	Actions  uint32
+	Sequence uint32
+	Msec     uint32
+}
 
+// Close the client connection
 func (cc *ClientConn) Close() {
 	cc.ws.Close()
 	cc.open = false
@@ -49,6 +57,11 @@ func (cc *ClientConn) ReadMessage(reader io.Reader) (cmd UserCommand, err error)
 		return cmd, fmt.Errorf("binary.Read() - Couldn't read sequence: '%s'", err)
 	}
 
+	err = binary.Read(buffer, binary.LittleEndian, &cmd.Msec)
+	if err != nil {
+		return cmd, fmt.Errorf("binary.Read() - Couldn't read msec: '%s'", err)
+	}
+
 	err = binary.Read(buffer, binary.LittleEndian, &cmd.Actions)
 	if err != nil {
 		return cmd, fmt.Errorf("binary.Read() - Couldn't read command: '%s'", err)
@@ -56,6 +69,7 @@ func (cc *ClientConn) ReadMessage(reader io.Reader) (cmd UserCommand, err error)
 	return cmd, nil
 }
 
+//
 func wsHandler(ws *websocket.Conn) {
 	clientConn := &ClientConn{}
 	clientConn.ws = ws
