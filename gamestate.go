@@ -38,10 +38,11 @@ func (gs *GameState) NextPlayerId() (nextPlayerId Id) {
 
 func createWorld(state *GameState) {
 
-	for a := 0; a < 10; a++ {
+	for a := 0; a < 20; a++ {
 		e := NewEntity(state.NextEntityID())
 		e.model = ENTITY_BUNNY
-		e.pos = NewVec(rand.Float64()*1000, rand.Float64()*600)
+		e.tx.position = Vec{rand.Float64() * 1000, rand.Float64() * 600}
+		e.tx.rotation = 3.14
 		e.controller = &NPController{}
 		state.AddEntity(e)
 	}

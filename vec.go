@@ -61,9 +61,9 @@ func (a *Vec) Copy(b *Vec) (*Vec, error) {
 	return a, nil
 }
 
-func (res *Vec) Sub(a, b *Vec) *Vec {
-	(*res)[0] = (*a)[0] - (*b)[0]
-	(*res)[1] = (*a)[1] - (*b)[1]
+func (res *Vec) Sub(b *Vec) *Vec {
+	(*res)[0] = (*res)[0] - (*b)[0]
+	(*res)[1] = (*res)[1] - (*b)[1]
 	return res
 }
 

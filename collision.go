@@ -1,57 +1,60 @@
 package main
 
 import (
-	"github.com/ungerik/go3d/vec2"
 	"math"
 )
 
 /* Point */
 type Point struct {
-	X, Y float32
+	X, Y float64
 }
 
 type Shape interface {
-	Area() float32
+	Area() float64
+	Size() *Vec
 }
 
 /* Circle */
 type Circle struct {
-	X, Y, R float32
+	X, Y, R float64
 }
 
-func (c *Circle) Area() float32 {
-	return float32(c.R*c.R) * math.Pi
+func (c *Circle) Area() float64 {
+	return c.R * c.R * math.Pi
 }
 
 func (c *Circle) Intersect(p *Point) bool {
-	a := vec2.T{c.X, c.Y}
-	b := vec2.T{p.X, p.Y}
-	// return a.Sub(&b).Length() < c1.r + c2.r
+	a := Vec{c.X, c.Y}
+	b := Vec{p.X, p.Y}
 	return a.Sub(&b).Length() < c.R
 }
 
 /* Rectangle */
 type Rectangle struct {
-	x, y, h, w float32
+	x, y, h, w float64
 }
 
-func (r *Rectangle) Area() float32 {
+func (r *Rectangle) Area() float64 {
 	return r.h * r.w
 }
 
-func (r *Rectangle) left() float32 {
+func (r *Rectangle) Size() *Vec {
+	return &Vec{r.w, r.h}
+}
+
+func (r *Rectangle) left() float64 {
 	return r.x - (r.w / 2)
 }
 
-func (r *Rectangle) right() float32 {
+func (r *Rectangle) right() float64 {
 	return r.x + (r.w / 2)
 }
 
-func (r *Rectangle) bottom() float32 {
+func (r *Rectangle) bottom() float64 {
 	return r.y + (r.h / 2)
 }
 
-func (r *Rectangle) top() float32 {
+func (r *Rectangle) top() float64 {
 	return r.y - (r.h / 2)
 }
 

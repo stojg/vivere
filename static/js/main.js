@@ -93,8 +93,10 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simu
         for (i = 0; i < nEnts; i++) {
             // get the bitmask
             var bitMask = buf.readUint8();
+
             // id
             var id = buf.readUint16();
+
             // model
             if ((bitMask & (1 << 0)) > 0) {
                 var modelId = buf.readUint16();
@@ -104,38 +106,37 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simu
                         delete gamestate.entities[id];
                     }
                 } else if (typeof gamestate.entities[id] === 'undefined') {
+
                     gamestate.entities[id] = entity.create(modelId);
                     main.stages[0].addChild(gamestate.entities[id].getSprite());
                 }
             }
 
             var command = { id: id };
-
+            //console.log("got");
             // rotation
             if ((bitMask & (1 << 1)) > 0) {
-                command.rotation = buf.readFloat32();
+                command.rotation = buf.readFloat64();
             }
-            // angular velocity
-            if ((bitMask & (1 << 2)) > 0) {
-                command.angularVel = buf.readFloat32();
-            }
+
             // pos
-            if ((bitMask & (1 << 3)) > 0) {
+            if ((bitMask & (1 << 2)) > 0) {
                 var pos = buf.readFloat64Array(2);
                 command.position = {x: pos[0], y: pos[1]};
+
             }
             // vel
-            if ((bitMask & (1 << 4)) > 0) {
+            if ((bitMask & (1 << 3)) > 0) {
                 var vel = buf.readFloat64Array(2);
                 command.velocity = {x: vel[0], y: vel[1]};
             }
             // size
-            if ((bitMask & (1 << 5)) > 0) {
+            if ((bitMask & (1 << 4)) > 0) {
                 var size = buf.readFloat64Array(2);
                 command.size = {x: size[0], y: size[1]};
             }
             // action
-            if ((bitMask & (1 << 6)) > 0) {
+            if ((bitMask & (1 << 5)) > 0) {
                 command.action = buf.readUint16();
             }
 

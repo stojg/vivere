@@ -20,7 +20,10 @@ define(["datastream"], function (DataStream){
             conn.onerror = function() {
                 console.log("connection error");
             }
-            conn.onmessage = onMessage;
+            conn.onmessage = function(evt) {
+                onMessage(evt);
+                //conn.close()
+            }
             conn.onclose = function(data) {
                 console.log("connection was closed to '" + data.currentTarget.URL+'"');
             };

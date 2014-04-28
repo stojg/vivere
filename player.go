@@ -1,7 +1,7 @@
 package main
 
 import (
-	"math/rand"
+//"math/rand"
 )
 
 // List all the available actions here (bitwise position)
@@ -38,16 +38,16 @@ func login(conn *ClientConn) {
 	p.id = state.NextPlayerId()
 	p.conn = conn
 
-	ent := NewEntity(state.NextEntityID())
-	ent.model = ENTITY_BUNNY
-	ent.rotation = 0.0
-	ent.angularVel = 0.0
-	ent.pos = NewVec(rand.Float64()*1000, rand.Float64()*600)
-	ent.size = NewVec(20, 40)
-	ent.controller = &PController{player: p}
+	//ent := NewEntity(state.NextEntityID())
+	//ent.model = ENTITY_BUNNY
+	//	ent.rotation = 0.0
+	//	ent.angularVel = 0.0
+	//	ent.pos = NewVec(rand.Float64()*1000, rand.Float64()*600)
+	//	ent.size = NewVec(20, 40)
+	//ent.controller = &PController{player: p}
 
 	state.AddPlayer(p)
-	state.AddEntity(ent)
+	//state.AddEntity(ent)
 }
 
 func disconnect(p *Player) {

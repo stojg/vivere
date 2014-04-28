@@ -38,14 +38,14 @@ func TestPointNotInCircle(t *testing.T) {
 
 func TestRectLeft(t *testing.T) {
 	r1 := Rectangle{x: 2, y: 2, h: 4, w: 4}
-	var out float32 = 0
+	var out float64 = 0
 	if x := r1.left(); x != out {
 		t.Errorf("%v, want %v", x, out)
 	}
 }
 func TestRectRight(t *testing.T) {
 	r1 := Rectangle{x: 2, y: 2, h: 4, w: 4}
-	var out float32 = 4
+	var out float64 = 4
 	if x := r1.right(); x != out {
 		t.Errorf("%v, want %v", x, out)
 	}
@@ -53,7 +53,7 @@ func TestRectRight(t *testing.T) {
 
 func TestRectBottom(t *testing.T) {
 	r1 := Rectangle{x: 2, y: 2, h: 4, w: 4}
-	var out float32 = 4
+	var out float64 = 4
 	if x := r1.bottom(); x != out {
 		t.Errorf("%v, want %v", x, out)
 	}
@@ -61,7 +61,7 @@ func TestRectBottom(t *testing.T) {
 
 func TestRectTop(t *testing.T) {
 	r1 := Rectangle{x: 2, y: 2, h: 4, w: 4}
-	var out float32 = 0
+	var out float64 = 0
 	if x := r1.top(); x != out {
 		t.Errorf("%v, want %v", x, out)
 	}
