@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"code.google.com/p/go.net/websocket"
 	"log"
+	"math"
 	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
@@ -48,7 +49,9 @@ func main() {
 			state.Tick()
 			GetUpdates()
 			Update(elapsed)
-			SendUpdates()
+			if math.Mod(float64(state.tick), 3) == 0 {
+				SendUpdates()
+			}
 		// On every new connection
 		case cl := <-newConn:
 			login(cl)

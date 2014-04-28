@@ -47,6 +47,7 @@ type Body struct {
 	material     Material
 	massData     MassData
 	velocity     Vec
+	maxVelocity  float64
 	force        Vec
 	gravityScale float64
 }
@@ -70,7 +71,7 @@ func NewEntity(id Id) *Entity {
 	e.shape = &Rectangle{h: 10, w: 20}
 	e.tx = Transform{position: Vec{0, 0}, rotation: 0.0}
 	e.material = Material{density: 0.3, restitution: 0.3}
-	e.massData = MassData{mass: 10, inertia: 4}
+	e.massData = MassData{mass: 20, inertia: 4}
 
 	e.prev = &Entity{}
 	e.prev.id = id
@@ -88,12 +89,13 @@ func NewEntity(id Id) *Entity {
 func (e *Entity) Update(elapsed int64) {
 	input := e.controller.GetAction(e)
 
-	e.action = input.action
 	// Symplectic Euler
-	velocity := input.force.Scale(e.massData.InvMass()).Scale(float64(elapsed))
+	velocity := input.force.Scale(e.massData.InvMass() * float64(elapsed))
 
-	e.tx.position.Add(velocity.Scale(float64(elapsed)))
+	e.velocity.Add(velocity)
 
+	e.tx.position.Add(e.velocity.Scale(float64(elapsed)))
+	e.action = input.action
 	//	e.rotation = e.rotation + (e.angularVel * elapsedSecond)
 }
 

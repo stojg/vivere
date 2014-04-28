@@ -11,32 +11,86 @@ define(["pixi"], function (pixi) {
 
         this.sprite.anchor = {x: 0.5, y: 0.5};
 
-        this.updates = new Array();
+        this.lastUpdate = null;
+
+        this.server = new Array();
 
         /**
+         * This updates on the rate that the server can push (50ms)
          *
          * @param message
          */
-        this.serverUpdate = function(message) {
-            this.updates.push(message)
+        this.serverUpdate = function (message) {
+            this.server.unshift(message);
+            while(this.server.length > 3) {
+                this.server.pop();
+            }
         };
 
         /**
+         * this method is called approx every 50ms
          *
          * @param dTime - ms since last update
          */
-        this.update = function(dTime) {
-            var mess = this.updates.pop();
-            if(!mess) {
-                return;
-            }
-            this.sprite.position = mess.position;
-            this.sprite.rotation = mess.rotation;
-            //console.log('update');
-            //console.log(dTime);
+        this.applyUpdates = function () {
+//            if(this.lastUpdate === null) {
+//                return;
+//            }
+//            this.server.push(this.lastUpdate);
+//            this.lastUpdate = null;
+//            // keep two server updates
+//            while(this.server.length > 3) {
+//                this.server.shift();
+//            }
         }
 
-        this.getSprite = function() {
+        /**
+         * this method is called approx every 16ms
+         *
+         * @param mSec
+         */
+        this.update = function(mSec) {
+            if(this.server.length < 3) {
+                return;
+            }
+//            this.sprite.position.x += (mSec) * this.velocity.x;
+//            this.sprite.position.y += (mSec) * this.velocity.y;
+              //this.sprite.position = this.server[this.server.length-1].position;
+        }
+
+        /**
+         * this method is called every approx 16ms
+         *
+         * @param mSec
+         */
+        this.interpolate = function (range) {
+            if(this.server.length < 3) {
+                return;
+            }
+            if(range <= 0 || range >= 1) {
+                return;
+            }
+
+            var diffX =  this.server[0].position.x - this.sprite.position.x;
+            if(Math.abs(diffX) < 2) {
+                this.sprite.position.x = this.server[0].position.x;
+            } else {
+                this.sprite.position.x += diffX * range;
+            }
+
+            var diffY =  this.server[0].position.y - this.sprite.position.y;
+            if(Math.abs(diffY) < 2) {
+                this.sprite.position.y = this.server[0].position.y;
+            } else {
+                this.sprite.position.y += diffY * range;
+            }
+        }
+
+        /**
+         *
+         * @returns {PIXI.Sprite|*}
+         */
+        this.getSprite = function () {
             return this.sprite;
         }
     }

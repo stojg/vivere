@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"io"
 	"log"
-	"math/rand"
+	//"math/rand"
 )
 
 var state *GameState
@@ -37,11 +37,10 @@ func (gs *GameState) NextPlayerId() (nextPlayerId Id) {
 }
 
 func createWorld(state *GameState) {
-
-	for a := 0; a < 20; a++ {
+	for a := 0; a < 1; a++ {
 		e := NewEntity(state.NextEntityID())
 		e.model = ENTITY_BUNNY
-		e.tx.position = Vec{rand.Float64() * 1000, rand.Float64() * 600}
+		e.tx.position = Vec{900, 200}
 		e.tx.rotation = 3.14
 		e.controller = &NPController{}
 		state.AddEntity(e)

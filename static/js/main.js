@@ -8,10 +8,17 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simu
     main.connected = false;
     main.stopGameLoop = 0;
     main.lastTick = window.performance.now();
-    main.lastRender = main.lastTick;
+    main.lastRender = window.performance.now();
     main.pixi = null;
     main.commandTick = 0;
     main.stages = [];
+
+    main.fpsText;
+    main.frameCounter = 0;
+
+    main.mpsText;
+    main.messageCounter = 0;
+    main.lastRecieved = window.performance.now();
 
     /**
      * Initialize the renderer and the gamestate
@@ -20,15 +27,24 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simu
         this.pixi = pixi.autoDetectRenderer(1000, 600);
         document.body.appendChild(this.pixi.view);
         this.stages[0] = new pixi.Stage(0x666666);
+        main.fpsText = new pixi.Text("fps ", {font:"22px Arial", fill:"white"});
+        this.stages[0].addChild(main.fpsText);
+        main.mpsText = new pixi.Text("mps ", {font:"22px Arial", fill:"white"});
+        main.mpsText.position = {x:0, y:20}
+        this.stages[0].addChild(main.mpsText);
+        this.lastTick = window.performance.now();
+        this.lastRender = window.performance.now();
+
     }
 
     /**
      * Render the game
      */
-    main.render = function () {
+    main.render = function (tFrame) {
         for(var i = 0; i < this.stages.length; i++) {
            this.pixi.render(this.stages[i]);
         }
+        printFPS(tFrame);
     }
 
     /**
@@ -54,8 +70,10 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simu
     websocket.connect(function () {
         main.connected = true;
         main.init();
-        gameloop();
+        gameloop(window.performance.now());
     }, onRecieve);
+
+    main.lastRenderTime = 0;
 
     /**
      * The main game loop
@@ -66,18 +84,47 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simu
         main.stopGameLoop = window.requestAnimationFrame(gameloop);
         var nextTick = main.lastTick + main.tickLength;
         var numTicks = 0;
+
+        var timeSinceTick = tFrame - main.lastTick;
         if (tFrame > nextTick) {
-            var timeSinceTick = tFrame - main.lastTick;
             numTicks = Math.floor(timeSinceTick / main.tickLength);
         }
+
+        // Update the server messages every 50ms
         for (var i = 0; i < numTicks; i++) {
             main.lastTick = main.lastTick + main.tickLength;
-            simulator.update(main.lastTick);
+            simulator.applyUpdates(main.lastTick);
         }
-        main.render();
-        main.sendUpdates(main.tickLength);
+
+        simulator.update(tFrame - main.lastRender);
+
+        var avgTimeBetweenMessages = 1000 / main.mps;
+
+        simulator.interpolate((tFrame-main.lastRecieved)/avgTimeBetweenMessages);
+
+        // timeSinceTick
+        main.render(main.lastTick);
         main.lastRender = tFrame;
+        main.sendUpdates(main.tickLength);
     }
+
+    /**
+     *
+     * @param t
+     */
+    function printFPS(tFrame) {
+        main.frameCounter++;
+        main.fpsText.setText("fps " + Math.round(1000 / (tFrame / main.frameCounter)));
+    }
+
+    //
+    function printMPS() {
+        main.messageCounter++;
+        main.mps = 1000 / (main.lastRecieved / main.messageCounter);
+        main.mpsText.setText("mps " + Math.round(main.mps));
+    }
+
+
 
     /**
      * Gets called by the websocket when things are happening
@@ -87,6 +134,8 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simu
      * @param evt
      */
     function onRecieve(evt) {
+        main.lastRecieved = window.performance.now();
+        printMPS();
         var buf = new DataStream(evt.data)
         gamestate.serverTick = buf.readUint32();
         var nEnts = buf.readUint16();
@@ -106,14 +155,16 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simu
                         delete gamestate.entities[id];
                     }
                 } else if (typeof gamestate.entities[id] === 'undefined') {
-
                     gamestate.entities[id] = entity.create(modelId);
                     main.stages[0].addChild(gamestate.entities[id].getSprite());
                 }
             }
 
             var command = { id: id };
-            //console.log("got");
+            command.timestamp = main.lastTick;
+
+            command.tick = gamestate.serverTick;
+
             // rotation
             if ((bitMask & (1 << 1)) > 0) {
                 command.rotation = buf.readFloat64();
@@ -123,8 +174,8 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simu
             if ((bitMask & (1 << 2)) > 0) {
                 var pos = buf.readFloat64Array(2);
                 command.position = {x: pos[0], y: pos[1]};
-
             }
+
             // vel
             if ((bitMask & (1 << 3)) > 0) {
                 var vel = buf.readFloat64Array(2);

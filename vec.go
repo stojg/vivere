@@ -61,6 +61,18 @@ func (a *Vec) Copy(b *Vec) (*Vec, error) {
 	return a, nil
 }
 
+// Invert inverts the vector.
+func (vec *Vec) Invert() *Vec {
+	return &Vec{-(*vec)[0], -(*vec)[1]}
+}
+
+// Inverted returns an inverted copy of the vector.
+func (vec *Vec) Inverted() *Vec {
+	vec[0] = -vec[0]
+	vec[1] = -vec[1]
+	return vec
+}
+
 func (res *Vec) Sub(b *Vec) *Vec {
 	(*res)[0] = (*res)[0] - (*b)[0]
 	(*res)[1] = (*res)[1] - (*b)[1]
@@ -91,8 +103,12 @@ func (v *Vec) Nrm2Sq() float64 {
 	return Dot(v, v)
 }
 
-func (v *Vec) Scale(alpha float64) *Vec {
+func (v *Vec) Scaled(alpha float64) *Vec {
 	(*v)[0] = alpha * (*v)[0]
 	(*v)[1] = alpha * (*v)[1]
 	return v
+}
+
+func (v *Vec) Scale(alpha float64) *Vec {
+	return &Vec{alpha * (*v)[0], alpha * (*v)[1]}
 }

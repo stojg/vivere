@@ -1,7 +1,7 @@
 package main
 
 import (
-	//		"log"
+	//			"log"
 	"time"
 )
 
@@ -32,28 +32,28 @@ func NewNPController(p *Perception) *NPController {
 
 func (c *NPController) GetAction(e *Entity) *Input {
 
-	elapsed := time.Now().Sub(c.timer)
-
-	if elapsed > (time.Second * 3) {
-		c.timer = time.Now()
-		if c.lastAction == ACTION_RIGHT {
-			c.lastAction = ACTION_LEFT
-		} else {
-			c.lastAction = ACTION_RIGHT
-		}
-	}
+	worldSize := c.perception.WorldDimension()
 
 	input := &Input{}
 	input.force = &Vec{0, 0}
 	input.rotation = 0
 
-	if c.lastAction == ACTION_RIGHT {
-		input.force.Add(&Vec{0.1, 0})
+	if e.action == ACTION_NONE {
 		input.action = ACTION_RIGHT
-	} else if c.lastAction == ACTION_LEFT {
-		input.action = ACTION_LEFT
-		input.force.Add(&Vec{-0.1, 0})
 	}
+
+	if e.tx.position[0] > worldSize[0] {
+		input.action = ACTION_LEFT
+	} else if e.tx.position[0] < 0 {
+		input.action = ACTION_RIGHT
+	}
+
+	if input.action == ACTION_RIGHT {
+		input.force[0] = 0.001
+	} else {
+		input.force[0] = -0.001
+	}
+
 	return input
 }
 
@@ -79,22 +79,22 @@ func (c *PController) GetAction(e *Entity) *Input {
 	// max velocity
 	if cmd.Actions&(1<<ACTION_UP) > 0 {
 		input.action = ACTION_UP
-		input.force.Add(&Vec{0, -1})
+		input.force.Add(&Vec{0, -0.01})
 	}
 
 	if cmd.Actions&(1<<ACTION_DOWN) > 0 {
 		input.action = ACTION_DOWN
-		input.force.Add(&Vec{0, 1})
+		input.force.Add(&Vec{0, 0.01})
 	}
 
 	if cmd.Actions&(1<<ACTION_LEFT) > 0 {
 		input.action = ACTION_LEFT
-		input.force.Add(&Vec{-1, 0})
+		input.force.Add(&Vec{-0.01, 0})
 	}
 
 	if cmd.Actions&(1<<ACTION_RIGHT) > 0 {
 		input.action = ACTION_RIGHT
-		input.force.Add(&Vec{1, 0})
+		input.force.Add(&Vec{0.01, 0})
 	}
 	ClearCommand(c.player)
 	return input
