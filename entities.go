@@ -5,7 +5,6 @@ import (
 	"container/list"
 	"encoding/binary"
 	"io"
-	//	"log"
 )
 
 type Model uint16
@@ -60,6 +59,7 @@ type Entity struct {
 	controller Controller
 	action     Action
 	element    *list.Element
+	left       bool
 }
 
 func NewEntity(id Id) *Entity {
@@ -91,10 +91,9 @@ func (e *Entity) Update(elapsed int64) {
 
 	// Symplectic Euler
 	velocity := input.force.Scale(e.massData.InvMass() * float64(elapsed))
-
+	velocity.Scale(float64(elapsed))
 	e.velocity.Add(velocity)
-
-	e.tx.position.Add(e.velocity.Scale(float64(elapsed)))
+	e.tx.position.Add(&e.velocity)
 	e.action = input.action
 	//	e.rotation = e.rotation + (e.angularVel * elapsedSecond)
 }

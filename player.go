@@ -44,7 +44,7 @@ func login(conn *ClientConn) {
 	ent.controller = &PController{player: p}
 
 	state.AddPlayer(p)
-	//state.AddEntity(ent)
+	state.AddEntity(ent)
 }
 
 func disconnect(p *Player) {

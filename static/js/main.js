@@ -127,10 +127,6 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simu
      * @param evt
      */
     function onRecieve(evt) {
-        if(gamestate.firstSnapshotTS === 0) {
-            gamestate.firstSnapshotTS = window.performance.now();
-        }
-
         main.lastRecieved = window.performance.now();
         printMPS();
 
