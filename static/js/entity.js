@@ -133,7 +133,7 @@ define(["pixi", "gamestate"], function (pixi, gamestate) {
             if(Math.abs(diffY) < 0.1 ) {
                 this.sprite.position.y = latestSnapshot.position.y;
             } else {
-                this.sprite.position.x = fromSnapshot.position.y + coef * diffY;
+                this.sprite.position.y = fromSnapshot.position.y + coef * diffY;
             }
         }
 
