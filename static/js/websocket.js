@@ -32,6 +32,10 @@ define(["datastream"], function (DataStream){
         }
     }
 
+    my.close = function() {
+        conn.close();
+    }
+
     /**
      *
      * @param message

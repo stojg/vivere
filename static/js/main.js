@@ -1,9 +1,18 @@
 require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simulator"], function (screen, websocket, pixi, entity, gamestate, commands, simulator) {
 
+    window.cancelRequestAnimFrame = ( function() {
+        return window.cancelAnimationFrame          ||
+            window.webkitCancelRequestAnimationFrame    ||
+            window.mozCancelRequestAnimationFrame       ||
+            window.oCancelRequestAnimationFrame     ||
+            window.msCancelRequestAnimationFrame        ||
+            clearTimeout
+    } )();
+
     var main = {};
 
-    // Simulation tick time in (1000 / 20hz = 50ms)
-    main.tickLength = 50;
+    // Simulation tick time in (1000 / 60hz = 50ms)
+    main.tickLength = 17;
     main.cmdSequence = 0;
     main.connected = false;
     main.stopGameLoop = 0;
@@ -35,16 +44,20 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simu
         this.lastTick = window.performance.now();
         this.lastRender = window.performance.now();
 
+//        setTimeout(function(){
+//            window.cancelRequestAnimFrame(main.stopGameLoop);
+//            websocket.close();
+//        }, 5*1000)
+
     }
 
     /**
      * Render the game
      */
-    main.render = function (tFrame) {
+    main.render = function () {
         for(var i = 0; i < this.stages.length; i++) {
            this.pixi.render(this.stages[i]);
         }
-        printFPS(tFrame);
     }
 
     /**
@@ -82,33 +95,15 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simu
      */
     function gameloop(tFrame) {
         main.stopGameLoop = window.requestAnimationFrame(gameloop);
-        var nextTick = main.lastTick + main.tickLength;
-        var numTicks = 0;
-
-        var timeSinceTick = tFrame - main.lastTick;
-        if (tFrame > nextTick) {
-            numTicks = Math.floor(timeSinceTick / main.tickLength);
-        }
-
-        // Update the server messages every 50ms
-        for (var i = 0; i < numTicks; i++) {
-            main.lastTick = main.lastTick + main.tickLength;
-            simulator.applyUpdates(main.lastTick);
-        }
-
-        simulator.update(tFrame - main.lastRender);
-
-        var avgTimeBetweenMessages = 1000 / main.mps;
-
-        simulator.interpolate((tFrame-main.lastRecieved)/avgTimeBetweenMessages);
-
-        // timeSinceTick
-        main.render(main.lastTick);
+        simulator.update(tFrame);
+        main.render();
+        printFPS(tFrame);
         main.lastRender = tFrame;
-        main.sendUpdates(main.tickLength);
+        main.sendUpdates(tFrame);
     }
 
     /**
+     * Prints frames rendered per second
      *
      * @param t
      */
@@ -117,25 +112,28 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simu
         main.fpsText.setText("fps " + Math.round(1000 / (tFrame / main.frameCounter)));
     }
 
-    //
+    /**
+     * Prints messages recieved per second
+     */
     function printMPS() {
         main.messageCounter++;
         main.mps = 1000 / (main.lastRecieved / main.messageCounter);
         main.mpsText.setText("mps " + Math.round(main.mps));
     }
 
-
-
     /**
-     * Gets called by the websocket when things are happening
-     *
-     * Updates the gamestate with the data from the server
+     * Gets called by the websocket when things
      *
      * @param evt
      */
     function onRecieve(evt) {
+        if(gamestate.firstSnapshotTS === 0) {
+            gamestate.firstSnapshotTS = window.performance.now();
+        }
+
         main.lastRecieved = window.performance.now();
         printMPS();
+
         var buf = new DataStream(evt.data)
         gamestate.serverTick = buf.readUint32();
         var nEnts = buf.readUint16();
@@ -161,7 +159,8 @@ require(["screen", "websocket", 'pixi', 'entity', "gamestate", "commands", "simu
             }
 
             var command = { id: id };
-            command.timestamp = main.lastTick;
+            // @todo subtract network lag (RTT) to this
+            command.timestamp = window.performance.now();
 
             command.tick = gamestate.serverTick;
 

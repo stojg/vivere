@@ -1,4 +1,4 @@
-define(["pixi"], function (pixi) {
+define(["pixi", "gamestate"], function (pixi, gamestate) {
 
     const ENTITY_WORLD = 1;
     const ENTITY_BUNNY = 2;
@@ -11,78 +11,147 @@ define(["pixi"], function (pixi) {
 
         this.sprite.anchor = {x: 0.5, y: 0.5};
 
-        this.lastUpdate = null;
+        this.interpolationDelay = 100;
 
+        /**
+         * Contains a list of queued updates from the server
+         *
+         * Older update -> last update
+         *
+         * @type {Array}
+         */
         this.server = new Array();
 
         /**
-         * This updates on the rate that the server can push (50ms)
+         * Contains a list of updates in the past, used for interpolation
+         * Last snapshot -> older
+         *
+         * @type {Array}
+         */
+        this.snapshots = new Array();
+
+        /**
+         * serverUpdate is called when the server sends an update command
+         * to this entity
          *
          * @param message
          */
         this.serverUpdate = function (message) {
-            this.server.unshift(message);
-            while(this.server.length > 3) {
-                this.server.pop();
-            }
+            this.server.push(message);
         };
 
         /**
-         * this method is called approx every 50ms
-         *
-         * @param dTime - ms since last update
-         */
-        this.applyUpdates = function () {
-//            if(this.lastUpdate === null) {
-//                return;
-//            }
-//            this.server.push(this.lastUpdate);
-//            this.lastUpdate = null;
-//            // keep two server updates
-//            while(this.server.length > 3) {
-//                this.server.shift();
-//            }
-        }
-
-        /**
-         * this method is called approx every 16ms
          *
          * @param mSec
          */
-        this.update = function(mSec) {
-            if(this.server.length < 3) {
-                return;
+        this.update = function(tFrame) {
+            // Move queued server updates to the snapshot array
+            var msg = this.server.pop();
+            while(typeof msg !== 'undefined') {
+                this.snapshots.unshift(msg);
+                msg = this.server.pop();
             }
-//            this.sprite.position.x += (mSec) * this.velocity.x;
-//            this.sprite.position.y += (mSec) * this.velocity.y;
-              //this.sprite.position = this.server[this.server.length-1].position;
+
+            if(this.interpolationDelay < 1) {
+                this.sprite.position.x = this.snapshots[0].position.x;
+                this.sprite.position.y = this.snapshots[0].position.y;
+                this.deleteOldSnapshots(this.snapshots[0].timestamp);
+            } else {
+                this.interpolate(tFrame);
+            }
         }
 
         /**
-         * this method is called every approx 16ms
          *
-         * @param mSec
+         * @param tFrame
          */
-        this.interpolate = function (range) {
-            if(this.server.length < 3) {
-                return;
+        this.interpolate = function (tFrame) {
+            var interpolationTime = tFrame - this.interpolationDelay,
+                latestSnapshot,
+                fromSnapshot,
+                coef,
+                diffX,
+                diffY;
+
+            for(key in this.snapshots) {
+                if(tFrame > this.snapshots[key].timestamp) {
+                    latestSnapshot = this.snapshots[key];
+                    break;
+                }
             }
-            if(range <= 0 || range >= 1) {
+
+            if(typeof latestSnapshot === 'undefined') {
+                console.info("There is no snapshot older then tFrame");
                 return;
             }
 
-            var diffX =  this.server[0].position.x - this.sprite.position.x;
-            if(Math.abs(diffX) < 2) {
-                this.sprite.position.x = this.server[0].position.x;
-            } else {
-                this.sprite.position.x += diffX * range;
+            for(key in this.snapshots) {
+                if(interpolationTime > this.snapshots[key].timestamp) {
+                    fromSnapshot = this.snapshots[key];
+                    break;
+                }
             }
 
-            var diffY =  this.server[0].position.y - this.sprite.position.y;
-            if(Math.abs(diffY) < 2) {
-                this.sprite.position.y = this.server[0].position.y;
+            if(typeof fromSnapshot === 'undefined') {
+                console.info("Not enough snapshots to interpolate between");
+                this.sprite.position.x = latestSnapshot.position.x;
+                this.sprite.position.y = latestSnapshot.position.y;
+                return;
+            }
+
+            this.deleteOldSnapshots(fromSnapshot.timestamp);
+
+            if(latestSnapshot.timestamp == fromSnapshot.timestamp) {
+                console.info("Latest and from snapshots are the same, interpolationDelay too low.");
+                this.sprite.position.x = latestSnapshot.position.x;
+                this.sprite.position.y = latestSnapshot.position.y;
+                return;
+            }
+
+            if(latestSnapshot.timestamp < fromSnapshot.timestamp) {
+               console.error("From snapshot have a newer timestamp than latest snapshot");
+               return;
+            }
+
+            coef = (interpolationTime  - fromSnapshot.timestamp) / (latestSnapshot.timestamp - fromSnapshot.timestamp);
+
+            if(coef < 0 || coef > 1) {
+                console.error("Interpolation coef is out of bounds: " + coef);
+                this.sprite.position.x = latestSnapshot.position.x;
+                this.sprite.position.y = latestSnapshot.position.y;
+                return;
+            }
+
+            diffX = latestSnapshot.position.x - fromSnapshot.position.x;
+            if(Math.abs(diffX) < 0.1 ) {
+                this.sprite.position.x = latestSnapshot.position.x;
             } else {
-                this.sprite.position.y += diffY * range;
+                this.sprite.position.x = fromSnapshot.position.x + coef * diffX;
+            }
+
+            diffY = latestSnapshot.position.y - fromSnapshot.position.y;
+            if(Math.abs(diffY) < 0.1 ) {
+                this.sprite.position.y = latestSnapshot.position.y;
+            } else {
+                this.sprite.position.x = fromSnapshot.position.y + coef * diffY;
+            }
+        }
+
+        /**
+         * Delete all timestamps older than passed in timestamp
+         *
+         * @param timestamp
+         */
+        this.deleteOldSnapshots = function(timestamp) {
+            if(typeof timestamp === 'undefined') {
+                console.error("timestamp undefined");
+                return;
+            }
+            // delete older than fromSnapshot
+            for(key in this.snapshots) {
+                if(this.snapshots[key].timestamp < timestamp) {
+                    delete(this.snapshots[key]);
+                }
             }
         }
 

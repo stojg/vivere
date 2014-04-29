@@ -7,6 +7,8 @@ define(function(){
 
     my.messageQueue = new Array();
 
+    my.firstSnapshotTS = 0;
+
     my.serverTick = 0;
 
     return my;
