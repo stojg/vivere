@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"container/list"
 	"encoding/binary"
 	"io"
 	"log"
@@ -12,21 +11,23 @@ import (
 var state *GameState
 
 type GameState struct {
-	entities     *list.List
+	entities     []*Entity
 	players      []*Player
 	tick         uint32
 	nextPlayerId Id
 	nextEntityId Id
 	prevState    *GameState
+	simulator    *Simulator
 }
 
 func NewGameState() *GameState {
 	st := &GameState{}
-	st.entities = list.New()
+	st.entities = make([]*Entity, 0)
 	st.players = make([]*Player, 0)
 	st.tick = 0
 	st.nextPlayerId = 0
 	st.nextEntityId = 0
+	st.simulator = &Simulator{}
 	return st
 }
 
@@ -40,8 +41,8 @@ func createWorld(state *GameState) {
 	for a := 0; a < 30; a++ {
 		e := NewEntity(state.NextEntityID())
 		e.model = ENTITY_BUNNY
-		e.tx.position = Vec{rand.Float64() * 1000, rand.Float64() * 600}
-		e.tx.rotation = 3.14
+		e.position = Vec{rand.Float64() * 1000, rand.Float64() * 600}
+		e.rotation = 3.14
 		e.controller = &NPController{}
 		state.AddEntity(e)
 	}
@@ -78,18 +79,34 @@ func (gs *GameState) UpdatePrev() {
 	state.prevState.players = state.players
 	state.prevState.tick = state.tick
 	state.nextPlayerId = state.nextPlayerId
-	for e := state.entities.Front(); e != nil; e = e.Next() {
-		e.Value.(*Entity).UpdatePrev()
+
+	for i := 0; i < len(state.entities); i++ {
+
+		state.entities[i].UpdatePrev()
 	}
 }
 
 func (gs *GameState) AddEntity(e *Entity) {
-	e.element = state.entities.PushBack(e)
+	gs.entities = append(gs.entities, e)
 	log.Printf("[+] Entity #%v added", e.id)
 }
 
 func (gs *GameState) RemoveEntity(e *Entity) {
-	state.entities.Remove(e.element)
+	index := -1
+	for i := 0; i < len(state.entities); i++ {
+		if state.entities[i].id == e.id {
+			index = i
+			break
+		}
+	}
+	if index < 0 {
+		log.Printf("[!] Couldnt remove entity with id ", e.id)
+		return
+	}
+	// Copy the last entry to the index position
+	gs.entities[index] = gs.entities[len(gs.entities)-1]
+	// Shrink the list
+	gs.entities = gs.entities[:len(gs.entities)-1]
 	log.Printf("[-] Entity #%v removed", e.id)
 }
 
@@ -98,11 +115,11 @@ func (gs *GameState) Serialize(buf io.Writer, serAll bool) {
 	bufTemp := &bytes.Buffer{}
 	var updated uint16
 
-	for e := state.entities.Front(); e != nil; e = e.Next() {
-		if e.Value.(*Entity).Serialize(bufTemp, true) {
+	for i := 0; i < len(state.entities); i++ {
+		if gs.entities[i].Serialize(bufTemp, true) {
 			updated++
-			if e.Value.(*Entity).action == ACTION_DIE {
-				state.RemoveEntity(e.Value.(*Entity))
+			if gs.entities[i].action == ACTION_DIE {
+				state.RemoveEntity(gs.entities[i])
 			}
 		}
 	}

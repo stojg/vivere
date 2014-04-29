@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"container/list"
 	"encoding/binary"
 	"io"
 )
@@ -16,39 +15,44 @@ const (
 	ENTITY_BUNNY  Model = 2
 )
 
-type MassData struct {
-	mass            float64
-	invMass         float64
-	inertia         float64
-	inverse_inertia float64
-}
-
-func (md *MassData) InvMass() float64 {
-	if md.invMass == 0 {
-		md.invMass = 1 / md.mass
-	}
-	return md.invMass
-}
-
 type Material struct {
 	density     float64
 	restitution float64
 }
 
-type Transform struct {
-	position Vec
-	rotation float64
+type Body struct {
+	shape           Shape
+	position        Vec
+	rotation        float64
+	mass            float64
+	invMass         float64
+	inertia         float64
+	invInertia      float64
+	velocity        Vec
+	maxVelocity     float64
+	acceleration    Vec
+	macAcceleration float64
+	gravityScale    float64
+	damping         float64
 }
 
-type Body struct {
-	shape        Shape
-	tx           Transform
-	material     Material
-	massData     MassData
-	velocity     Vec
-	maxVelocity  float64
-	force        Vec
-	gravityScale float64
+func (body *Body) InvMass() float64 {
+	if body.invMass == 0 {
+		body.invMass = 1 / body.mass
+	}
+	return body.invMass
+}
+
+func (body *Body) SetMass(m float64) *Body {
+	body.mass = m
+	body.invMass = 1 / body.mass
+	return body
+}
+
+func (body *Body) SetInertia(i float64) *Body {
+	body.inertia = i
+	body.invInertia = 1 / body.inertia
+	return body
 }
 
 type Entity struct {
@@ -58,7 +62,6 @@ type Entity struct {
 	prev       *Entity
 	controller Controller
 	action     Action
-	element    *list.Element
 	left       bool
 }
 
@@ -69,41 +72,34 @@ func NewEntity(id Id) *Entity {
 	e.action = ACTION_NONE
 
 	e.shape = &Rectangle{h: 10, w: 20}
-	e.tx = Transform{position: Vec{0, 0}, rotation: 0.0}
-	e.material = Material{density: 0.3, restitution: 0.3}
-	e.massData = MassData{mass: 20, inertia: 4}
+	e.position = Vec{0, 0}
+	e.rotation = 0.0
+	e.SetMass(1)
+	e.SetInertia(4)
+	e.damping = 0.999
+	e.gravityScale = 10
 
 	e.prev = &Entity{}
+	e.prev.model = e.model
 	e.prev.id = id
+	e.prev.position = e.position
+	e.prev.rotation = e.rotation
 	e.prev.action = ACTION_NONE
 	e.prev.shape = e.shape
-	e.prev.tx = e.tx
-	e.prev.material = e.material
-	e.prev.massData = e.massData
+	e.prev.mass = e.mass
+	e.prev.invMass = e.invMass
+	e.prev.inertia = e.inertia
+	e.prev.invInertia = e.invInertia
 
 	return e
-}
-
-// Update will call this entity's controller to find an action and then
-// update the internal state
-func (e *Entity) Update(elapsed int64) {
-	input := e.controller.GetAction(e)
-
-	// Symplectic Euler
-	velocity := input.force.Scale(e.massData.InvMass() * float64(elapsed))
-	velocity.Scale(float64(elapsed))
-	e.velocity.Add(velocity)
-	e.tx.position.Add(&e.velocity)
-	e.action = input.action
-	//	e.rotation = e.rotation + (e.angularVel * elapsedSecond)
 }
 
 func (e *Entity) UpdatePrev() {
 	e.prev.model = e.model
 	e.prev.action = e.action
-	e.prev.tx.position = e.tx.position
-	e.prev.tx.rotation = e.tx.rotation
-	e.prev.tx.rotation = e.prev.tx.rotation
+	e.prev.position = e.position
+	e.prev.rotation = e.rotation
+	e.prev.velocity = e.prev.velocity
 }
 
 // Serialize writes a binary representation of this object into a writer
@@ -119,16 +115,16 @@ func (e *Entity) Serialize(buf io.Writer, serAll bool) bool {
 	}
 
 	bitMask[0] |= 0 << uint(1)
-	if serAll || e.tx.rotation != e.prev.tx.rotation {
+	if serAll || e.rotation != e.prev.rotation {
 		bitMask[0] |= 1 << uint(1)
-		binary.Write(bufTemp, binary.LittleEndian, e.tx.rotation)
+		binary.Write(bufTemp, binary.LittleEndian, e.rotation)
 	}
 
 	bitMask[0] |= 0 << uint(2)
-	if serAll || !e.tx.position.Equals(&e.prev.tx.position) {
+	if serAll || !e.position.Equals(&e.prev.position) {
 		bitMask[0] |= 1 << uint(2)
-		for i := range e.tx.position {
-			binary.Write(bufTemp, binary.LittleEndian, &e.tx.position[i])
+		for i := range e.position {
+			binary.Write(bufTemp, binary.LittleEndian, &e.position[i])
 		}
 	}
 

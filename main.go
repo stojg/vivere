@@ -44,11 +44,12 @@ func main() {
 		// Every game tick
 		case <-ticker.C:
 			now := time.Now()
-			elapsed := int64(now.Sub(current) / time.Millisecond)
+			elapsed := float64(now.Sub(current)/time.Millisecond) / 1000
+
 			current = now
 			state.Tick()
 			GetUpdates()
-			Update(elapsed)
+			state.simulator.Update(elapsed)
 			if math.Mod(float64(state.tick), 3) == 0 {
 				SendUpdates()
 			}
@@ -79,13 +80,6 @@ func SendUpdates() {
 		}
 	}
 	state.UpdatePrev()
-}
-
-// Update the state of all entities
-func Update(elapsed int64) {
-	for e := state.entities.Front(); e != nil; e = e.Next() {
-		e.Value.(*Entity).Update(elapsed)
-	}
 }
 
 // Get all the messages from the client and push the latest one to the

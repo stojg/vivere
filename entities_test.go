@@ -22,8 +22,8 @@ func BenchmarkSerialization(b *testing.B) {
 func TestSerialization(t *testing.T) {
 	e := NewEntity(5)
 	e.model = ENTITY_BUNNY
-	e.tx.rotation = 0.4
-	e.tx.position = Vec{20, 30}
+	e.rotation = 0.4
+	e.position = Vec{20, 30}
 	e.velocity = Vec{4, 2}
 	e.shape.(*Rectangle).h = 1
 	e.shape.(*Rectangle).w = 2
@@ -67,8 +67,8 @@ func TestSerialization(t *testing.T) {
 		t.Errorf("Expected rotation bitmask %v, but got %v", 2, eBitmask)
 	}
 	binary.Read(buf, binary.LittleEndian, &rotation)
-	if e.tx.rotation != rotation {
-		t.Errorf("Expected %v, but got %v", e.tx.rotation, rotation)
+	if e.rotation != rotation {
+		t.Errorf("Expected %v, but got %v", e.rotation, rotation)
 	}
 
 	// position
@@ -77,8 +77,8 @@ func TestSerialization(t *testing.T) {
 		t.Errorf("position not serialized, bitmask %v", eBitmask)
 	}
 	binary.Read(buf, binary.LittleEndian, &pos)
-	if e.tx.position[0] != pos[0] {
-		t.Errorf("Expected %v, but got %v", e.tx.position[0], pos[0])
+	if e.position[0] != pos[0] {
+		t.Errorf("Expected %v, but got %v", e.position[0], pos[0])
 	}
 
 	// velocity
@@ -123,27 +123,27 @@ func TestSerializationNothingChanged(t *testing.T) {
 
 func TestUpdatePrev(t *testing.T) {
 	e := NewEntity(4)
-	e.tx.position = Vec{10, 20}
+	e.position = Vec{10, 20}
 	e.UpdatePrev()
 
-	if !e.tx.position.Equals(&e.prev.tx.position) {
+	if !e.position.Equals(&e.prev.position) {
 		t.Errorf("Current and Previous position should be the same")
 	}
 
-	e.tx.position.Set(5, 4)
-	if e.tx.position.Equals(&e.prev.tx.position) {
+	e.position.Set(5, 4)
+	if e.position.Equals(&e.prev.position) {
 		t.Errorf("Current and Previous position should not be the same after resetting pos")
 	}
 
 	e.UpdatePrev()
-	if !e.tx.position.Equals(&e.prev.tx.position) {
+	if !e.position.Equals(&e.prev.position) {
 		t.Errorf("Current and Previous position should be the same after UpdatePrev()")
 	}
 }
 
 func TestSerializationPositionChanged(t *testing.T) {
 	e := NewEntity(4)
-	e.tx.position = Vec{10, 20}
+	e.position = Vec{10, 20}
 
 	buf := &bytes.Buffer{}
 	e.Serialize(buf, false)
@@ -167,8 +167,8 @@ func TestSerializationPositionChanged(t *testing.T) {
 	}
 
 	binary.Read(buf, binary.LittleEndian, &pos)
-	if e.tx.position[0] != pos[0] {
-		t.Errorf("Expected %v, but got %v", e.tx.position[0], pos[0])
+	if e.position[0] != pos[0] {
+		t.Errorf("Expected %v, but got %v", e.position[0], pos[0])
 	}
 
 	next, err := buf.ReadByte()

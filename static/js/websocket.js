@@ -11,7 +11,7 @@ define(["datastream"], function (DataStream){
     my.connect = function(onConnect, onMessage) {
         if (window["WebSocket"]) {
             // Let us open a web socket
-            conn = new WebSocket("wss://"+document.location.host+"/ws/");
+            conn = new WebSocket("ws://"+document.location.host+"/ws/");
             conn.binaryType = "arraybuffer";
             conn.onopen = function(data) {
                 console.log("connection was opened to '" + data.currentTarget.URL+'"');

@@ -9,9 +9,19 @@ type Controller interface {
 }
 
 type Input struct {
-	action   Action
-	force    *Vec
-	rotation float32
+	action       Action
+	acceleration *Vec
+	velocity     *Vec
+	rotation     float32
+}
+
+func NewInput() *Input {
+	input := &Input{}
+	input.action = ACTION_NONE
+	input.acceleration = &Vec{0, 0}
+	input.velocity = &Vec{0, 0}
+	input.rotation = 0
+	return input
 }
 
 type NPController struct {
@@ -30,23 +40,18 @@ func NewNPController(p *Perception) *NPController {
 }
 
 func (c *NPController) GetAction(e *Entity) *Input {
-
 	worldSize := c.perception.WorldDimension()
-
-	input := &Input{}
-	input.force = &Vec{0, 0}
-	input.rotation = 0
-
-	if e.tx.position[0] > worldSize[0]/2 {
+	input := NewInput()
+	if e.position[0] > worldSize[0]/2 {
 		input.action = ACTION_LEFT
-	} else if e.tx.position[0] < worldSize[0]/2 {
+	} else if e.position[0] < worldSize[0]/2 {
 		input.action = ACTION_RIGHT
 	}
 
 	if input.action == ACTION_RIGHT {
-		input.force[0] = 0.01
+		input.acceleration[0] = 20
 	} else {
-		input.force[0] = -0.01
+		input.acceleration[0] = -20
 	}
 	return input
 }
@@ -59,8 +64,7 @@ type PController struct {
 func (c *PController) GetAction(e *Entity) (input *Input) {
 	defer ClearCommand(c.player)
 
-	input = &Input{}
-	input.force = &Vec{0, 0}
+	input = NewInput()
 
 	if !c.player.conn.open {
 		input.action = ACTION_DIE
@@ -76,21 +80,21 @@ func (c *PController) GetAction(e *Entity) (input *Input) {
 	// max velocity
 	if cmd.Actions&(1<<ACTION_UP) > 0 {
 		input.action = ACTION_UP
-		input.force[1] = -0.1
+		input.acceleration[1] = -200
 	}
 
 	if cmd.Actions&(1<<ACTION_DOWN) > 0 {
 		input.action = ACTION_DOWN
-		input.force[1] = 0.1
+		input.acceleration[1] = 200
 	}
 
 	if cmd.Actions&(1<<ACTION_LEFT) > 0 {
 		input.action = ACTION_LEFT
-		input.force[0] = -0.1
+		input.acceleration[0] = -200
 	}
 
 	if cmd.Actions&(1<<ACTION_RIGHT) > 0 {
-		input.force[0] = 0.1
+		input.acceleration[0] = 200
 		input.action = ACTION_RIGHT
 	}
 	return

@@ -40,7 +40,7 @@ func login(conn *ClientConn) {
 
 	ent := NewEntity(state.NextEntityID())
 	ent.model = ENTITY_BUNNY
-	ent.tx.position = Vec{rand.Float64() * 1000, rand.Float64() * 600}
+	ent.position = Vec{rand.Float64() * 1000, rand.Float64() * 600}
 	ent.controller = &PController{player: p}
 
 	state.AddPlayer(p)

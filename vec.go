@@ -33,11 +33,18 @@ func NewVec(x, y float64) *Vec {
 
 func (a *Vec) Normalize() *Vec {
 	length := a.Length()
-	return NewVec(a[0]/length, a[1]/length)
+	if length > 0 {
+		a.Scale(1 / length)
+	}
+	return a
 }
 
 func (a *Vec) Length() float64 {
 	return math.Sqrt(a[0]*a[0] + a[1]*a[1])
+}
+
+func (a *Vec) SquareLength() float64 {
+	return (a[0]*a[0] + a[1]*a[1])
 }
 
 func (a *Vec) Set(x, y float64) *Vec {
@@ -52,6 +59,12 @@ func (a *Vec) Add(b *Vec) *Vec {
 	return a
 }
 
+func (v *Vec) Sub(b *Vec) *Vec {
+	(*v)[0] -= (*b)[0]
+	(*v)[1] -= (*b)[1]
+	return v
+}
+
 func (a *Vec) Copy(b *Vec) (*Vec, error) {
 	if len(a) != len(b) {
 		return a, errors.New("Vec: Can't copy values between two Vec with different size")
@@ -63,30 +76,20 @@ func (a *Vec) Copy(b *Vec) (*Vec, error) {
 
 // Invert inverts the vector.
 func (vec *Vec) Invert() *Vec {
-	return &Vec{-(*vec)[0], -(*vec)[1]}
-}
-
-// Inverted returns an inverted copy of the vector.
-func (vec *Vec) Inverted() *Vec {
 	vec[0] = -vec[0]
 	vec[1] = -vec[1]
 	return vec
-}
-
-func (res *Vec) Sub(b *Vec) *Vec {
-	(*res)[0] = (*res)[0] - (*b)[0]
-	(*res)[1] = (*res)[1] - (*b)[1]
-	return res
 }
 
 func (a *Vec) Equals(b *Vec) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
+	if (*a)[0] != (*b)[0] {
+		return false
+	}
+	if (*a)[0] != (*b)[0] {
+		return false
 	}
 	return true
 }
@@ -99,16 +102,28 @@ func Dot(a, b *Vec) float64 {
 	return (*a)[0]*(*b)[0] + (*a)[1]*(*b)[1]
 }
 
-func (v *Vec) Nrm2Sq() float64 {
+func (v *Vec) SquaredNormal() float64 {
 	return Dot(v, v)
 }
 
-func (v *Vec) Scaled(alpha float64) *Vec {
-	(*v)[0] = alpha * (*v)[0]
-	(*v)[1] = alpha * (*v)[1]
+func (v *Vec) ComponentProduct(b *Vec) *Vec {
+	return &Vec{(*v)[0] * (*b)[0], (*v)[1] * (*b)[1]}
+}
+
+func (v *Vec) ComponentProductUpdate(b *Vec) *Vec {
+	(*v)[0] *= (*b)[0]
+	(*v)[1] *= (*b)[1]
 	return v
 }
 
 func (v *Vec) Scale(alpha float64) *Vec {
-	return &Vec{alpha * (*v)[0], alpha * (*v)[1]}
+	(*v)[0] *= alpha
+	(*v)[1] *= alpha
+	return v
+}
+
+func (v *Vec) AddScaledVector(b *Vec, t float64) *Vec {
+	(*v)[0] += (*b)[0] * t
+	(*v)[1] += (*b)[1] * t
+	return v
 }
