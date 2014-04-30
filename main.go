@@ -63,9 +63,9 @@ func main() {
 
 			// only send updates to the clients every third tick (20Hz)
 			if math.Mod(float64(gamestate.Tick()), 3) == 0 {
-				SendUpdates()
+				SendUpdates(false)
+				gamestate.RemoveDeadEntities()
 			}
-			gamestate.RemoveDeadEntities()
 
 		// New connection
 		case cl := <-connectionHandler.NewConn():
@@ -76,14 +76,15 @@ func main() {
 
 			gamestate.AddEntity(ent)
 			gamestate.Simulator().Add(ent, player)
+			SendUpdates(true)
 		}
 	}
 }
 
 // Send to clients
-func SendUpdates() {
+func SendUpdates(serializeAll bool) {
 	buf := &bytes.Buffer{}
-	gamestate.Serialize(buf, false)
+	gamestate.Serialize(buf, serializeAll)
 	for _, player := range gamestate.Players() {
 		err := n.Send(player, buf)
 		if err != nil {

@@ -127,7 +127,7 @@ func (gamestate *GameState) Serialize(buf io.Writer, serAll bool) {
 	var updated uint16
 
 	for _, entity := range gamestate.Entities() {
-		if entity.(Serializer).Serialize(bufTemp, true) {
+		if entity.(Serializer).Serialize(bufTemp, serAll) {
 			updated++
 		}
 	}

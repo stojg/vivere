@@ -77,7 +77,7 @@ require(["websocket", 'pixi', 'entity', "gamestate", "player", "simulator"], fun
     function gameloop(tFrame) {
         main.stopGameLoop = window.requestAnimationFrame(gameloop);
         var elapsed = tFrame - main.lastTick;
-        simulator.update(tFrame);
+        simulator.update(tFrame, main);
         main.render();
         updateFPSCounter(tFrame);
         updateMPSCounter();
@@ -164,7 +164,7 @@ require(["websocket", 'pixi', 'entity', "gamestate", "player", "simulator"], fun
             }
             // state
             if ((bitMask & (1 << 5)) > 0) {
-                command.state = buf.readUint32();
+                command.state = buf.readUint16();
             }
 
             gamestate.entities[id].serverUpdate(command);

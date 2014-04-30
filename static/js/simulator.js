@@ -7,15 +7,14 @@ define(["gamestate"], function (gamestate) {
      *
      * @param mSec
      */
-    sim.update = function(tFrame) {
-        for (var i = 0; i < gamestate.entities.length; i++) {
+    sim.update = function(tFrame, main) {
+        for(i in gamestate.entities) {
             if (typeof(gamestate.entities[i]) === 'undefined') {
                 continue;
             }
-            // died
-            if (gamestate.entities[i].action == 4) {
-                this.stages[0].removeChild(gamestate.entities[i]);
-                delete(gamestate.entities[i]);
+            if (gamestate.entities[i].state == 1) {
+                main.stages[0].removeChild(gamestate.entities[i].getSprite());
+                delete gamestate.entities[i];
             } else {
                 gamestate.entities[i].update(tFrame);
             }

@@ -6,6 +6,7 @@ import (
 	p "github.com/stojg/vivere/physics"
 	"github.com/stojg/vivere/state"
 	"io"
+	//"log"
 )
 
 type Model uint16
@@ -110,9 +111,9 @@ func (e *Entity) Serialize(buf io.Writer, serAll bool) bool {
 	}
 
 	bitMask[0] |= 0 << uint(5)
-	if serAll || e.state != e.prev.state {
+	if serAll || e.State() != e.prev.State() {
 		bitMask[0] |= 1 << uint(5)
-		binary.Write(bufTemp, binary.LittleEndian, e.state)
+		binary.Write(bufTemp, binary.LittleEndian, e.State())
 	}
 
 	// Only write if something changed

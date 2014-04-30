@@ -1,6 +1,6 @@
 package state
 
-type State uint32
+type State uint16
 
 const (
 	IDLE   State = 0

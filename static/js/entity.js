@@ -3,19 +3,19 @@ define(["pixi", "gamestate"], function (pixi, gamestate) {
     const ENTITY_WORLD = 1;
     const ENTITY_BUNNY = 2;
 
-    const STATE_DEAD = 0;
-    const STATE_IDLE = 1;
+    const STATE_IDLE = 0;
+    const STATE_DEAD = 1;
     const STATE_MOVING = 2;
 
     var GameObject = function (texture) {
 
-        this.texture = pixi.Texture.fromImage(texture);
+        this.texture = new pixi.Texture.fromImage(texture);
 
         this.sprite = new pixi.Sprite(this.texture);
 
         this.sprite.anchor = {x: 0.5, y: 0.5};
 
-        this.interpolationDelay = 100;
+        this.interpolationDelay = 120;
 
         /**
          *
@@ -95,6 +95,11 @@ define(["pixi", "gamestate"], function (pixi, gamestate) {
                 return;
             }
 
+            this.state = latestSnapshot.state;
+            if( this.state != 0 ) {
+                //console.log(latestSnapshot);
+            }
+
             for(key in this.snapshots) {
                 if(interpolationTime > this.snapshots[key].timestamp) {
                     fromSnapshot = this.snapshots[key];
@@ -112,7 +117,7 @@ define(["pixi", "gamestate"], function (pixi, gamestate) {
             this.deleteOldSnapshots(fromSnapshot.timestamp);
 
             if(latestSnapshot.timestamp == fromSnapshot.timestamp) {
-                console.info("Latest and from snapshots are the same, interpolationDelay too low.");
+                //console.info("Latest and from snapshots are the same, interpolationDelay too low.");
                 this.sprite.position.x = latestSnapshot.position.x;
                 this.sprite.position.y = latestSnapshot.position.y;
                 return;
@@ -145,8 +150,6 @@ define(["pixi", "gamestate"], function (pixi, gamestate) {
             } else {
                 this.sprite.position.y = fromSnapshot.position.y + coef * diffY;
             }
-
-            this.state = fromSnapshot.state;
         }
 
         /**
