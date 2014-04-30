@@ -1,8 +1,8 @@
 package physics
 
 import (
-	"math"
 	v "github.com/stojg/vivere/vec"
+	"math"
 )
 
 /* Point */

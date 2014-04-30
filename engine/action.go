@@ -22,5 +22,3 @@ const (
 	ACTION_11    Action = 14 // 8192
 	ACTION_12    Action = 15 // 8192
 )
-
-

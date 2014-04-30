@@ -89,5 +89,3 @@ func (player *Player) UpdateForce(entity physics.Kinematic, duration float64) {
 		entity.AddForce(&v.Vec{200, 0})
 	}
 }
-
-

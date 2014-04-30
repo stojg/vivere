@@ -1,14 +1,13 @@
 package ai
 
 import (
-	v "github.com/stojg/vivere/vec"
 	p "github.com/stojg/vivere/physics"
+	v "github.com/stojg/vivere/vec"
 )
-
 
 type Simple struct {
 	perception *Perception
-	right bool
+	right      bool
 }
 
 func (ai *Simple) UpdateForce(e p.Kinematic, duration float64) {
@@ -20,12 +19,12 @@ func (ai *Simple) UpdateForce(e p.Kinematic, duration float64) {
 		ai.right = true
 	}
 
-	force := &v.Vec{0,0}
+	force := &v.Vec{0, 0}
 
 	if ai.right {
-		force.Set(20,0)
+		force.Set(20, 0)
 	} else {
-		force.Set(-20,0)
+		force.Set(-20, 0)
 	}
 
 	e.AddForce(force)

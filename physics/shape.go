@@ -8,4 +8,3 @@ type Shape interface {
 	Area() float64
 	Size() *v.Vec
 }
-

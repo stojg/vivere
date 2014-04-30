@@ -71,7 +71,6 @@ func (cc *ClientConn) ReadMessage(reader io.Reader) (cmd UserCommand, err error)
 	return cmd, nil
 }
 
-
 type ConnectionHandler struct {
 	NewConnections chan *ClientConn
 }
@@ -106,7 +105,7 @@ func (ch *ConnectionHandler) WsHandler(ws *websocket.Conn) {
 	}
 }
 
-func Send(player *Player, buf *bytes.Buffer) (error) {
+func Send(player *Player, buf *bytes.Buffer) error {
 	if buf.Len() == 0 {
 		return nil
 	}
@@ -131,7 +130,7 @@ func GetUpdates(players []*Player) {
 	}
 }
 
-func Connect(conn *ClientConn, id uint16) *Player{
+func Connect(conn *ClientConn, id uint16) *Player {
 	p := &Player{}
 	p.id = id
 	p.conn = conn

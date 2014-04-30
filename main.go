@@ -24,8 +24,6 @@ const (
 var state *e.GameState
 var simulator *p.Simulator
 
-
-
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {

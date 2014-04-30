@@ -3,7 +3,7 @@ package physics
 import "testing"
 
 func TestRectangleArea(t *testing.T) {
-	shape := Rectangle{h: 10, w: 10}
+	shape := Rectangle{H: 10, W: 10}
 	const out = 100
 	if x := shape.Area(); x != out {
 		t.Errorf("shape.Area() = %v, want %v", x, out)
@@ -37,14 +37,14 @@ func TestPointNotInCircle(t *testing.T) {
 }
 
 func TestRectLeft(t *testing.T) {
-	r1 := Rectangle{x: 2, y: 2, h: 4, w: 4}
+	r1 := Rectangle{x: 2, y: 2, H: 4, W: 4}
 	var out float64 = 0
 	if x := r1.left(); x != out {
 		t.Errorf("%v, want %v", x, out)
 	}
 }
 func TestRectRight(t *testing.T) {
-	r1 := Rectangle{x: 2, y: 2, h: 4, w: 4}
+	r1 := Rectangle{x: 2, y: 2, H: 4, W: 4}
 	var out float64 = 4
 	if x := r1.right(); x != out {
 		t.Errorf("%v, want %v", x, out)
@@ -52,7 +52,7 @@ func TestRectRight(t *testing.T) {
 }
 
 func TestRectBottom(t *testing.T) {
-	r1 := Rectangle{x: 2, y: 2, h: 4, w: 4}
+	r1 := Rectangle{x: 2, y: 2, H: 4, W: 4}
 	var out float64 = 4
 	if x := r1.bottom(); x != out {
 		t.Errorf("%v, want %v", x, out)
@@ -60,7 +60,7 @@ func TestRectBottom(t *testing.T) {
 }
 
 func TestRectTop(t *testing.T) {
-	r1 := Rectangle{x: 2, y: 2, h: 4, w: 4}
+	r1 := Rectangle{x: 2, y: 2, H: 4, W: 4}
 	var out float64 = 0
 	if x := r1.top(); x != out {
 		t.Errorf("%v, want %v", x, out)

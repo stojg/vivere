@@ -3,8 +3,8 @@ package engine
 import (
 	"bytes"
 	"encoding/binary"
-	"io"
 	p "github.com/stojg/vivere/physics"
+	"io"
 )
 
 type Model uint16
@@ -21,11 +21,12 @@ type Unique interface {
 
 type Entity struct {
 	p.Body
-	id         uint16
-	model      Model
-	prev       *Entity
-	action     Action
-	left       bool
+	id     uint16
+	model  Model
+	prev   *Entity
+	action Action
+	left   bool
+	status string
 }
 
 func (e *Entity) SetModel(m Model) {

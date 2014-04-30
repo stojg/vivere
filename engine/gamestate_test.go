@@ -1,8 +1,8 @@
 package engine
 
 import (
-	"testing"
 	"github.com/stojg/vivere/net"
+	"testing"
 )
 
 func TestNewGameState(t *testing.T) {

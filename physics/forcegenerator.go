@@ -12,7 +12,7 @@ type GravityGenerator struct{}
 
 func (gg *GravityGenerator) UpdateForce(e Kinematic, duration float64) {
 
-	center := &v.Vec{500,300}
+	center := &v.Vec{500, 300}
 	center.Sub(e.Position())
 	center.Normalize().Scale(4)
 	e.AddForce(center)

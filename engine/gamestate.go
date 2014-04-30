@@ -3,10 +3,10 @@ package engine
 import (
 	"bytes"
 	"encoding/binary"
-	"io"
-	"log"
 	n "github.com/stojg/vivere/net"
 	p "github.com/stojg/vivere/physics"
+	"io"
+	"log"
 )
 
 var state *GameState
@@ -102,10 +102,10 @@ func (gs *GameState) UpdatePrev() {
 	}
 }
 
-func (gs *GameState) AddEntity (e p.Kinematic) int {
+func (gs *GameState) AddEntity(e p.Kinematic) int {
 	gs.entities = append(gs.entities, e)
 	log.Printf("[+] Entity added")
-	return len(gs.entities)-1
+	return len(gs.entities) - 1
 }
 
 func (gs *GameState) RemoveEntity(newEntity Unique) {

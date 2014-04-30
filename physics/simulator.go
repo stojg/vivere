@@ -1,9 +1,9 @@
 package physics
 
 import (
+	v "github.com/stojg/vivere/vec"
 	"log"
 	"math"
-	v "github.com/stojg/vivere/vec"
 )
 
 type Kinematic interface {
@@ -66,7 +66,7 @@ func (s *Simulator) Update(state EntityProvider, duration float64) {
 		return
 	}
 
-	s.Forceregistry.UpdateForces(duration);
+	s.Forceregistry.UpdateForces(duration)
 
 	for _, entity := range state.Entities() {
 		if entity.InvMass() == 0 {

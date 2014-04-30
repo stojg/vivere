@@ -4,18 +4,17 @@ import (
 	v "github.com/stojg/vivere/vec"
 )
 
-
 type Body struct {
-	shape       Shape
-	position    v.Vec
-	rotation    float64
-	mass        float64
-	invMass     float64
-	inertia     float64
-	invInertia  float64
-	velocity    v.Vec
-	forces      v.Vec
-	damping     float64
+	shape      Shape
+	position   v.Vec
+	rotation   float64
+	mass       float64
+	invMass    float64
+	inertia    float64
+	invInertia float64
+	velocity   v.Vec
+	forces     v.Vec
+	damping    float64
 }
 
 func (body *Body) Position() *v.Vec {
@@ -53,15 +52,15 @@ func (body *Body) Damping() float64 {
 	return body.damping
 }
 
-func (body *Body) SetDamping(damping float64){
+func (body *Body) SetDamping(damping float64) {
 	body.damping = damping
 }
 
-func (body *Body) Forces() *v.Vec{
+func (body *Body) Forces() *v.Vec {
 	return &body.forces
 }
 
-func (body *Body) Velocity() *v.Vec{
+func (body *Body) Velocity() *v.Vec {
 	return &body.velocity
 }
 
@@ -73,7 +72,7 @@ func (body *Body) SetRotation(r float64) {
 	body.rotation = r
 }
 
-func (body *Body) Shape() Shape{
+func (body *Body) Shape() Shape {
 	return body.shape
 }
 
