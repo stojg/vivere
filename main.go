@@ -4,6 +4,10 @@ package main
 import (
 	"bytes"
 	"code.google.com/p/go.net/websocket"
+	ai "github.com/stojg/vivere/ai"
+	e "github.com/stojg/vivere/engine"
+	n "github.com/stojg/vivere/net"
+	p "github.com/stojg/vivere/physics"
 	"log"
 	"math"
 	"math/rand"
@@ -17,20 +21,25 @@ const (
 	FRAMES_PER_SECOND = 60
 )
 
+var state *e.GameState
+var simulator *p.Simulator
+
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	state = NewGameState()
-	state.prevState = NewGameState()
+	state = e.NewGameState()
+	simulator = p.NewSimulator()
+
+	//rand.Seed(time.Now().UTC().UnixNano())
+
 	createWorld(state)
 	state.UpdatePrev()
 
-	rand.Seed(time.Now().UTC().UnixNano())
-
-	http.Handle("/ws/", websocket.Handler(wsHandler))
+	connectionHandler := n.NewConnectionHandler()
+	http.Handle("/ws/", websocket.Handler(connectionHandler.WsHandler))
 	http.HandleFunc("/", serveStatic)
 
 	go func() {
@@ -38,29 +47,44 @@ func main() {
 	}()
 
 	ticker := time.NewTicker(time.Duration(int(1e9) / FRAMES_PER_SECOND))
-	current := time.Now()
+	tFrame := time.Now()
+
 	for {
 		select {
+
 		// Every game tick
 		case <-ticker.C:
 			now := time.Now()
-			elapsed := float64(now.Sub(current)/time.Millisecond) / 1000
+			elapsed := float64(now.Sub(tFrame)/time.Millisecond) / 1000
+			tFrame = now
 
-			current = now
-			state.Tick()
-			GetUpdates()
-			state.simulator.Update(elapsed)
-			if math.Mod(float64(state.tick), 3) == 0 {
+			state.IncTick()
+
+			n.GetUpdates(state.Players())
+			simulator.Update(state, elapsed)
+			if math.Mod(float64(state.Tick()), 3) == 0 {
 				SendUpdates()
 			}
+
 		// On every new connection
-		case cl := <-newConn:
-			login(cl)
+		case cl := <-connectionHandler.NewConn():
+
+			player := n.NewPlayer(state.NextPlayerId(), cl)
+			state.AddPlayer(player)
+
+			ent := e.NewEntity(state.NextEntityID())
+			ent.SetModel(e.ENTITY_BUNNY)
+			ent.Position().Set(rand.Float64()*1000, rand.Float64()*600)
+
+			state.AddEntity(ent)
+			simulator.Forceregistry.Add(ent, player)
+
 			buf := &bytes.Buffer{}
 			state.Serialize(buf, true)
-			if buf.Len() > 0 {
-				websocket.Message.Send(cl.ws, buf.Bytes())
-			}
+
+			players := make([]*n.Player, 1, 1)
+			players[0] = player
+			n.Send(players, buf)
 		}
 	}
 }
@@ -69,33 +93,8 @@ func main() {
 func SendUpdates() {
 	buf := &bytes.Buffer{}
 	state.Serialize(buf, false)
-	if buf.Len() == 0 {
-		return
-	}
-	for _, player := range state.players {
-		err := websocket.Message.Send(player.conn.ws, buf.Bytes())
-		if err != nil {
-			log.Printf("[!] ws.Send() for Player %d - '%s'\n", player.id, err)
-			disconnect(player)
-		}
-	}
+	n.Send(state.Players(), buf)
 	state.UpdatePrev()
-}
-
-// Get all the messages from the client and push the latest one to the
-// clientConnection.currentCMD
-func GetUpdates() {
-	for _, player := range state.players {
-		for {
-			select {
-			case cmd := <-player.conn.cmdBuf:
-				player.conn.currentCmd = cmd
-			default:
-				goto done
-			}
-		}
-	done:
-	}
 }
 
 func serveStatic(w http.ResponseWriter, r *http.Request) {
@@ -108,4 +107,22 @@ func serveStatic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.ServeFile(w, r, "static/"+r.URL.Path[1:])
+}
+
+func disconnect(p *n.Player) {
+	n.Disconnect(p)
+	state.RemovePlayer(p)
+}
+
+func createWorld(state *e.GameState) {
+	for a := 0; a < 30; a++ {
+		ent := e.NewEntity(state.NextEntityID())
+		ent.SetModel(e.ENTITY_BUNNY)
+		ent.Position().Set(rand.Float64()*1000, rand.Float64()*600)
+		ent.SetRotation(3.14)
+		state.AddEntity(ent)
+
+		simulator.Forceregistry.Add(ent, &ai.Simple{})
+		//simulator.Forceregistry.Add(ent, &p.GravityGenerator{})
+	}
 }
