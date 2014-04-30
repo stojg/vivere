@@ -16,46 +16,25 @@ type Kinematic interface {
 	Damping() float64
 }
 
+type ForceKinematicMap struct {
+	kinematic Kinematic
+	generator ForceGenerator
+}
+
 type EntityProvider interface {
 	Entities() []Kinematic
 }
 
-type ForceRegistry struct {
-	registry map[Kinematic]ForceGenerator
-}
-
-func (f *ForceRegistry) Add(e Kinematic, fg ForceGenerator) *ForceRegistry {
-	if f.registry == nil {
-		f.registry = make(map[Kinematic]ForceGenerator)
-	}
-	f.registry[e] = fg
-	return f
-}
-
-func (f *ForceRegistry) Remove(e Kinematic) *ForceRegistry {
-	delete(f.registry, e)
-	return f
-}
-
-// @todo implement when needed
-func (f *ForceRegistry) Clear() *ForceRegistry {
-	return f
-}
-
-func (f *ForceRegistry) UpdateForces(duration float64) *ForceRegistry {
-	for entity, forcegenerator := range f.registry {
-		forcegenerator.UpdateForce(entity, duration)
-	}
-	return f
-}
-
+/**
+Physics simulator
+*/
 type Simulator struct {
-	Forceregistry *ForceRegistry
+	registry []ForceKinematicMap
 }
 
 func NewSimulator() *Simulator {
 	s := &Simulator{}
-	s.Forceregistry = &ForceRegistry{}
+	s.registry = make([]ForceKinematicMap, 0)
 	return s
 }
 
@@ -66,7 +45,7 @@ func (s *Simulator) Update(state EntityProvider, duration float64) {
 		return
 	}
 
-	s.Forceregistry.UpdateForces(duration)
+	s.UpdateForces(duration)
 
 	for _, entity := range state.Entities() {
 		if entity.InvMass() == 0 {
@@ -77,5 +56,34 @@ func (s *Simulator) Update(state EntityProvider, duration float64) {
 		entity.Velocity().AddScaledVector(entity.Forces(), duration)
 		entity.Velocity().Scale(math.Pow(entity.Damping(), duration))
 		entity.ClearForces()
+	}
+}
+
+func (s *Simulator) Add(e Kinematic, fg ForceGenerator) {
+	if s.registry == nil {
+		s.registry = make([]ForceKinematicMap, 0)
+	}
+	s.registry = append(s.registry, ForceKinematicMap{e, fg})
+}
+
+func (s *Simulator) Remove(e Kinematic) {
+	for index, fg := range s.registry {
+		if fg.kinematic == e {
+			log.Println("[-] Removing controller for entity")
+			// Copy the last entry to the PlayerID position
+			s.registry[index] = s.registry[len(s.registry)-1]
+			// Shrink the list
+			s.registry = s.registry[:len(s.registry)-1]
+		}
+	}
+}
+
+func (s *Simulator) Clear() {
+	s.registry = make([]ForceKinematicMap, 0)
+}
+
+func (s *Simulator) UpdateForces(duration float64) {
+	for _, fg := range s.registry {
+		fg.generator.UpdateForce(fg.kinematic, duration)
 	}
 }

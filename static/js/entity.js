@@ -3,6 +3,10 @@ define(["pixi", "gamestate"], function (pixi, gamestate) {
     const ENTITY_WORLD = 1;
     const ENTITY_BUNNY = 2;
 
+    const STATE_DEAD = 0;
+    const STATE_IDLE = 1;
+    const STATE_MOVING = 2;
+
     var GameObject = function (texture) {
 
         this.texture = pixi.Texture.fromImage(texture);
@@ -12,6 +16,12 @@ define(["pixi", "gamestate"], function (pixi, gamestate) {
         this.sprite.anchor = {x: 0.5, y: 0.5};
 
         this.interpolationDelay = 100;
+
+        /**
+         *
+         * @type {number}
+         */
+        this.state = 0;
 
         /**
          * Contains a list of queued updates from the server
@@ -135,6 +145,8 @@ define(["pixi", "gamestate"], function (pixi, gamestate) {
             } else {
                 this.sprite.position.y = fromSnapshot.position.y + coef * diffY;
             }
+
+            this.state = fromSnapshot.state;
         }
 
         /**

@@ -3,8 +3,8 @@ package net
 import (
 	"bytes"
 	"encoding/binary"
+	"github.com/stojg/vivere/state"
 	"testing"
-	//"time"
 )
 
 func TestDeSerialization(t *testing.T) {
@@ -13,7 +13,7 @@ func TestDeSerialization(t *testing.T) {
 
 	// Add the user command
 	cmd := UserCommand{}
-	cmd.Actions |= 1 << ACTION_DIE
+	cmd.Actions |= 1 << state.DEAD
 	cmd.Sequence = 12
 	cmd.Msec = 50
 	// Add the game tick

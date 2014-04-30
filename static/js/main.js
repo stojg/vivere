@@ -162,9 +162,9 @@ require(["websocket", 'pixi', 'entity', "gamestate", "player", "simulator"], fun
                 var size = buf.readFloat64Array(2);
                 command.size = {x: size[0], y: size[1]};
             }
-            // action
+            // state
             if ((bitMask & (1 << 5)) > 0) {
-                command.action = buf.readUint16();
+                command.state = buf.readUint32();
             }
 
             gamestate.entities[id].serverUpdate(command);

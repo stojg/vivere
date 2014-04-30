@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	p "github.com/stojg/vivere/physics"
+	"github.com/stojg/vivere/state"
 	v "github.com/stojg/vivere/vec"
 	"io"
 	"testing"
@@ -29,7 +30,7 @@ func TestSerialization(t *testing.T) {
 	e.Velocity().Set(4, 2)
 
 	e.SetShape(&p.Rectangle{H: 1, W: 2})
-	e.action = ACTION_DIE
+	e.state = state.DEAD
 
 	buf := &bytes.Buffer{}
 	e.Serialize(buf, true)
@@ -42,10 +43,9 @@ func TestSerialization(t *testing.T) {
 	var pos v.Vec
 	var vel v.Vec
 	var size v.Vec
-	var action Action
+	var state state.State
 
 	binary.Read(buf, binary.LittleEndian, &bitmask)
-
 	binary.Read(buf, binary.LittleEndian, &id)
 
 	// id
@@ -108,9 +108,9 @@ func TestSerialization(t *testing.T) {
 	if eBitmask != 32 {
 		t.Errorf("Expected action bitmask %v, but got %v", 64, eBitmask)
 	}
-	binary.Read(buf, binary.LittleEndian, &action)
-	if e.action != action {
-		t.Errorf("Expected %v, but got %v", e.action, action)
+	binary.Read(buf, binary.LittleEndian, &state)
+	if e.state != state {
+		t.Errorf("Expected %v, but got %v", e.state, state)
 	}
 }
 

@@ -21,8 +21,7 @@ const (
 	FRAMES_PER_SECOND = 60
 )
 
-var state *e.GameState
-var simulator *p.Simulator
+var gamestate *e.GameState
 
 func main() {
 	port := os.Getenv("PORT")
@@ -32,10 +31,10 @@ func main() {
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	state = e.NewGameState()
-	simulator = p.NewSimulator()
+	gamestate = e.NewGameState()
+	gamestate.SetSimulator(p.NewSimulator())
 
-	createWorld(state)
+	createWorld(gamestate)
 
 	connectionHandler := n.NewConnectionHandler()
 	http.Handle("/ws/", websocket.Handler(connectionHandler.WsHandler))
@@ -57,25 +56,26 @@ func main() {
 			elapsed := float64(now.Sub(tFrame)/time.Millisecond) / 1000
 			tFrame = now
 
-			state.IncTick()
+			gamestate.IncTick()
 
-			n.GetUpdates(state.Players())
-			simulator.Update(state, elapsed)
+			n.GetUpdates(gamestate.Players())
+			gamestate.Simulator().Update(gamestate, elapsed)
 
 			// only send updates to the clients every third tick (20Hz)
-			if math.Mod(float64(state.Tick()), 3) == 0 {
+			if math.Mod(float64(gamestate.Tick()), 3) == 0 {
 				SendUpdates()
 			}
+			gamestate.RemoveDeadEntities()
 
 		// New connection
 		case cl := <-connectionHandler.NewConn():
 			player := connect(cl)
-			ent := e.NewEntity(state.NextEntityID())
+			ent := e.NewEntity(gamestate.NextEntityID())
 			ent.SetModel(e.ENTITY_BUNNY)
 			ent.Position().Set(rand.Float64()*1000, rand.Float64()*600)
 
-			state.AddEntity(ent)
-			simulator.Forceregistry.Add(ent, player)
+			gamestate.AddEntity(ent)
+			gamestate.Simulator().Add(ent, player)
 		}
 	}
 }
@@ -83,15 +83,15 @@ func main() {
 // Send to clients
 func SendUpdates() {
 	buf := &bytes.Buffer{}
-	state.Serialize(buf, false)
-	for _, player := range state.Players() {
+	gamestate.Serialize(buf, false)
+	for _, player := range gamestate.Players() {
 		err := n.Send(player, buf)
 		if err != nil {
 			log.Printf("[!] ws.Send() for Player %d - '%s'\n", player.Id(), err)
 			disconnect(player)
 		}
 	}
-	state.UpdatePrev()
+	gamestate.UpdatePrev()
 }
 
 func serveStatic(w http.ResponseWriter, r *http.Request) {
@@ -107,24 +107,25 @@ func serveStatic(w http.ResponseWriter, r *http.Request) {
 }
 
 func connect(connection *n.ClientConn) *n.Player {
-	player := n.NewPlayer(state.NextPlayerId(), connection)
-	state.AddPlayer(player)
+	player := n.NewPlayer(gamestate.NextPlayerId(), connection)
+	gamestate.AddPlayer(player)
 	return player
 }
 
 func disconnect(p *n.Player) {
 	n.Disconnect(p)
-	state.RemovePlayer(p)
+	gamestate.RemovePlayer(p)
 }
 
 func createWorld(state *e.GameState) {
-	for a := 0; a < 1; a++ {
+	for a := 0; a < 30; a++ {
 		ent := e.NewEntity(state.NextEntityID())
 		ent.SetModel(e.ENTITY_BUNNY)
 		ent.Position().Set(rand.Float64()*1000, rand.Float64()*600)
 		ent.SetRotation(3.14)
 		state.AddEntity(ent)
-		simulator.Forceregistry.Add(ent, &ai.Simple{})
+		state.Simulator().Add(ent, &ai.Simple{})
+		state.Simulator().Add(ent, &p.GravityGenerator{})
 	}
 	state.UpdatePrev()
 }

@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"encoding/binary"
 	p "github.com/stojg/vivere/physics"
+	"github.com/stojg/vivere/state"
 	"io"
 )
 
 type Model uint16
 
 const (
-	ENTITY_DELETE Model = 0
-	ENTITY_WORLD  Model = 1
-	ENTITY_BUNNY  Model = 2
+	ENTITY_WORLD Model = 1
+	ENTITY_BUNNY Model = 2
 )
 
 type Unique interface {
@@ -21,27 +21,29 @@ type Unique interface {
 
 type Entity struct {
 	p.Body
-	id     uint16
-	model  Model
-	prev   *Entity
-	action Action
-	left   bool
-	status string
+	id    uint16
+	model Model
+	prev  *Entity
+	left  bool
+	state state.State
 }
 
 func (e *Entity) SetModel(m Model) {
 	e.model = m
 }
 
-func (e *Entity) Action() Action {
-	return e.action
+func (e *Entity) State() state.State {
+	return e.state
+}
+
+func (e *Entity) SetState(s state.State) {
+	e.state = s
 }
 
 func NewEntity(id uint16) *Entity {
 	e := &Entity{}
 	e.id = id
-
-	e.action = ACTION_NONE
+	e.SetState(state.IDLE)
 	e.Position().Set(0, 0)
 	e.SetRotation(0.0)
 	e.SetMass(1)
@@ -57,7 +59,7 @@ func NewEntity(id uint16) *Entity {
 
 func (e *Entity) UpdatePrev() {
 	e.prev.model = e.model
-	e.prev.action = e.action
+	e.prev.state = e.state
 
 	e.prev.SetShape(e.Shape())
 	e.prev.Position().Copy(e.Position())
@@ -108,9 +110,9 @@ func (e *Entity) Serialize(buf io.Writer, serAll bool) bool {
 	}
 
 	bitMask[0] |= 0 << uint(5)
-	if serAll || e.action != e.prev.action {
+	if serAll || e.state != e.prev.state {
 		bitMask[0] |= 1 << uint(5)
-		binary.Write(bufTemp, binary.LittleEndian, e.action)
+		binary.Write(bufTemp, binary.LittleEndian, e.state)
 	}
 
 	// Only write if something changed

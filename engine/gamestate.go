@@ -5,11 +5,10 @@ import (
 	"encoding/binary"
 	n "github.com/stojg/vivere/net"
 	p "github.com/stojg/vivere/physics"
+	"github.com/stojg/vivere/state"
 	"io"
 	"log"
 )
-
-var state *GameState
 
 type GameState struct {
 	entities     []p.Kinematic
@@ -19,10 +18,6 @@ type GameState struct {
 	nextEntityId uint16
 	prevState    *GameState
 	simulator    *p.Simulator
-}
-
-type Stater interface {
-	Action() Action
 }
 
 type Snapshotable interface {
@@ -47,15 +42,23 @@ func NewGameState() *GameState {
 	return st
 }
 
+func (gamestate *GameState) Simulator() *p.Simulator {
+	return gamestate.simulator
+}
+
+func (gs *GameState) SetSimulator(s *p.Simulator) {
+	gs.simulator = s
+}
+
 // NextPlayerId returns the next id
 func (gs *GameState) NextPlayerId() (nextPlayerId uint16) {
 	gs.nextPlayerId += 1
 	return gs.nextPlayerId
 }
 
-func (state *GameState) NextEntityID() (nextEntityId uint16) {
-	state.nextEntityId += 1
-	return state.nextEntityId
+func (gamestate *GameState) NextEntityID() (nextEntityId uint16) {
+	gamestate.nextEntityId += 1
+	return gamestate.nextEntityId
 }
 
 func (gs *GameState) AddPlayer(p *n.Player) {
@@ -76,10 +79,6 @@ func (gs *GameState) RemovePlayer(p *n.Player) {
 		log.Printf("[-] Player %d was disconnected \n", p.Id())
 		return
 	}
-}
-
-func (gs *GameState) SetSimulator(s *p.Simulator) {
-	gs.simulator = s
 }
 
 func (gs *GameState) Entities() []p.Kinematic {
@@ -104,45 +103,37 @@ func (gs *GameState) UpdatePrev() {
 
 func (gs *GameState) AddEntity(e p.Kinematic) int {
 	gs.entities = append(gs.entities, e)
-	log.Printf("[+] Entity added")
+	log.Printf("[+] Entity #%v added ", len(gs.entities)-1)
 	return len(gs.entities) - 1
 }
 
-func (gs *GameState) RemoveEntity(newEntity Unique) {
-	index := -1
-	for i, entity := range gs.entities {
-		if entity.(Unique).Id() == newEntity.Id() {
-			index = i
-			break
+func (gamestate *GameState) RemoveDeadEntities() {
+	for i, entity := range gamestate.entities {
+		if entity.(state.Stater).State() != state.DEAD {
+			continue
 		}
+		log.Println("[-] Entity removed from gamestate")
+		gamestate.simulator.Remove(entity)
+		// Copy the last entry to the index position
+		gamestate.entities[i] = gamestate.entities[len(gamestate.entities)-1]
+		// Shrink the list
+		gamestate.entities = gamestate.entities[:len(gamestate.entities)-1]
 	}
-	if index < 0 {
-		log.Printf("[!] Couldnt remove entity with id ", newEntity.Id())
-		return
-	}
-	// Copy the last entry to the index position
-	gs.entities[index] = gs.entities[len(gs.entities)-1]
-	// Shrink the list
-	gs.entities = gs.entities[:len(gs.entities)-1]
-	log.Printf("[-] Entity #%v removed", newEntity.Id())
 }
 
 // Serialize the game state
-func (gs *GameState) Serialize(buf io.Writer, serAll bool) {
+func (gamestate *GameState) Serialize(buf io.Writer, serAll bool) {
 	bufTemp := &bytes.Buffer{}
 	var updated uint16
 
-	for _, entity := range gs.Entities() {
+	for _, entity := range gamestate.Entities() {
 		if entity.(Serializer).Serialize(bufTemp, true) {
 			updated++
-			if entity.(Stater).Action() == ACTION_DIE {
-				gs.RemoveEntity(entity.(Unique))
-			}
 		}
 	}
 
 	if updated > 0 {
-		binary.Write(buf, binary.LittleEndian, gs.tick)
+		binary.Write(buf, binary.LittleEndian, gamestate.tick)
 		binary.Write(buf, binary.LittleEndian, updated)
 		buf.Write(bufTemp.Bytes())
 	}
