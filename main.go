@@ -24,19 +24,20 @@ const (
 var state *e.GameState
 var simulator *p.Simulator
 
+
+
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
+	rand.Seed(time.Now().UTC().UnixNano())
+
 	state = e.NewGameState()
 	simulator = p.NewSimulator()
 
-	//rand.Seed(time.Now().UTC().UnixNano())
-
 	createWorld(state)
-	state.UpdatePrev()
 
 	connectionHandler := n.NewConnectionHandler()
 	http.Handle("/ws/", websocket.Handler(connectionHandler.WsHandler))
@@ -52,7 +53,7 @@ func main() {
 	for {
 		select {
 
-		// Every game tick
+		// Main game loop
 		case <-ticker.C:
 			now := time.Now()
 			elapsed := float64(now.Sub(tFrame)/time.Millisecond) / 1000
@@ -62,29 +63,21 @@ func main() {
 
 			n.GetUpdates(state.Players())
 			simulator.Update(state, elapsed)
+
+			// only send updates to the clients every third tick (20Hz)
 			if math.Mod(float64(state.Tick()), 3) == 0 {
 				SendUpdates()
 			}
 
-		// On every new connection
+		// New connection
 		case cl := <-connectionHandler.NewConn():
-
-			player := n.NewPlayer(state.NextPlayerId(), cl)
-			state.AddPlayer(player)
-
+			player := connect(cl)
 			ent := e.NewEntity(state.NextEntityID())
 			ent.SetModel(e.ENTITY_BUNNY)
 			ent.Position().Set(rand.Float64()*1000, rand.Float64()*600)
 
 			state.AddEntity(ent)
 			simulator.Forceregistry.Add(ent, player)
-
-			buf := &bytes.Buffer{}
-			state.Serialize(buf, true)
-
-			players := make([]*n.Player, 1, 1)
-			players[0] = player
-			n.Send(players, buf)
 		}
 	}
 }
@@ -93,7 +86,13 @@ func main() {
 func SendUpdates() {
 	buf := &bytes.Buffer{}
 	state.Serialize(buf, false)
-	n.Send(state.Players(), buf)
+	for _, player := range state.Players() {
+		err := n.Send(player, buf)
+		if err != nil {
+			log.Printf("[!] ws.Send() for Player %d - '%s'\n", player.Id(), err)
+			disconnect(player)
+		}
+	}
 	state.UpdatePrev()
 }
 
@@ -109,20 +108,25 @@ func serveStatic(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/"+r.URL.Path[1:])
 }
 
+func connect(connection *n.ClientConn) *n.Player {
+	player := n.NewPlayer(state.NextPlayerId(), connection)
+	state.AddPlayer(player)
+	return player
+}
+
 func disconnect(p *n.Player) {
 	n.Disconnect(p)
 	state.RemovePlayer(p)
 }
 
 func createWorld(state *e.GameState) {
-	for a := 0; a < 30; a++ {
+	for a := 0; a < 1; a++ {
 		ent := e.NewEntity(state.NextEntityID())
 		ent.SetModel(e.ENTITY_BUNNY)
 		ent.Position().Set(rand.Float64()*1000, rand.Float64()*600)
 		ent.SetRotation(3.14)
 		state.AddEntity(ent)
-
 		simulator.Forceregistry.Add(ent, &ai.Simple{})
-		//simulator.Forceregistry.Add(ent, &p.GravityGenerator{})
 	}
+	state.UpdatePrev()
 }

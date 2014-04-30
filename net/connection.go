@@ -106,17 +106,15 @@ func (ch *ConnectionHandler) WsHandler(ws *websocket.Conn) {
 	}
 }
 
-func Send(players []*Player, buf *bytes.Buffer) {
+func Send(player *Player, buf *bytes.Buffer) (error) {
 	if buf.Len() == 0 {
-		return
+		return nil
 	}
-	for _, player := range players {
-		err := websocket.Message.Send(player.conn.ws, buf.Bytes())
-		if err != nil {
-			log.Printf("[!] ws.Send() for Player %d - '%s'\n", player.id, err)
-			Disconnect(player)
-		}
+	err := websocket.Message.Send(player.conn.ws, buf.Bytes())
+	if err != nil {
+		return err
 	}
+	return nil
 }
 
 func GetUpdates(players []*Player) {
@@ -133,7 +131,7 @@ func GetUpdates(players []*Player) {
 	}
 }
 
-func Login(conn *ClientConn, id uint16) *Player{
+func Connect(conn *ClientConn, id uint16) *Player{
 	p := &Player{}
 	p.id = id
 	p.conn = conn
