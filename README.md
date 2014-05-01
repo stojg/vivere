@@ -11,9 +11,9 @@ just a delusion on my part, but I prefer to stick to it.
 
 Games are awesome because
 
-    1) They engage the abstract parts of our brain
-    2) They are technically challenging to make
-    3) One of the reasons why have super computers disguised as phones
+1.  They engage the abstract parts of our brain
+2.  They are technically challenging to make
+3.  One of the reasons why have super computers disguised as phones
 
 I also like the challenge and failing is okay.
 
@@ -25,17 +25,17 @@ Umm, yeah.. Do you have go installed? Otherwise tough luck. I believe you can in
  If you actuallt got the `library` into your $GOHOME folder, you need to run the server by running the `vivere` bin
  inside the library folder, since I'm serving the static files from the project root.
 
- ## How to you contribute
+## How to you contribute
 
- If you really want to contribute, do a Pull Request and tell me how much
- I suck and that why I should do it your way. I most likely will reject the PR since this
- is a project where I'm learning to `go` and how to organize a game engine.
+If you really want to contribute, do a Pull Request and tell me how much
+I suck and that why I should do it your way. I most likely will reject the PR since this
+is a project where I'm learning to `go` and how to organize a game engine.
 
-  ## Sales pitch
+## Sales pitch
 
- Heh, you're kidding me? I'm a developer, I'm doing this as a hobby and trying to learn something.
- There are a ton of free (as in beer) AAA game engines out there that actually let you focus on making a game instead
- of a game engine.
+Heh, you're kidding me? I'm a developer, I'm doing this as a hobby and trying to learn something.
+There are a ton of free (as in beer) AAA game engines out there that actually let you focus on making a game instead
+of a game engine.
 
 What I can give you is a mostly broken link to the heroku build of the lib - [enigmatic inlet 8706](enigmatic-inlet-8706.herokuapp.com)
 
