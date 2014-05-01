@@ -29,7 +29,7 @@ func TestSerialization(t *testing.T) {
 	e.Position().Set(20, 30)
 	e.Velocity().Set(4, 2)
 
-	e.SetShape(&p.Rectangle{H: 1, W: 2})
+	e.SetShape(p.NewRectangle(e.Position(), 2, 1))
 	e.state = state.DEAD
 
 	buf := &bytes.Buffer{}

@@ -37,7 +37,7 @@ func NewEntity(id uint16) *Entity {
 	e.SetMass(1)
 	e.SetInertia(4)
 	e.SetDamping(0.999)
-	e.SetShape(&p.Rectangle{H: 10, W: 20})
+	e.SetShape(p.NewRectangle(e.Position(), 10, 20))
 	e.prev = &Entity{}
 	e.UpdatePrev()
 	return e

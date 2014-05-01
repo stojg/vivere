@@ -5,11 +5,22 @@ import (
 	"math"
 )
 
-func (c *Circle) Intersect(point *v.Vec) bool {
-	a := v.Vec{c.X, c.Y}
-return a.Sub(&).Length() < c.R
+type Circle interface {
+	Position() *v.Vec
+	Radius() float64
 }
 
-func (r1 *Rectangle) Intersects(r2 *Rectangle) bool {
-	return (r1.left() < r2.right() && r1.right() > r2.left() && r1.top() < r2.bottom() && r1.bottom() > r2.top())
+type Rectangle interface {
+	Position() *v.Vec
+	Width() float64
+	Height() float64
+}
+
+func CirclePoint(c Circle, point *v.Vec) bool {
+	return c.Position().Sub(point).Length() <= c.Radius()
+}
+
+func RectangleRectangle(a Rectangle, b Rectangle) bool {
+	return (math.Abs(a.Position()[0]-b.Position()[0])*2 <= (a.Width() + b.Width())) &&
+		(math.Abs(a.Position()[1]-b.Position()[1])*2 <= (a.Height() + b.Height()))
 }
