@@ -1,11 +1,15 @@
 package ai
 
-import "testing"
+import (
+	v "github.com/stojg/vivere/vec"
+	"testing"
+)
 
-func TestNewPerception(t *testing.T) {
+func TestWorldDimension(t *testing.T) {
 	obj := &Perception{}
-
-	if obj != obj {
+	dims := obj.WorldDimension()
+	expected := &v.Vec{1000, 600}
+	if !expected.Equals(dims) {
 		t.Error("Super fail, cant find struct")
 	}
 }
