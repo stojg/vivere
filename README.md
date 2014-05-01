@@ -22,10 +22,8 @@ I also like the challenge and failing is okay.
 Umm, yeah.. Do you have go installed? Otherwise tough luck. I believe you can install with
 `go get github.com/stojg/vivere` but I'm to much of a n00b to know if that actually works.
 
- If you got into your GOHOME folders, you need to run the server by running the `vivere` bin
- inside the folder, since I'm serving the static files from the project root.
-
- Go is awesome and weird.
+ If you actuallt got the `library` into your $GOHOME folder, you need to run the server by running the `vivere` bin
+ inside the library folder, since I'm serving the static files from the project root.
 
  ## How to you contribute
 
@@ -41,4 +39,7 @@ Umm, yeah.. Do you have go installed? Otherwise tough luck. I believe you can in
 
 What I can give you is a mostly broken link to the heroku build of the lib - [enigmatic inlet 8706](enigmatic-inlet-8706.herokuapp.com)
 
+------
 
+On a side note: Go is awesome and weird, read up about `channels`, `slices` and `interfaces`. They will
+make you think that you had too much unicorn beer.
