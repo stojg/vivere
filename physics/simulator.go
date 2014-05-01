@@ -2,7 +2,6 @@ package physics
 
 import (
 	v "github.com/stojg/vivere/vec"
-	"log"
 	"math"
 )
 
@@ -41,7 +40,6 @@ func NewSimulator() *Simulator {
 func (s *Simulator) Update(state EntityProvider, duration float64) {
 
 	if duration == 0 {
-		log.Println("Elapsed time is zero?")
 		return
 	}
 
@@ -69,10 +67,7 @@ func (s *Simulator) Add(e Kinematic, fg ForceGenerator) {
 func (s *Simulator) Remove(e Kinematic) {
 	for index, fg := range s.registry {
 		if fg.kinematic == e {
-			log.Println("[-] Removing controller for entity")
-			// Copy the last entry to the PlayerID position
 			s.registry[index] = s.registry[len(s.registry)-1]
-			// Shrink the list
 			s.registry = s.registry[:len(s.registry)-1]
 		}
 	}

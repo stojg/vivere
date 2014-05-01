@@ -6,7 +6,6 @@ import (
 	p "github.com/stojg/vivere/physics"
 	"github.com/stojg/vivere/state"
 	"io"
-	//"log"
 )
 
 type Model uint16
@@ -29,6 +28,21 @@ type Entity struct {
 	state state.State
 }
 
+func NewEntity(id uint16) *Entity {
+	e := &Entity{}
+	e.id = id
+	e.SetState(state.IDLE)
+	e.Position().Set(0, 0)
+	e.SetRotation(0.0)
+	e.SetMass(1)
+	e.SetInertia(4)
+	e.SetDamping(0.999)
+	e.SetShape(&p.Rectangle{H: 10, W: 20})
+	e.prev = &Entity{}
+	e.UpdatePrev()
+	return e
+}
+
 func (e *Entity) SetModel(m Model) {
 	e.model = m
 }
@@ -41,23 +55,7 @@ func (e *Entity) SetState(s state.State) {
 	e.state = s
 }
 
-func NewEntity(id uint16) *Entity {
-	e := &Entity{}
-	e.id = id
-	e.SetState(state.IDLE)
-	e.Position().Set(0, 0)
-	e.SetRotation(0.0)
-	e.SetMass(1)
-	e.SetInertia(4)
-	e.SetDamping(0.999)
-	e.SetShape(&p.Rectangle{H: 10, W: 20})
-
-	e.prev = &Entity{}
-	e.UpdatePrev()
-
-	return e
-}
-
+// @todo fill this out with more properties from body
 func (e *Entity) UpdatePrev() {
 	e.prev.model = e.model
 	e.prev.state = e.state
