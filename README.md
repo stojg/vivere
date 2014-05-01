@@ -1,5 +1,7 @@
 # Vivere
 
+[![Build Status](https://travis-ci.org/stojg/vivere.svg?branch=master)](https://travis-ci.org/stojg/vivere)
+
 So.. every project should have a README that tells you what the reason of project, how to
 install and in these awesome days of open source; how to contribute and most of all the sales pitch.
 
