@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "mode: set" > acc.out
-for Dir in $(find ./* -maxdepth 10 -type d ! -iname "Godeps" -type d ); 
+for Dir in $(find ./* -maxdepth 0 -type d -and -not -iname "Godeps");
 do
 	if ls $Dir/*.go &> /dev/null;
 	then
