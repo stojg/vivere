@@ -38,18 +38,15 @@ func NewSimulator() *Simulator {
 }
 
 func (s *Simulator) Update(state EntityProvider, duration float64) {
-
 	if duration == 0 {
 		return
 	}
-
 	s.UpdateForces(duration)
 
 	for _, entity := range state.Entities() {
 		if entity.InvMass() == 0 {
 			continue
 		}
-
 		entity.Position().AddScaledVector(entity.Velocity(), duration)
 		entity.Velocity().AddScaledVector(entity.Forces(), duration)
 		entity.Velocity().Scale(math.Pow(entity.Damping(), duration))

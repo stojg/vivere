@@ -2,14 +2,10 @@ package ai
 
 import (
 	v "github.com/stojg/vivere/vec"
-	"testing"
+	. "gopkg.in/check.v1"
 )
 
-func TestWorldDimension(t *testing.T) {
+func (s *TestSuite) TestWorldDimension(c *C) {
 	obj := &Perception{}
-	dims := obj.WorldDimension()
-	expected := &v.Vec{1000, 600}
-	if !expected.Equals(dims) {
-		t.Error("Super fail, cant find struct")
-	}
+	c.Assert(obj.WorldDimension(), DeepEquals, &v.Vec{1000, 600})
 }
