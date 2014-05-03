@@ -52,6 +52,10 @@ define(["lib/pixi", "src/gamestate"], function (pixi, gamestate) {
          * @param mSec
          */
         this.update = function (tFrame) {
+            if(typeof tFrame == 'undefined' || tFrame == 0) {
+                console.error('Elapsed time is zero?');
+                return;
+            }
             // Move queued server updates to the snapshot array
             var msg = this.server.pop();
             while (typeof msg !== 'undefined') {
@@ -180,10 +184,15 @@ define(["lib/pixi", "src/gamestate"], function (pixi, gamestate) {
 
     entity.BUNNY = 2;
 
-    entity.create = function (type) {
+    entity.create = function (type, interpolationDelay) {
+        if(typeof interpolationDelay == 'undefined') {
+            interpolationDelay=false;
+        }
 
         if (type === this.BUNNY) {
-            return new GameObject("sprites/bunny.png");
+            go = new GameObject("sprites/bunny.png");
+            go.interpolationDelay = interpolationDelay;
+            return go;
         }
 
         throw new Error("Tried to create a model without an exiting type '" + type + "'");
