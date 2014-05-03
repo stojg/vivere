@@ -1,4 +1,4 @@
-define(["gamestate"], function (gamestate) {
+define(["src/gamestate"], function (gamestate) {
 
     var sim = {}
 
@@ -7,9 +7,9 @@ define(["gamestate"], function (gamestate) {
      *
      * @param mSec
      */
-    sim.update = function(tFrame, main) {
+    sim.update = function (tFrame, main) {
 
-        for(i in gamestate.entities) {
+        for (i in gamestate.entities) {
 
             if (typeof(gamestate.entities[i]) === 'undefined') {
                 continue;

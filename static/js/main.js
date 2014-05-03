@@ -1,13 +1,13 @@
-require(["websocket", 'pixi', 'entity', "gamestate", "player", "simulator"], function (websocket, pixi, entity, gamestate, player, simulator) {
+require(["src/websocket", 'lib/pixi', 'src/entity', "src/gamestate", "src/player", "src/simulator"], function (websocket, pixi, entity, gamestate, player, simulator) {
 
-    window.cancelRequestAnimFrame = ( function() {
-        return window.cancelAnimationFrame          ||
-            window.webkitCancelRequestAnimationFrame    ||
-            window.mozCancelRequestAnimationFrame       ||
-            window.oCancelRequestAnimationFrame     ||
-            window.msCancelRequestAnimationFrame        ||
+    window.cancelRequestAnimFrame = (function () {
+        return window.cancelAnimationFrame ||
+            window.webkitCancelRequestAnimationFrame ||
+            window.mozCancelRequestAnimationFrame ||
+            window.oCancelRequestAnimationFrame ||
+            window.msCancelRequestAnimationFrame ||
             clearTimeout
-    } )();
+    })();
 
     var main = {};
 
@@ -33,11 +33,11 @@ require(["websocket", 'pixi', 'entity', "gamestate", "player", "simulator"], fun
         this.pixi = pixi.autoDetectRenderer(1000, 600);
         document.body.appendChild(this.pixi.view);
         this.stages[0] = new pixi.Stage(0x666666);
-        main.fpsText = new pixi.Text("fps ", {font:"22px Arial", fill:"white"});
-        main.fpsText.position = {x:10, y:5}
+        main.fpsText = new pixi.Text("fps ", {font: "22px Arial", fill: "white"});
+        main.fpsText.position = {x: 10, y: 5}
         this.stages[0].addChild(main.fpsText);
-        main.mpsText = new pixi.Text("mps ", {font:"22px Arial", fill:"white"});
-        main.mpsText.position = {x:10, y:25}
+        main.mpsText = new pixi.Text("mps ", {font: "22px Arial", fill: "white"});
+        main.mpsText.position = {x: 10, y: 25}
         this.stages[0].addChild(main.mpsText);
         this.lastTick = window.performance.now();
 
@@ -53,8 +53,8 @@ require(["websocket", 'pixi', 'entity', "gamestate", "player", "simulator"], fun
      */
     main.render = function () {
         main.frameCounter++;
-        for(var i = 0; i < this.stages.length; i++) {
-           this.pixi.render(this.stages[i]);
+        for (var i = 0; i < this.stages.length; i++) {
+            this.pixi.render(this.stages[i]);
         }
     }
 

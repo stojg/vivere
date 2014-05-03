@@ -1,4 +1,4 @@
-define(["datastream"], function (DataStream){
+define(["lib/datastream"], function (DataStream) {
 
     var my = {},
         conn;
@@ -8,30 +8,30 @@ define(["datastream"], function (DataStream){
      * @param callback - onConnect
      * @param callback - onMessage
      */
-    my.connect = function(onConnect, onMessage) {
+    my.connect = function (onConnect, onMessage) {
         if (window["WebSocket"]) {
             // Let us open a web socket
-            conn = new WebSocket("ws://"+document.location.host+"/ws/");
+            conn = new WebSocket("ws://" + document.location.host + "/ws/");
             conn.binaryType = "arraybuffer";
-            conn.onopen = function(data) {
-                console.log("connection was opened to '" + data.currentTarget.URL+'"');
+            conn.onopen = function (data) {
+                console.log("connection was opened to '" + data.currentTarget.URL + '"');
                 onConnect();
             }
-            conn.onerror = function() {
+            conn.onerror = function () {
                 console.log("connection error");
             }
-            conn.onmessage = function(evt) {
+            conn.onmessage = function (evt) {
                 onMessage(evt);
             }
-            conn.onclose = function(data) {
-                console.log("connection was closed to '" + data.currentTarget.URL+'"');
+            conn.onclose = function (data) {
+                console.log("connection was closed to '" + data.currentTarget.URL + '"');
             };
         } else {
             alert("Your browser does not support WebSockets. :'|");
         }
     }
 
-    my.close = function() {
+    my.close = function () {
         conn.close();
     }
 
@@ -40,7 +40,7 @@ define(["datastream"], function (DataStream){
      * @param message
      * @returns {boolean}
      */
-    my.send = function(message) {
+    my.send = function (message) {
         if (conn.readyState != WebSocket.OPEN) {
             return false;
         }

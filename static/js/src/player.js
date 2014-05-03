@@ -1,4 +1,4 @@
-define(['gamestate'], function(gamestate){
+define(['src/gamestate'], function (gamestate) {
 
     var player = {};
 
@@ -12,10 +12,10 @@ define(['gamestate'], function(gamestate){
         MOVE_DOWN = 1,
         MOVE_RIGHT = 2,
         MOVE_LEFT = 3,
-        // A byte, represents the actions
+    // A byte, represents the actions
         actions = 0,
-        // console.log the keypressed
-         debug = false;
+    // console.log the keypressed
+        debug = false;
 
     /**
      *
@@ -37,11 +37,13 @@ define(['gamestate'], function(gamestate){
      * @param event
      */
     window.document.onkeydown = function (event) {
-        if(debug) {
+        if (debug) {
             console.log(String.fromCharCode(event.keyCode), event.keyCode);
         }
-        if(typeof keycodeToAction[event.keyCode] === 'undefined') { return; }
-        actions |= 1 <<  keycodeToAction[event.keyCode];
+        if (typeof keycodeToAction[event.keyCode] === 'undefined') {
+            return;
+        }
+        actions |= 1 << keycodeToAction[event.keyCode];
     }
 
     /**
@@ -49,7 +51,9 @@ define(['gamestate'], function(gamestate){
      * @param event
      */
     window.document.onkeyup = function (event) {
-        if(typeof keycodeToAction[event.keyCode] === 'undefined') { return; }
+        if (typeof keycodeToAction[event.keyCode] === 'undefined') {
+            return;
+        }
         actions &= ~(1 << keycodeToAction[event.keyCode]);
     }
 
@@ -58,8 +62,8 @@ define(['gamestate'], function(gamestate){
      *
      * @returns bool
      */
-    player.sendUpdates = function(tickLength, websocket) {
-        if(actions == 0) {
+    player.sendUpdates = function (tickLength, websocket) {
+        if (actions == 0) {
             return false;
         }
         var cmd = new DataStream();
