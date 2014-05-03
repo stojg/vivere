@@ -1,5 +1,7 @@
 #!/bin/bash
 
+./make.sh
+
 echo "mode: set" > acc.out
 for Dir in $(find ./* -maxdepth 0 -type d -and -not -iname "Godeps");
 do
