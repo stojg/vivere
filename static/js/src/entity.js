@@ -1,8 +1,8 @@
-define(["lib/pixi", "src/gamestate"], function (pixi, gamestate) {
+/* jshint undef: true, unused: true, strict: true */
+/* global define, console */
+define(["lib/pixi"], function (pixi) {
 
-    const STATE_IDLE = 0;
-    const STATE_DEAD = 1;
-    const STATE_MOVING = 2;
+    'use strict';
 
     var GameObject = function (texture) {
 
@@ -12,7 +12,7 @@ define(["lib/pixi", "src/gamestate"], function (pixi, gamestate) {
 
         this.sprite.anchor = {x: 0.5, y: 0.5};
 
-        this.interpolationDelay = 120;
+        this.interpolationDelay = 0;
 
         /**
          *
@@ -27,7 +27,7 @@ define(["lib/pixi", "src/gamestate"], function (pixi, gamestate) {
          *
          * @type {Array}
          */
-        this.server = new Array();
+        this.server = [];
 
         /**
          * Contains a list of updates in the past, used for interpolation
@@ -35,7 +35,7 @@ define(["lib/pixi", "src/gamestate"], function (pixi, gamestate) {
          *
          * @type {Array}
          */
-        this.snapshots = new Array();
+        this.snapshots = [];
 
         /**
          * serverUpdate is called when the server sends an update command
@@ -49,109 +49,60 @@ define(["lib/pixi", "src/gamestate"], function (pixi, gamestate) {
 
         /**
          *
-         * @param mSec
          */
-        this.update = function (tFrame) {
-            if(typeof tFrame == 'undefined' || tFrame == 0) {
-                console.error('Elapsed time is zero?');
-                return;
-            }
+        this.applyServerUpdates = function() {
             // Move queued server updates to the snapshot array
             var msg = this.server.pop();
             while (typeof msg !== 'undefined') {
                 this.snapshots.unshift(msg);
                 msg = this.server.pop();
             }
-
-            if (this.interpolationDelay < 1) {
-                this.sprite.position.x = this.snapshots[0].position.x;
-                this.sprite.position.y = this.snapshots[0].position.y;
-                this.deleteOldSnapshots(this.snapshots[0].timestamp);
-            } else {
-                this.interpolate(tFrame);
-            }
-        }
+        };
 
         /**
          *
-         * @param tFrame
+         * @param mSec
          */
-        this.interpolate = function (tFrame) {
-            var interpolationTime = tFrame - this.interpolationDelay,
+        this.update = function (tFrame) {
+            var coef,
                 latestSnapshot,
-                fromSnapshot,
-                coef,
-                diffX,
-                diffY;
+                interpolationTime = tFrame - this.interpolationDelay;
 
-            for (key in this.snapshots) {
-                if (tFrame > this.snapshots[key].timestamp) {
-                    latestSnapshot = this.snapshots[key];
-                    break;
-                }
+            if(typeof tFrame == 'undefined' || tFrame === 0) {
+                return;
             }
 
-            if (typeof latestSnapshot === 'undefined') {
-                console.info("There is no snapshot older then tFrame");
-                return;
+            this.applyServerUpdates();
+
+            latestSnapshot = this.getLatestState(tFrame);
+            if(latestSnapshot === false) {
+                return false;
             }
 
             this.state = latestSnapshot.state;
-            if (this.state != 0) {
-                //console.log(latestSnapshot);
-            }
 
-            for (key in this.snapshots) {
-                if (interpolationTime > this.snapshots[key].timestamp) {
-                    fromSnapshot = this.snapshots[key];
-                    break;
-                }
-            }
-
-            if (typeof fromSnapshot === 'undefined') {
-                console.info("Not enough snapshots to interpolate between");
-                this.sprite.position.x = latestSnapshot.position.x;
-                this.sprite.position.y = latestSnapshot.position.y;
+            if (this.interpolationDelay <= 0) {
+                this.sprite.position = latestSnapshot.position;
                 return;
             }
 
-            this.deleteOldSnapshots(fromSnapshot.timestamp);
+            var fromSnapshot = this.getPreviousState(interpolationTime, latestSnapshot);
 
-            if (latestSnapshot.timestamp == fromSnapshot.timestamp) {
-                //console.info("Latest and from snapshots are the same, interpolationDelay too low.");
-                this.sprite.position.x = latestSnapshot.position.x;
-                this.sprite.position.y = latestSnapshot.position.y;
-                return;
-            }
-
-            if (latestSnapshot.timestamp < fromSnapshot.timestamp) {
-                console.error("From snapshot have a newer timestamp than latest snapshot");
+            if(fromSnapshot === false) {
+                this.sprite.position = latestSnapshot.position;
                 return;
             }
 
             coef = (interpolationTime - fromSnapshot.timestamp) / (latestSnapshot.timestamp - fromSnapshot.timestamp);
-
-            if (coef < 0 || coef > 1) {
-                console.error("Interpolation coef is out of bounds: " + coef);
-                this.sprite.position.x = latestSnapshot.position.x;
-                this.sprite.position.y = latestSnapshot.position.y;
+            if(coef < 0 || coef > 1) {
+                this.sprite.position = latestSnapshot.position;
                 return;
             }
 
-            diffX = latestSnapshot.position.x - fromSnapshot.position.x;
-            if (Math.abs(diffX) < 0.1) {
-                this.sprite.position.x = latestSnapshot.position.x;
-            } else {
-                this.sprite.position.x = fromSnapshot.position.x + coef * diffX;
-            }
 
-            diffY = latestSnapshot.position.y - fromSnapshot.position.y;
-            if (Math.abs(diffY) < 0.1) {
-                this.sprite.position.y = latestSnapshot.position.y;
-            } else {
-                this.sprite.position.y = fromSnapshot.position.y + coef * diffY;
-            }
-        }
+            this.sprite.position = this.getInterpolated(fromSnapshot, latestSnapshot, coef);
+            this.deleteOldSnapshots(fromSnapshot.timestamp);
+        };
 
         /**
          * Delete all timestamps older than passed in timestamp
@@ -160,16 +111,88 @@ define(["lib/pixi", "src/gamestate"], function (pixi, gamestate) {
          */
         this.deleteOldSnapshots = function (timestamp) {
             if (typeof timestamp === 'undefined') {
-                console.error("timestamp undefined");
                 return;
             }
             // delete older than fromSnapshot
-            for (key in this.snapshots) {
+            for (var key in this.snapshots) {
                 if (this.snapshots[key].timestamp < timestamp) {
                     delete(this.snapshots[key]);
                 }
             }
-        }
+        };
+
+        /**
+         *
+         * @param timestamp
+         * @returns {*}
+         */
+        this.getLatestState = function(timestamp) {
+            var latestSnapshot;
+            for (var key in this.snapshots) {
+                if (timestamp >= this.snapshots[key].timestamp) {
+                    latestSnapshot = this.snapshots[key];
+                    break;
+                }
+            }
+            if (typeof latestSnapshot === 'undefined') {
+                return false;
+            }
+            return latestSnapshot;
+        };
+
+        /**
+         *
+         * @param timestamp
+         * @param toState
+         * @returns {*}
+         */
+        this.getPreviousState = function(timestamp, toState) {
+            var fromSnapshot;
+
+            if(typeof toState == 'undefined' || toState === false) {
+                return false;
+            }
+
+            for (var key in this.snapshots) {
+                if (timestamp > this.snapshots[key].timestamp && this.snapshots[key].tick != toState.tick) {
+                    fromSnapshot = this.snapshots[key];
+                    break;
+                }
+            }
+
+            if (typeof fromSnapshot == 'undefined') {
+                return false;
+            }
+            return fromSnapshot;
+        };
+
+        /**
+         *
+         * @param from
+         * @param to
+         * @param coef
+         * @returns {{x: number, y: number}}
+         */
+        this.getInterpolated = function(from, to, coef) {
+            var position = {x: 0, y: 0},
+                diffX,
+                diffY;
+
+            diffX = to.position.x - from.position.x;
+            if (Math.abs(diffX) < 0.1) {
+                position.x = from.position.x;
+            } else {
+                position.x = from.position.x + coef * diffX;
+            }
+            diffY = to.position.y - from.position.y;
+            if (Math.abs(diffY) < 0.1) {
+                position.y = from.position.y;
+            } else {
+                position.y = from.position.y + coef * diffY;
+            }
+            return position;
+        };
+
 
         /**
          *
@@ -177,16 +200,17 @@ define(["lib/pixi", "src/gamestate"], function (pixi, gamestate) {
          */
         this.getSprite = function () {
             return this.sprite;
-        }
-    }
+        };
+    };
 
     var entity = {};
 
     entity.BUNNY = 2;
 
     entity.create = function (type, interpolationDelay) {
+        var go;
         if(typeof interpolationDelay == 'undefined') {
-            interpolationDelay=false;
+            interpolationDelay = 0;
         }
 
         if (type === this.BUNNY) {
@@ -196,7 +220,8 @@ define(["lib/pixi", "src/gamestate"], function (pixi, gamestate) {
         }
 
         throw new Error("Tried to create a model without an exiting type '" + type + "'");
-    }
+    };
+
     return entity;
 });
 

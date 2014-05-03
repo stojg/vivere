@@ -1,4 +1,8 @@
-define(['src/gamestate'], function (gamestate) {
+/* jshint undef: true, unused: true, strict: true */
+/* global define, console, window */
+define(['src/gamestate', 'lib/datastream'], function (gamestate, DataStream) {
+
+    "use strict";
 
     var player = {};
 
@@ -30,7 +34,7 @@ define(['src/gamestate'], function (gamestate) {
         39: MOVE_RIGHT, // arrow right
         65: MOVE_LEFT, // a
         37: MOVE_LEFT // arrow left
-    }
+    };
 
     /**
      *
@@ -44,7 +48,7 @@ define(['src/gamestate'], function (gamestate) {
             return;
         }
         actions |= 1 << keycodeToAction[event.keyCode];
-    }
+    };
 
     /**
      *
@@ -55,7 +59,7 @@ define(['src/gamestate'], function (gamestate) {
             return;
         }
         actions &= ~(1 << keycodeToAction[event.keyCode]);
-    }
+    };
 
     /**
      * Send the client commands back to the server
@@ -63,7 +67,7 @@ define(['src/gamestate'], function (gamestate) {
      * @returns bool
      */
     player.sendUpdates = function (tickLength, websocket) {
-        if (actions == 0) {
+        if (actions ==+ 0) {
             return false;
         }
         var cmd = new DataStream();
@@ -73,7 +77,7 @@ define(['src/gamestate'], function (gamestate) {
         cmd.writeUint32(tickLength);
         cmd.writeUint32(actions);
         return websocket.send(cmd.buffer);
-    }
+    };
 
     return player;
 });

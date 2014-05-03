@@ -1,6 +1,10 @@
+/* jshint undef: true, unused: true, strict: true */
+/* global define */
 define(["src/gamestate"], function (gamestate) {
 
-    var sim = {}
+    "use strict";
+
+    var sim = {};
 
     /**
      * this method is called every approx 16ms
@@ -8,8 +12,7 @@ define(["src/gamestate"], function (gamestate) {
      * @param mSec
      */
     sim.update = function (tFrame, main) {
-
-        for (i in gamestate.entities) {
+        for (var i in gamestate.entities) {
 
             if (typeof(gamestate.entities[i]) === 'undefined') {
                 continue;
@@ -22,10 +25,7 @@ define(["src/gamestate"], function (gamestate) {
                 gamestate.entities[i].update(tFrame);
             }
         }
-    }
-
-
-
+    };
 
     return sim;
-})
+});

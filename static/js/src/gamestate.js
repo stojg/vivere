@@ -1,10 +1,14 @@
+/* jshint undef: true, unused: true, strict: true */
+/* global define */
 define(function () {
 
-    var my = {}
+    "use strict";
 
-    my.entities = new Array();
+    var my = {};
 
-    my.messageQueue = new Array();
+    my.entities = [];
+
+    my.messageQueue = [];
 
     my.serverTick = 0;
 

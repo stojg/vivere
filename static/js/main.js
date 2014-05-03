@@ -1,4 +1,8 @@
-require(["src/websocket", 'lib/pixi', 'src/entity', "src/gamestate", "src/player", "src/simulator"], function (websocket, pixi, entity, gamestate, player, simulator) {
+/* jshint undef: true, unused: true, strict: true */
+/* global require, window, clearTimeout, document */
+require(["src/websocket", 'lib/pixi', 'src/entity', "src/gamestate", "src/player", "src/simulator", 'lib/datastream'], function (websocket, pixi, entity, gamestate, player, simulator, DataStream) {
+
+    "use strict";
 
     window.cancelRequestAnimFrame = (function () {
         return window.cancelAnimationFrame ||
@@ -6,7 +10,7 @@ require(["src/websocket", 'lib/pixi', 'src/entity', "src/gamestate", "src/player
             window.mozCancelRequestAnimationFrame ||
             window.oCancelRequestAnimationFrame ||
             window.msCancelRequestAnimationFrame ||
-            clearTimeout
+            clearTimeout;
     })();
 
     var main = {};
@@ -19,10 +23,10 @@ require(["src/websocket", 'lib/pixi', 'src/entity', "src/gamestate", "src/player
     main.commandTick = 0;
     main.stages = [];
 
-    main.fpsText;
+    main.fpsText = null;
     main.frameCounter = 0;
 
-    main.mpsText;
+    main.mpsText = null;
     main.messageCounter = 0;
     main.lastRecieved = window.performance.now();
 
@@ -34,10 +38,10 @@ require(["src/websocket", 'lib/pixi', 'src/entity', "src/gamestate", "src/player
         document.body.appendChild(this.pixi.view);
         this.stages[0] = new pixi.Stage(0x666666);
         main.fpsText = new pixi.Text("fps ", {font: "22px Arial", fill: "white"});
-        main.fpsText.position = {x: 10, y: 5}
+        main.fpsText.position = {x: 10, y: 5};
         this.stages[0].addChild(main.fpsText);
         main.mpsText = new pixi.Text("mps ", {font: "22px Arial", fill: "white"});
-        main.mpsText.position = {x: 10, y: 25}
+        main.mpsText.position = {x: 10, y: 25};
         this.stages[0].addChild(main.mpsText);
         this.lastTick = window.performance.now();
 
@@ -46,7 +50,7 @@ require(["src/websocket", 'lib/pixi', 'src/entity', "src/gamestate", "src/player
 //            websocket.close();
 //        }, 5*1000)
 
-    }
+    };
 
     /**
      * Render the game
@@ -56,7 +60,7 @@ require(["src/websocket", 'lib/pixi', 'src/entity', "src/gamestate", "src/player
         for (var i = 0; i < this.stages.length; i++) {
             this.pixi.render(this.stages[i]);
         }
-    }
+    };
 
     /**
      * Behold, the game server starts after the websocket connects
@@ -111,10 +115,10 @@ require(["src/websocket", 'lib/pixi', 'src/entity', "src/gamestate", "src/player
         main.lastRecieved = window.performance.now();
         main.messageCounter++;
 
-        var buf = new DataStream(evt.data)
+        var buf = new DataStream(evt.data);
         gamestate.serverTick = buf.readUint32();
         var nEnts = buf.readUint16();
-        for (i = 0; i < nEnts; i++) {
+        for (var i = 0; i < nEnts; i++) {
             // get the bitmask
             var bitMask = buf.readUint8();
 
@@ -124,13 +128,13 @@ require(["src/websocket", 'lib/pixi', 'src/entity', "src/gamestate", "src/player
             // model
             if ((bitMask & (1 << 0)) > 0) {
                 var modelId = buf.readUint16();
-                if (modelId == 0) {
+                if (modelId === 0) {
                     if (typeof gamestate.entities[id] !== 'undefined') {
                         main.stages[0].removeChild(gamestate.entities[id].getSprite());
                         delete gamestate.entities[id];
                     }
                 } else if (typeof gamestate.entities[id] === 'undefined') {
-                    gamestate.entities[id] = entity.create(modelId);
+                    gamestate.entities[id] = entity.create(modelId, 120 );
                     main.stages[0].addChild(gamestate.entities[id].getSprite());
                 }
             }
