@@ -111,11 +111,9 @@ require(["src/websocket", 'lib/pixi', 'src/entity', "src/gamestate", "src/player
      *
      * @param evt
      */
-    function onRecieve(evt) {
-        main.lastRecieved = window.performance.now();
-        main.messageCounter++;
+    function onRecieve(buf) {
 
-        var buf = new DataStream(evt.data);
+
         gamestate.serverTick = buf.readUint32();
         var nEnts = buf.readUint16();
         for (var i = 0; i < nEnts; i++) {

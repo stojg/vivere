@@ -71,11 +71,21 @@ define(['src/gamestate', 'lib/datastream'], function (gamestate, DataStream) {
             return false;
         }
         var cmd = new DataStream();
-        cmd.writeUint32(gamestate.serverTick);
+        // Attach the current server time
+
+
+        // send a input request
+        cmd.writeUint8(3);
+        // Send the latest server time recieved
+        // cmd.writeFloat64(tickLength);
+        // Send which # of command this is, this get passed by the server
+        // so we can readjust the estimated controlled entity's position
         cmd.writeUint32(++cmdSequence);
-        // lenght of command
+        // How many ms this command was pressed for
         cmd.writeUint32(tickLength);
+        // a byte that represents the pressed buttons
         cmd.writeUint32(actions);
+
         return websocket.send(cmd.buffer);
     };
 

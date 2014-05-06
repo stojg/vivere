@@ -7,7 +7,7 @@ define(function () {
      @param {?Number} byteOffset Offset from arrayBuffer beginning for the DataStream.
      @param {?Boolean} endianness DataStream.BIG_ENDIAN or DataStream.LITTLE_ENDIAN (the default).
      */
-    DataStream = function (arrayBuffer, byteOffset, endianness) {
+    DataStream = function(arrayBuffer, byteOffset, endianness) {
         this._byteOffset = byteOffset || 0;
         if (arrayBuffer instanceof ArrayBuffer) {
             this.buffer = arrayBuffer;
@@ -32,7 +32,7 @@ define(function () {
      @param {string} filename Filename to save as.
      @return {null}
      */
-    DataStream.prototype.save = function (filename) {
+    DataStream.prototype.save = function(filename) {
         var blob = new Blob(this.buffer);
         var URL = (window.webkitURL || window.URL);
         if (URL && URL.createObjectURL) {
@@ -67,10 +67,10 @@ define(function () {
      */
     DataStream.prototype._dynamicSize = true;
     Object.defineProperty(DataStream.prototype, 'dynamicSize',
-        { get: function () {
+        { get: function() {
             return this._dynamicSize;
         },
-            set: function (v) {
+            set: function(v) {
                 if (!v) {
                     this._trimAlloc();
                 }
@@ -90,7 +90,7 @@ define(function () {
      @type {number}
      */
     Object.defineProperty(DataStream.prototype, 'byteLength',
-        { get: function () {
+        { get: function() {
             return this._byteLength - this._byteOffset;
         }});
 
@@ -100,11 +100,11 @@ define(function () {
      @type {Object}
      */
     Object.defineProperty(DataStream.prototype, 'buffer',
-        { get: function () {
+        { get: function() {
             this._trimAlloc();
             return this._buffer;
         },
-            set: function (v) {
+            set: function(v) {
                 this._buffer = v;
                 this._dataView = new DataView(this._buffer, this._byteOffset);
                 this._byteLength = this._buffer.byteLength;
@@ -116,10 +116,10 @@ define(function () {
      @type {number}
      */
     Object.defineProperty(DataStream.prototype, 'byteOffset',
-        { get: function () {
+        { get: function() {
             return this._byteOffset;
         },
-            set: function (v) {
+            set: function(v) {
                 this._byteOffset = v;
                 this._dataView = new DataView(this._buffer, this._byteOffset);
                 this._byteLength = this._buffer.byteLength;
@@ -131,10 +131,10 @@ define(function () {
      @type {Object}
      */
     Object.defineProperty(DataStream.prototype, 'dataView',
-        { get: function () {
+        { get: function() {
             return this._dataView;
         },
-            set: function (v) {
+            set: function(v) {
                 this._byteOffset = v.byteOffset;
                 this._buffer = v.buffer;
                 this._dataView = new DataView(this._buffer, this._byteOffset);
@@ -146,7 +146,7 @@ define(function () {
      @param {number} extra Number of bytes to add to the buffer allocation.
      @return {null}
      */
-    DataStream.prototype._realloc = function (extra) {
+    DataStream.prototype._realloc = function(extra) {
         if (!this._dynamicSize) {
             return;
         }
@@ -180,7 +180,7 @@ define(function () {
 
      @return {null}
      */
-    DataStream.prototype._trimAlloc = function () {
+    DataStream.prototype._trimAlloc = function() {
         if (this._byteLength == this._buffer.byteLength) {
             return;
         }
@@ -198,7 +198,7 @@ define(function () {
      @param {number} pos Position to seek to.
      @return {null}
      */
-    DataStream.prototype.seek = function (pos) {
+    DataStream.prototype.seek = function(pos) {
         var npos = Math.max(0, Math.min(this.byteLength, pos));
         this.position = (isNaN(npos) || !isFinite(npos)) ? 0 : npos;
     };
@@ -209,7 +209,7 @@ define(function () {
 
      @return {boolean} True if the seek pointer is at the end of the buffer.
      */
-    DataStream.prototype.isEof = function () {
+    DataStream.prototype.isEof = function() {
         return (this.position >= this._byteLength);
     };
 
@@ -225,9 +225,9 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} Int32Array to the DataStream backing buffer.
      */
-    DataStream.prototype.mapInt32Array = function (length, e) {
+    DataStream.prototype.mapInt32Array = function(length, e) {
         this._realloc(length * 4);
-        var arr = new Int32Array(this._buffer, this.byteOffset + this.position, length);
+        var arr = new Int32Array(this._buffer, this.byteOffset+this.position, length);
         DataStream.arrayToNative(arr, e == null ? this.endianness : e);
         this.position += length * 4;
         return arr;
@@ -245,9 +245,9 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} Int16Array to the DataStream backing buffer.
      */
-    DataStream.prototype.mapInt16Array = function (length, e) {
+    DataStream.prototype.mapInt16Array = function(length, e) {
         this._realloc(length * 2);
-        var arr = new Int16Array(this._buffer, this.byteOffset + this.position, length);
+        var arr = new Int16Array(this._buffer, this.byteOffset+this.position, length);
         DataStream.arrayToNative(arr, e == null ? this.endianness : e);
         this.position += length * 2;
         return arr;
@@ -262,9 +262,9 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} Int8Array to the DataStream backing buffer.
      */
-    DataStream.prototype.mapInt8Array = function (length) {
+    DataStream.prototype.mapInt8Array = function(length) {
         this._realloc(length * 1);
-        var arr = new Int8Array(this._buffer, this.byteOffset + this.position, length);
+        var arr = new Int8Array(this._buffer, this.byteOffset+this.position, length);
         this.position += length * 1;
         return arr;
     };
@@ -281,9 +281,9 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} Uint32Array to the DataStream backing buffer.
      */
-    DataStream.prototype.mapUint32Array = function (length, e) {
+    DataStream.prototype.mapUint32Array = function(length, e) {
         this._realloc(length * 4);
-        var arr = new Uint32Array(this._buffer, this.byteOffset + this.position, length);
+        var arr = new Uint32Array(this._buffer, this.byteOffset+this.position, length);
         DataStream.arrayToNative(arr, e == null ? this.endianness : e);
         this.position += length * 4;
         return arr;
@@ -301,9 +301,9 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} Uint16Array to the DataStream backing buffer.
      */
-    DataStream.prototype.mapUint16Array = function (length, e) {
+    DataStream.prototype.mapUint16Array = function(length, e) {
         this._realloc(length * 2);
-        var arr = new Uint16Array(this._buffer, this.byteOffset + this.position, length);
+        var arr = new Uint16Array(this._buffer, this.byteOffset+this.position, length);
         DataStream.arrayToNative(arr, e == null ? this.endianness : e);
         this.position += length * 2;
         return arr;
@@ -318,9 +318,9 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} Uint8Array to the DataStream backing buffer.
      */
-    DataStream.prototype.mapUint8Array = function (length) {
+    DataStream.prototype.mapUint8Array = function(length) {
         this._realloc(length * 1);
-        var arr = new Uint8Array(this._buffer, this.byteOffset + this.position, length);
+        var arr = new Uint8Array(this._buffer, this.byteOffset+this.position, length);
         this.position += length * 1;
         return arr;
     };
@@ -337,9 +337,9 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} Float64Array to the DataStream backing buffer.
      */
-    DataStream.prototype.mapFloat64Array = function (length, e) {
+    DataStream.prototype.mapFloat64Array = function(length, e) {
         this._realloc(length * 8);
-        var arr = new Float64Array(this._buffer, this.byteOffset + this.position, length);
+        var arr = new Float64Array(this._buffer, this.byteOffset+this.position, length);
         DataStream.arrayToNative(arr, e == null ? this.endianness : e);
         this.position += length * 8;
         return arr;
@@ -357,9 +357,9 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} Float32Array to the DataStream backing buffer.
      */
-    DataStream.prototype.mapFloat32Array = function (length, e) {
+    DataStream.prototype.mapFloat32Array = function(length, e) {
         this._realloc(length * 4);
-        var arr = new Float32Array(this._buffer, this.byteOffset + this.position, length);
+        var arr = new Float32Array(this._buffer, this.byteOffset+this.position, length);
         DataStream.arrayToNative(arr, e == null ? this.endianness : e);
         this.position += length * 4;
         return arr;
@@ -372,12 +372,12 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} The read Int32Array.
      */
-    DataStream.prototype.readInt32Array = function (length, e) {
-        length = length == null ? (this.byteLength - this.position / 4) : length;
+    DataStream.prototype.readInt32Array = function(length, e) {
+        length = length == null ? (this.byteLength-this.position / 4) : length;
         var arr = new Int32Array(length);
         DataStream.memcpy(arr.buffer, 0,
-            this.buffer, this.byteOffset + this.position,
-            length * arr.BYTES_PER_ELEMENT);
+            this.buffer, this.byteOffset+this.position,
+            length*arr.BYTES_PER_ELEMENT);
         DataStream.arrayToNative(arr, e == null ? this.endianness : e);
         this.position += arr.byteLength;
         return arr;
@@ -390,12 +390,12 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} The read Int16Array.
      */
-    DataStream.prototype.readInt16Array = function (length, e) {
-        length = length == null ? (this.byteLength - this.position / 2) : length;
+    DataStream.prototype.readInt16Array = function(length, e) {
+        length = length == null ? (this.byteLength-this.position / 2) : length;
         var arr = new Int16Array(length);
         DataStream.memcpy(arr.buffer, 0,
-            this.buffer, this.byteOffset + this.position,
-            length * arr.BYTES_PER_ELEMENT);
+            this.buffer, this.byteOffset+this.position,
+            length*arr.BYTES_PER_ELEMENT);
         DataStream.arrayToNative(arr, e == null ? this.endianness : e);
         this.position += arr.byteLength;
         return arr;
@@ -408,12 +408,12 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} The read Int8Array.
      */
-    DataStream.prototype.readInt8Array = function (length) {
-        length = length == null ? (this.byteLength - this.position) : length;
+    DataStream.prototype.readInt8Array = function(length) {
+        length = length == null ? (this.byteLength-this.position) : length;
         var arr = new Int8Array(length);
         DataStream.memcpy(arr.buffer, 0,
-            this.buffer, this.byteOffset + this.position,
-            length * arr.BYTES_PER_ELEMENT);
+            this.buffer, this.byteOffset+this.position,
+            length*arr.BYTES_PER_ELEMENT);
         this.position += arr.byteLength;
         return arr;
     };
@@ -425,12 +425,12 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} The read Uint32Array.
      */
-    DataStream.prototype.readUint32Array = function (length, e) {
-        length = length == null ? (this.byteLength - this.position / 4) : length;
+    DataStream.prototype.readUint32Array = function(length, e) {
+        length = length == null ? (this.byteLength-this.position / 4) : length;
         var arr = new Uint32Array(length);
         DataStream.memcpy(arr.buffer, 0,
-            this.buffer, this.byteOffset + this.position,
-            length * arr.BYTES_PER_ELEMENT);
+            this.buffer, this.byteOffset+this.position,
+            length*arr.BYTES_PER_ELEMENT);
         DataStream.arrayToNative(arr, e == null ? this.endianness : e);
         this.position += arr.byteLength;
         return arr;
@@ -443,12 +443,12 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} The read Uint16Array.
      */
-    DataStream.prototype.readUint16Array = function (length, e) {
-        length = length == null ? (this.byteLength - this.position / 2) : length;
+    DataStream.prototype.readUint16Array = function(length, e) {
+        length = length == null ? (this.byteLength-this.position / 2) : length;
         var arr = new Uint16Array(length);
         DataStream.memcpy(arr.buffer, 0,
-            this.buffer, this.byteOffset + this.position,
-            length * arr.BYTES_PER_ELEMENT);
+            this.buffer, this.byteOffset+this.position,
+            length*arr.BYTES_PER_ELEMENT);
         DataStream.arrayToNative(arr, e == null ? this.endianness : e);
         this.position += arr.byteLength;
         return arr;
@@ -461,12 +461,12 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} The read Uint8Array.
      */
-    DataStream.prototype.readUint8Array = function (length) {
-        length = length == null ? (this.byteLength - this.position) : length;
+    DataStream.prototype.readUint8Array = function(length) {
+        length = length == null ? (this.byteLength-this.position) : length;
         var arr = new Uint8Array(length);
         DataStream.memcpy(arr.buffer, 0,
-            this.buffer, this.byteOffset + this.position,
-            length * arr.BYTES_PER_ELEMENT);
+            this.buffer, this.byteOffset+this.position,
+            length*arr.BYTES_PER_ELEMENT);
         this.position += arr.byteLength;
         return arr;
     };
@@ -478,12 +478,12 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} The read Float64Array.
      */
-    DataStream.prototype.readFloat64Array = function (length, e) {
-        length = length == null ? (this.byteLength - this.position / 8) : length;
+    DataStream.prototype.readFloat64Array = function(length, e) {
+        length = length == null ? (this.byteLength-this.position / 8) : length;
         var arr = new Float64Array(length);
         DataStream.memcpy(arr.buffer, 0,
-            this.buffer, this.byteOffset + this.position,
-            length * arr.BYTES_PER_ELEMENT);
+            this.buffer, this.byteOffset+this.position,
+            length*arr.BYTES_PER_ELEMENT);
         DataStream.arrayToNative(arr, e == null ? this.endianness : e);
         this.position += arr.byteLength;
         return arr;
@@ -496,12 +496,12 @@ define(function () {
      @param {?boolean} e Endianness of the data to read.
      @return {Object} The read Float32Array.
      */
-    DataStream.prototype.readFloat32Array = function (length, e) {
-        length = length == null ? (this.byteLength - this.position / 4) : length;
+    DataStream.prototype.readFloat32Array = function(length, e) {
+        length = length == null ? (this.byteLength-this.position / 4) : length;
         var arr = new Float32Array(length);
         DataStream.memcpy(arr.buffer, 0,
-            this.buffer, this.byteOffset + this.position,
-            length * arr.BYTES_PER_ELEMENT);
+            this.buffer, this.byteOffset+this.position,
+            length*arr.BYTES_PER_ELEMENT);
         DataStream.arrayToNative(arr, e == null ? this.endianness : e);
         this.position += arr.byteLength;
         return arr;
@@ -513,16 +513,16 @@ define(function () {
      @param {Object} arr The array to write.
      @param {?boolean} e Endianness of the data to write.
      */
-    DataStream.prototype.writeInt32Array = function (arr, e) {
+    DataStream.prototype.writeInt32Array = function(arr, e) {
         this._realloc(arr.length * 4);
         if (arr instanceof Int32Array &&
-            this.byteOffset + this.position % arr.BYTES_PER_ELEMENT == 0) {
-            DataStream.memcpy(this._buffer, this.byteOffset + this.position,
+            this.byteOffset+this.position % arr.BYTES_PER_ELEMENT == 0) {
+            DataStream.memcpy(this._buffer, this.byteOffset+this.position,
                 arr.buffer, 0,
                 arr.byteLength);
             this.mapInt32Array(arr.length, e);
         } else {
-            for (var i = 0; i < arr.length; i++) {
+            for (var i=0; i<arr.length; i++) {
                 this.writeInt32(arr[i], e);
             }
         }
@@ -534,16 +534,16 @@ define(function () {
      @param {Object} arr The array to write.
      @param {?boolean} e Endianness of the data to write.
      */
-    DataStream.prototype.writeInt16Array = function (arr, e) {
+    DataStream.prototype.writeInt16Array = function(arr, e) {
         this._realloc(arr.length * 2);
         if (arr instanceof Int16Array &&
-            this.byteOffset + this.position % arr.BYTES_PER_ELEMENT == 0) {
-            DataStream.memcpy(this._buffer, this.byteOffset + this.position,
+            this.byteOffset+this.position % arr.BYTES_PER_ELEMENT == 0) {
+            DataStream.memcpy(this._buffer, this.byteOffset+this.position,
                 arr.buffer, 0,
                 arr.byteLength);
             this.mapInt16Array(arr.length, e);
         } else {
-            for (var i = 0; i < arr.length; i++) {
+            for (var i=0; i<arr.length; i++) {
                 this.writeInt16(arr[i], e);
             }
         }
@@ -554,16 +554,16 @@ define(function () {
 
      @param {Object} arr The array to write.
      */
-    DataStream.prototype.writeInt8Array = function (arr) {
+    DataStream.prototype.writeInt8Array = function(arr) {
         this._realloc(arr.length * 1);
         if (arr instanceof Int8Array &&
-            this.byteOffset + this.position % arr.BYTES_PER_ELEMENT == 0) {
-            DataStream.memcpy(this._buffer, this.byteOffset + this.position,
+            this.byteOffset+this.position % arr.BYTES_PER_ELEMENT == 0) {
+            DataStream.memcpy(this._buffer, this.byteOffset+this.position,
                 arr.buffer, 0,
                 arr.byteLength);
             this.mapInt8Array(arr.length);
         } else {
-            for (var i = 0; i < arr.length; i++) {
+            for (var i=0; i<arr.length; i++) {
                 this.writeInt8(arr[i]);
             }
         }
@@ -575,16 +575,16 @@ define(function () {
      @param {Object} arr The array to write.
      @param {?boolean} e Endianness of the data to write.
      */
-    DataStream.prototype.writeUint32Array = function (arr, e) {
+    DataStream.prototype.writeUint32Array = function(arr, e) {
         this._realloc(arr.length * 4);
         if (arr instanceof Uint32Array &&
-            this.byteOffset + this.position % arr.BYTES_PER_ELEMENT == 0) {
-            DataStream.memcpy(this._buffer, this.byteOffset + this.position,
+            this.byteOffset+this.position % arr.BYTES_PER_ELEMENT == 0) {
+            DataStream.memcpy(this._buffer, this.byteOffset+this.position,
                 arr.buffer, 0,
                 arr.byteLength);
             this.mapUint32Array(arr.length, e);
         } else {
-            for (var i = 0; i < arr.length; i++) {
+            for (var i=0; i<arr.length; i++) {
                 this.writeUint32(arr[i], e);
             }
         }
@@ -596,16 +596,16 @@ define(function () {
      @param {Object} arr The array to write.
      @param {?boolean} e Endianness of the data to write.
      */
-    DataStream.prototype.writeUint16Array = function (arr, e) {
+    DataStream.prototype.writeUint16Array = function(arr, e) {
         this._realloc(arr.length * 2);
         if (arr instanceof Uint16Array &&
-            this.byteOffset + this.position % arr.BYTES_PER_ELEMENT == 0) {
-            DataStream.memcpy(this._buffer, this.byteOffset + this.position,
+            this.byteOffset+this.position % arr.BYTES_PER_ELEMENT == 0) {
+            DataStream.memcpy(this._buffer, this.byteOffset+this.position,
                 arr.buffer, 0,
                 arr.byteLength);
             this.mapUint16Array(arr.length, e);
         } else {
-            for (var i = 0; i < arr.length; i++) {
+            for (var i=0; i<arr.length; i++) {
                 this.writeUint16(arr[i], e);
             }
         }
@@ -616,16 +616,16 @@ define(function () {
 
      @param {Object} arr The array to write.
      */
-    DataStream.prototype.writeUint8Array = function (arr) {
+    DataStream.prototype.writeUint8Array = function(arr) {
         this._realloc(arr.length * 1);
         if (arr instanceof Uint8Array &&
-            this.byteOffset + this.position % arr.BYTES_PER_ELEMENT == 0) {
-            DataStream.memcpy(this._buffer, this.byteOffset + this.position,
+            this.byteOffset+this.position % arr.BYTES_PER_ELEMENT == 0) {
+            DataStream.memcpy(this._buffer, this.byteOffset+this.position,
                 arr.buffer, 0,
                 arr.byteLength);
             this.mapUint8Array(arr.length);
         } else {
-            for (var i = 0; i < arr.length; i++) {
+            for (var i=0; i<arr.length; i++) {
                 this.writeUint8(arr[i]);
             }
         }
@@ -637,16 +637,16 @@ define(function () {
      @param {Object} arr The array to write.
      @param {?boolean} e Endianness of the data to write.
      */
-    DataStream.prototype.writeFloat64Array = function (arr, e) {
+    DataStream.prototype.writeFloat64Array = function(arr, e) {
         this._realloc(arr.length * 8);
         if (arr instanceof Float64Array &&
-            this.byteOffset + this.position % arr.BYTES_PER_ELEMENT == 0) {
-            DataStream.memcpy(this._buffer, this.byteOffset + this.position,
+            this.byteOffset+this.position % arr.BYTES_PER_ELEMENT == 0) {
+            DataStream.memcpy(this._buffer, this.byteOffset+this.position,
                 arr.buffer, 0,
                 arr.byteLength);
             this.mapFloat64Array(arr.length, e);
         } else {
-            for (var i = 0; i < arr.length; i++) {
+            for (var i=0; i<arr.length; i++) {
                 this.writeFloat64(arr[i], e);
             }
         }
@@ -658,16 +658,16 @@ define(function () {
      @param {Object} arr The array to write.
      @param {?boolean} e Endianness of the data to write.
      */
-    DataStream.prototype.writeFloat32Array = function (arr, e) {
+    DataStream.prototype.writeFloat32Array = function(arr, e) {
         this._realloc(arr.length * 4);
         if (arr instanceof Float32Array &&
-            this.byteOffset + this.position % arr.BYTES_PER_ELEMENT == 0) {
-            DataStream.memcpy(this._buffer, this.byteOffset + this.position,
+            this.byteOffset+this.position % arr.BYTES_PER_ELEMENT == 0) {
+            DataStream.memcpy(this._buffer, this.byteOffset+this.position,
                 arr.buffer, 0,
                 arr.byteLength);
             this.mapFloat32Array(arr.length, e);
         } else {
-            for (var i = 0; i < arr.length; i++) {
+            for (var i=0; i<arr.length; i++) {
                 this.writeFloat32(arr[i], e);
             }
         }
@@ -680,7 +680,7 @@ define(function () {
      @param {?boolean} e Endianness of the number.
      @return {number} The read number.
      */
-    DataStream.prototype.readInt32 = function (e) {
+    DataStream.prototype.readInt32 = function(e) {
         var v = this._dataView.getInt32(this.position, e == null ? this.endianness : e);
         this.position += 4;
         return v;
@@ -692,7 +692,7 @@ define(function () {
      @param {?boolean} e Endianness of the number.
      @return {number} The read number.
      */
-    DataStream.prototype.readInt16 = function (e) {
+    DataStream.prototype.readInt16 = function(e) {
         var v = this._dataView.getInt16(this.position, e == null ? this.endianness : e);
         this.position += 2;
         return v;
@@ -703,7 +703,7 @@ define(function () {
 
      @return {number} The read number.
      */
-    DataStream.prototype.readInt8 = function () {
+    DataStream.prototype.readInt8 = function() {
         var v = this._dataView.getInt8(this.position);
         this.position += 1;
         return v;
@@ -715,7 +715,7 @@ define(function () {
      @param {?boolean} e Endianness of the number.
      @return {number} The read number.
      */
-    DataStream.prototype.readUint32 = function (e) {
+    DataStream.prototype.readUint32 = function(e) {
         var v = this._dataView.getUint32(this.position, e == null ? this.endianness : e);
         this.position += 4;
         return v;
@@ -727,7 +727,7 @@ define(function () {
      @param {?boolean} e Endianness of the number.
      @return {number} The read number.
      */
-    DataStream.prototype.readUint16 = function (e) {
+    DataStream.prototype.readUint16 = function(e) {
         var v = this._dataView.getUint16(this.position, e == null ? this.endianness : e);
         this.position += 2;
         return v;
@@ -738,7 +738,7 @@ define(function () {
 
      @return {number} The read number.
      */
-    DataStream.prototype.readUint8 = function () {
+    DataStream.prototype.readUint8 = function() {
         var v = this._dataView.getUint8(this.position);
         this.position += 1;
         return v;
@@ -750,7 +750,7 @@ define(function () {
      @param {?boolean} e Endianness of the number.
      @return {number} The read number.
      */
-    DataStream.prototype.readFloat32 = function (e) {
+    DataStream.prototype.readFloat32 = function(e) {
         var v = this._dataView.getFloat32(this.position, e == null ? this.endianness : e);
         this.position += 4;
         return v;
@@ -762,7 +762,7 @@ define(function () {
      @param {?boolean} e Endianness of the number.
      @return {number} The read number.
      */
-    DataStream.prototype.readFloat64 = function (e) {
+    DataStream.prototype.readFloat64 = function(e) {
         var v = this._dataView.getFloat64(this.position, e == null ? this.endianness : e);
         this.position += 8;
         return v;
@@ -775,7 +775,7 @@ define(function () {
      @param {number} v Number to write.
      @param {?boolean} e Endianness of the number.
      */
-    DataStream.prototype.writeInt32 = function (v, e) {
+    DataStream.prototype.writeInt32 = function(v, e) {
         this._realloc(4);
         this._dataView.setInt32(this.position, v, e == null ? this.endianness : e);
         this.position += 4;
@@ -787,7 +787,7 @@ define(function () {
      @param {number} v Number to write.
      @param {?boolean} e Endianness of the number.
      */
-    DataStream.prototype.writeInt16 = function (v, e) {
+    DataStream.prototype.writeInt16 = function(v, e) {
         this._realloc(2);
         this._dataView.setInt16(this.position, v, e == null ? this.endianness : e);
         this.position += 2;
@@ -798,7 +798,7 @@ define(function () {
 
      @param {number} v Number to write.
      */
-    DataStream.prototype.writeInt8 = function (v) {
+    DataStream.prototype.writeInt8 = function(v) {
         this._realloc(1);
         this._dataView.setInt8(this.position, v);
         this.position += 1;
@@ -810,7 +810,7 @@ define(function () {
      @param {number} v Number to write.
      @param {?boolean} e Endianness of the number.
      */
-    DataStream.prototype.writeUint32 = function (v, e) {
+    DataStream.prototype.writeUint32 = function(v, e) {
         this._realloc(4);
         this._dataView.setUint32(this.position, v, e == null ? this.endianness : e);
         this.position += 4;
@@ -822,7 +822,7 @@ define(function () {
      @param {number} v Number to write.
      @param {?boolean} e Endianness of the number.
      */
-    DataStream.prototype.writeUint16 = function (v, e) {
+    DataStream.prototype.writeUint16 = function(v, e) {
         this._realloc(2);
         this._dataView.setUint16(this.position, v, e == null ? this.endianness : e);
         this.position += 2;
@@ -833,7 +833,7 @@ define(function () {
 
      @param {number} v Number to write.
      */
-    DataStream.prototype.writeUint8 = function (v) {
+    DataStream.prototype.writeUint8 = function(v) {
         this._realloc(1);
         this._dataView.setUint8(this.position, v);
         this.position += 1;
@@ -845,7 +845,7 @@ define(function () {
      @param {number} v Number to write.
      @param {?boolean} e Endianness of the number.
      */
-    DataStream.prototype.writeFloat32 = function (v, e) {
+    DataStream.prototype.writeFloat32 = function(v, e) {
         this._realloc(4);
         this._dataView.setFloat32(this.position, v, e == null ? this.endianness : e);
         this.position += 4;
@@ -857,7 +857,7 @@ define(function () {
      @param {number} v Number to write.
      @param {?boolean} e Endianness of the number.
      */
-    DataStream.prototype.writeFloat64 = function (v, e) {
+    DataStream.prototype.writeFloat64 = function(v, e) {
         this._realloc(8);
         this._dataView.setFloat64(this.position, v, e == null ? this.endianness : e);
         this.position += 8;
@@ -881,7 +881,7 @@ define(function () {
      @param {number} srcOffset Offset to the source ArrayBuffer.
      @param {number} byteLength Number of bytes to copy.
      */
-    DataStream.memcpy = function (dst, dstOffset, src, srcOffset, byteLength) {
+    DataStream.memcpy = function(dst, dstOffset, src, srcOffset, byteLength) {
         var dstU8 = new Uint8Array(dst, dstOffset, byteLength);
         var srcU8 = new Uint8Array(src, srcOffset, byteLength);
         dstU8.set(srcU8);
@@ -895,7 +895,7 @@ define(function () {
      little-endian. Set false for big-endian.
      @return {Object} The converted typed array.
      */
-    DataStream.arrayToNative = function (array, arrayIsLittleEndian) {
+    DataStream.arrayToNative = function(array, arrayIsLittleEndian) {
         if (arrayIsLittleEndian == this.endianness) {
             return array;
         } else {
@@ -911,7 +911,7 @@ define(function () {
      little-endian. Set false for big-endian.
      @return {Object} The converted typed array.
      */
-    DataStream.nativeToEndian = function (array, littleEndian) {
+    DataStream.nativeToEndian = function(array, littleEndian) {
         if (this.endianness == littleEndian) {
             return array;
         } else {
@@ -925,10 +925,10 @@ define(function () {
      @param {Object} array Typed array to flip.
      @return {Object} The converted typed array.
      */
-    DataStream.flipArrayEndianness = function (array) {
+    DataStream.flipArrayEndianness = function(array) {
         var u8 = new Uint8Array(array.buffer, array.byteOffset, array.byteLength);
-        for (var i = 0; i < array.byteLength; i += array.BYTES_PER_ELEMENT) {
-            for (var j = i + array.BYTES_PER_ELEMENT - 1, k = i; j > k; j--, k++) {
+        for (var i=0; i<array.byteLength; i+=array.BYTES_PER_ELEMENT) {
+            for (var j=i+array.BYTES_PER_ELEMENT-1, k=i; j>k; j--, k++) {
                 var tmp = u8[k];
                 u8[k] = u8[j];
                 u8[j] = tmp;
@@ -999,11 +999,11 @@ define(function () {
      @param {Object} structDefinition Struct definition object.
      @return {Object} The read struct. Null if failed to read struct.
      */
-    DataStream.prototype.readStruct = function (structDefinition) {
+    DataStream.prototype.readStruct = function(structDefinition) {
         var struct = {}, t, v, n;
         var p = this.position;
-        for (var i = 0; i < structDefinition.length; i += 2) {
-            t = structDefinition[i + 1];
+        for (var i=0; i<structDefinition.length; i+=2) {
+            t = structDefinition[i+1];
             v = this.readType(t, struct);
             if (v == null) {
                 if (this.failurePosition == 0) {
@@ -1024,7 +1024,7 @@ define(function () {
      @param {boolean} endianness The endianness of the string data in the DataStream.
      @return {string} The read string.
      */
-    DataStream.prototype.readUCS2String = function (length, endianness) {
+    DataStream.prototype.readUCS2String = function(length, endianness) {
         return String.fromCharCode.apply(null, this.readUint16Array(length, endianness));
     };
 
@@ -1038,14 +1038,14 @@ define(function () {
      @param {?boolean} endianness The endianness to use for the written string data.
      @param {?number} lengthOverride The number of characters to write.
      */
-    DataStream.prototype.writeUCS2String = function (str, endianness, lengthOverride) {
+    DataStream.prototype.writeUCS2String = function(str, endianness, lengthOverride) {
         if (lengthOverride == null) {
             lengthOverride = str.length;
         }
         for (var i = 0; i < str.length && i < lengthOverride; i++) {
             this.writeUint16(str.charCodeAt(i), endianness);
         }
-        for (; i < lengthOverride; i++) {
+        for (; i<lengthOverride; i++) {
             this.writeUint16(0);
         }
     };
@@ -1058,9 +1058,9 @@ define(function () {
      Defaults to ASCII.
      @return {string} The read string.
      */
-    DataStream.prototype.readString = function (length, encoding) {
+    DataStream.prototype.readString = function(length, encoding) {
         if (encoding == null || encoding == "ASCII") {
-            return String.fromCharCode.apply(null, this.mapUint8Array(length == null ? this.byteLength - this.position : length));
+            return String.fromCharCode.apply(null, this.mapUint8Array(length == null ? this.byteLength-this.position : length));
         } else {
             return (new TextDecoder(encoding)).decode(this.mapUint8Array(length));
         }
@@ -1074,19 +1074,19 @@ define(function () {
      Defaults to ASCII.
      @param {?number} length The number of characters to write.
      */
-    DataStream.prototype.writeString = function (s, encoding, length) {
+    DataStream.prototype.writeString = function(s, encoding, length) {
         if (encoding == null || encoding == "ASCII") {
             if (length != null) {
                 var i = 0;
                 var len = Math.min(s.length, length);
-                for (i = 0; i < len; i++) {
+                for (i=0; i<len; i++) {
                     this.writeUint8(s.charCodeAt(i));
                 }
-                for (; i < length; i++) {
+                for (; i<length; i++) {
                     this.writeUint8(0);
                 }
             } else {
-                for (var i = 0; i < s.length; i++) {
+                for (var i=0; i<s.length; i++) {
                     this.writeUint8(s.charCodeAt(i));
                 }
             }
@@ -1103,8 +1103,8 @@ define(function () {
      @param {?number} length The length of the string to read.
      @return {string} The read string.
      */
-    DataStream.prototype.readCString = function (length) {
-        var blen = this.byteLength - this.position;
+    DataStream.prototype.readCString = function(length) {
+        var blen = this.byteLength-this.position;
         var u8 = new Uint8Array(this._buffer, this._byteOffset + this.position);
         var len = blen;
         if (length != null) {
@@ -1113,7 +1113,7 @@ define(function () {
         for (var i = 0; i < len && u8[i] != 0; i++); // find first zero byte
         var s = String.fromCharCode.apply(null, this.mapUint8Array(i));
         if (length != null) {
-            this.position += len - i;
+            this.position += len-i;
         } else if (i != blen) {
             this.position += 1; // trailing zero if not at end of buffer
         }
@@ -1129,18 +1129,18 @@ define(function () {
      @param {string} s The string to write.
      @param {?number} length The number of characters to write.
      */
-    DataStream.prototype.writeCString = function (s, length) {
+    DataStream.prototype.writeCString = function(s, length) {
         if (length != null) {
             var i = 0;
             var len = Math.min(s.length, length);
-            for (i = 0; i < len; i++) {
+            for (i=0; i<len; i++) {
                 this.writeUint8(s.charCodeAt(i));
             }
-            for (; i < length; i++) {
+            for (; i<length; i++) {
                 this.writeUint8(0);
             }
         } else {
-            for (var i = 0; i < s.length; i++) {
+            for (var i=0; i<s.length; i++) {
                 this.writeUint8(s.charCodeAt(i));
             }
             this.writeUint8(0);
@@ -1157,7 +1157,7 @@ define(function () {
      and for calling callbacks.
      @return {?Object} Returns the object on successful read, null on unsuccessful.
      */
-    DataStream.prototype.readType = function (t, struct) {
+    DataStream.prototype.readType = function(t, struct) {
         if (typeof t == "function") {
             return t(this, struct);
         } else if (typeof t == "object" && !(t instanceof Array)) {
@@ -1179,91 +1179,66 @@ define(function () {
             t = tp[0];
             charset = parseInt(tp[1]);
         }
-        switch (t) {
+        switch(t) {
 
             case 'uint8':
-                v = this.readUint8();
-                break;
+                v = this.readUint8(); break;
             case 'int8':
-                v = this.readInt8();
-                break;
+                v = this.readInt8(); break;
 
             case 'uint16':
-                v = this.readUint16(this.endianness);
-                break;
+                v = this.readUint16(this.endianness); break;
             case 'int16':
-                v = this.readInt16(this.endianness);
-                break;
+                v = this.readInt16(this.endianness); break;
             case 'uint32':
-                v = this.readUint32(this.endianness);
-                break;
+                v = this.readUint32(this.endianness); break;
             case 'int32':
-                v = this.readInt32(this.endianness);
-                break;
+                v = this.readInt32(this.endianness); break;
             case 'float32':
-                v = this.readFloat32(this.endianness);
-                break;
+                v = this.readFloat32(this.endianness); break;
             case 'float64':
-                v = this.readFloat64(this.endianness);
-                break;
+                v = this.readFloat64(this.endianness); break;
 
             case 'uint16be':
-                v = this.readUint16(DataStream.BIG_ENDIAN);
-                break;
+                v = this.readUint16(DataStream.BIG_ENDIAN); break;
             case 'int16be':
-                v = this.readInt16(DataStream.BIG_ENDIAN);
-                break;
+                v = this.readInt16(DataStream.BIG_ENDIAN); break;
             case 'uint32be':
-                v = this.readUint32(DataStream.BIG_ENDIAN);
-                break;
+                v = this.readUint32(DataStream.BIG_ENDIAN); break;
             case 'int32be':
-                v = this.readInt32(DataStream.BIG_ENDIAN);
-                break;
+                v = this.readInt32(DataStream.BIG_ENDIAN); break;
             case 'float32be':
-                v = this.readFloat32(DataStream.BIG_ENDIAN);
-                break;
+                v = this.readFloat32(DataStream.BIG_ENDIAN); break;
             case 'float64be':
-                v = this.readFloat64(DataStream.BIG_ENDIAN);
-                break;
+                v = this.readFloat64(DataStream.BIG_ENDIAN); break;
 
             case 'uint16le':
-                v = this.readUint16(DataStream.LITTLE_ENDIAN);
-                break;
+                v = this.readUint16(DataStream.LITTLE_ENDIAN); break;
             case 'int16le':
-                v = this.readInt16(DataStream.LITTLE_ENDIAN);
-                break;
+                v = this.readInt16(DataStream.LITTLE_ENDIAN); break;
             case 'uint32le':
-                v = this.readUint32(DataStream.LITTLE_ENDIAN);
-                break;
+                v = this.readUint32(DataStream.LITTLE_ENDIAN); break;
             case 'int32le':
-                v = this.readInt32(DataStream.LITTLE_ENDIAN);
-                break;
+                v = this.readInt32(DataStream.LITTLE_ENDIAN); break;
             case 'float32le':
-                v = this.readFloat32(DataStream.LITTLE_ENDIAN);
-                break;
+                v = this.readFloat32(DataStream.LITTLE_ENDIAN); break;
             case 'float64le':
-                v = this.readFloat64(DataStream.LITTLE_ENDIAN);
-                break;
+                v = this.readFloat64(DataStream.LITTLE_ENDIAN); break;
 
             case 'cstring':
-                v = this.readCString(lengthOverride);
-                break;
+                v = this.readCString(lengthOverride); break;
 
             case 'string':
-                v = this.readString(lengthOverride, charset);
-                break;
+                v = this.readString(lengthOverride, charset); break;
 
             case 'u16string':
-                v = this.readUCS2String(lengthOverride, this.endianness);
-                break;
+                v = this.readUCS2String(lengthOverride, this.endianness); break;
 
             case 'u16stringle':
-                v = this.readUCS2String(lengthOverride, DataStream.LITTLE_ENDIAN);
-                break;
+                v = this.readUCS2String(lengthOverride, DataStream.LITTLE_ENDIAN); break;
 
             case 'u16stringbe':
-                v = this.readUCS2String(lengthOverride, DataStream.BIG_ENDIAN);
-                break;
+                v = this.readUCS2String(lengthOverride, DataStream.BIG_ENDIAN); break;
 
             default:
                 if (t.length == 3) {
@@ -1288,31 +1263,23 @@ define(function () {
                         if (len == '*') {
                             length = null;
                         }
-                        switch (tap) {
+                        switch(tap) {
                             case 'uint8':
-                                v = this.readUint8Array(length);
-                                break;
+                                v = this.readUint8Array(length); break;
                             case 'uint16':
-                                v = this.readUint16Array(length, endianness);
-                                break;
+                                v = this.readUint16Array(length, endianness); break;
                             case 'uint32':
-                                v = this.readUint32Array(length, endianness);
-                                break;
+                                v = this.readUint32Array(length, endianness); break;
                             case 'int8':
-                                v = this.readInt8Array(length);
-                                break;
+                                v = this.readInt8Array(length); break;
                             case 'int16':
-                                v = this.readInt16Array(length, endianness);
-                                break;
+                                v = this.readInt16Array(length, endianness); break;
                             case 'int32':
-                                v = this.readInt32Array(length, endianness);
-                                break;
+                                v = this.readInt32Array(length, endianness); break;
                             case 'float32':
-                                v = this.readFloat32Array(length, endianness);
-                                break;
+                                v = this.readFloat32Array(length, endianness); break;
                             case 'float64':
-                                v = this.readFloat64Array(length, endianness);
-                                break;
+                                v = this.readFloat64Array(length, endianness); break;
                             case 'cstring':
                             case 'utf16string':
                             case 'string':
@@ -1325,7 +1292,7 @@ define(function () {
                                     }
                                 } else {
                                     v = new Array(length);
-                                    for (var i = 0; i < length; i++) {
+                                    for (var i=0; i<length; i++) {
                                         v[i] = this.readType(ta, struct);
                                     }
                                 }
@@ -1344,14 +1311,14 @@ define(function () {
                                         break;
                                     }
                                     v.push(o);
-                                } catch (e) {
+                                } catch(e) {
                                     this.position = p;
                                     break;
                                 }
                             }
                         } else {
                             v = new Array(length);
-                            for (var i = 0; i < length; i++) {
+                            for (var i=0; i<length; i++) {
                                 var u = this.readType(ta, struct);
                                 if (u == null) return null;
                                 v[i] = u;
@@ -1375,9 +1342,9 @@ define(function () {
      @param {Object} structDefinition Type definition of the struct.
      @param {Object} struct The struct data object.
      */
-    DataStream.prototype.writeStruct = function (structDefinition, struct) {
-        for (var i = 0; i < structDefinition.length; i += 2) {
-            var t = structDefinition[i + 1];
+    DataStream.prototype.writeStruct = function(structDefinition, struct) {
+        for (var i = 0; i < structDefinition.length; i+=2) {
+            var t = structDefinition[i+1];
             this.writeType(t, struct[structDefinition[i]], struct);
         }
     };
@@ -1389,7 +1356,7 @@ define(function () {
      @param {Object} v Value of data to write.
      @param {Object} struct Struct to pass to write callback functions.
      */
-    DataStream.prototype.writeType = function (t, v, struct) {
+    DataStream.prototype.writeType = function(t, v, struct) {
         if (typeof t == "function") {
             return t(this, v);
         } else if (typeof t == "object" && !(t instanceof Array)) {
@@ -1409,7 +1376,7 @@ define(function () {
             charset = parseInt(tp[1]);
         }
 
-        switch (t) {
+        switch(t) {
             case 'uint8':
                 this.writeUint8(v);
                 break;
@@ -1497,7 +1464,7 @@ define(function () {
             default:
                 if (t.length == 3) {
                     var ta = t[1];
-                    for (var i = 0; i < v.length; i++) {
+                    for (var i=0; i<v.length; i++) {
                         this.writeType(ta, v[i]);
                     }
                     break;
@@ -1511,7 +1478,7 @@ define(function () {
             this._realloc(lengthOverride);
             this.position = pos + lengthOverride;
         }
-    }
+    };
     return DataStream;
 });
 
