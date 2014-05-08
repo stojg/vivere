@@ -95,10 +95,12 @@ func (c *Client) Write(p []byte) (n int, err error) {
 	n = len(p)
 	err = nil
 	if n == 0 {
+		err = fmt.Errorf("Write() - zero length message")
 		return
 	}
 	err = websocket.Message.Send(c.ws, p)
 	if err != nil {
+		err = fmt.Errorf("Write() - error during send %v", err)
 		return
 	}
 	return
@@ -153,6 +155,13 @@ func (client *Client) NewMessage(msgType MessageType) *bytes.Buffer {
 // there is some problem reading int64 in javascript
 func (client *Client) timestamp() float64 {
 	return float64(time.Now().UnixNano())
+}
+
+// Updatea
+func (client *Client) Update(buf *bytes.Buffer) {
+	message := client.NewMessage(MSG_UPDATE)
+	message.Write(buf.Bytes())
+	client.Write(message.Bytes())
 }
 
 // Ping sends a ping request to the client

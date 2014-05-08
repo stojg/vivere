@@ -48,7 +48,7 @@ require(["src/websocket", 'lib/pixi', 'src/entity', "src/gamestate", "src/player
 //        setTimeout(function(){
 //            window.cancelRequestAnimFrame(main.stopGameLoop);
 //            websocket.close();
-//        }, 5*1000)
+//        }, 1.1*1000)
 
     };
 
@@ -113,63 +113,16 @@ require(["src/websocket", 'lib/pixi', 'src/entity', "src/gamestate", "src/player
      */
     function onRecieve(buf) {
 
-
-        gamestate.serverTick = buf.readUint32();
-        var nEnts = buf.readUint16();
-        for (var i = 0; i < nEnts; i++) {
-            // get the bitmask
-            var bitMask = buf.readUint8();
-
-            // id
-            var id = buf.readUint16();
-
-            // model
-            if ((bitMask & (1 << 0)) > 0) {
-                var modelId = buf.readUint16();
-                if (modelId === 0) {
-                    if (typeof gamestate.entities[id] !== 'undefined') {
-                        main.stages[0].removeChild(gamestate.entities[id].getSprite());
-                        delete gamestate.entities[id];
-                    }
-                } else if (typeof gamestate.entities[id] === 'undefined') {
-                    gamestate.entities[id] = entity.create(modelId, 120 );
-                    main.stages[0].addChild(gamestate.entities[id].getSprite());
-                }
-            }
-
-            var command = { id: id };
-            // @todo subtract network lag (RTT) to this
-            command.timestamp = window.performance.now();
-
-            command.tick = gamestate.serverTick;
-
-            // rotation
-            if ((bitMask & (1 << 1)) > 0) {
-                command.rotation = buf.readFloat64();
-            }
-
-            // pos
-            if ((bitMask & (1 << 2)) > 0) {
-                var pos = buf.readFloat64Array(2);
-                command.position = {x: pos[0], y: pos[1]};
-            }
-
-            // vel
-            if ((bitMask & (1 << 3)) > 0) {
-                var vel = buf.readFloat64Array(2);
-                command.velocity = {x: vel[0], y: vel[1]};
-            }
-            // size
-            if ((bitMask & (1 << 4)) > 0) {
-                var size = buf.readFloat64Array(2);
-                command.size = {x: size[0], y: size[1]};
-            }
-            // state
-            if ((bitMask & (1 << 5)) > 0) {
-                command.state = buf.readUint16();
-            }
-
-            gamestate.entities[id].serverUpdate(command);
+        var msgType = buf.readUint8();
+        // world state update
+        if(msgType === 1) {
+            gamestate.update(buf, main)
         }
+        // respond to a ping request
+        if(msgType === 2) {
+            websocket.send(websocket.newMessage(2));
+        }
+
+        return;
     }
 });

@@ -34,16 +34,7 @@ define(function () {
             conn.onmessage = function (evt) {
                 var buf = new DataStream(evt.data);
                 my.timestamp = buf.readFloat64();
-                var msgType = buf.readUint8();
-                // world state update
-                if(msgType === 1) {
-
-                }
-                // respond to a ping request
-                if(msgType === 2) {
-                    my.send(my.newMessage(2));
-                }
-                //onMessage(buf);
+                onMessage(buf);
             };
             conn.onclose = function (data) {
                 // var code = event.code;
