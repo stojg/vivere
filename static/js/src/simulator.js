@@ -1,6 +1,6 @@
 /* jshint undef: true, unused: true, strict: true */
 /* global define */
-define(["src/gamestate"], function (gamestate) {
+define(["src/world"], function (world) {
 
     "use strict";
 
@@ -12,17 +12,17 @@ define(["src/gamestate"], function (gamestate) {
      * @param mSec
      */
     sim.update = function (tFrame, main) {
-        for (var i in gamestate.entities) {
+        for (var i in world.entities) {
 
-            if (typeof(gamestate.entities[i]) === 'undefined') {
+            if (typeof(world.entities[i]) === 'undefined') {
                 continue;
             }
 
-            if (gamestate.entities[i].state == 1) {
-                main.stages[0].removeChild(gamestate.entities[i].getSprite());
-                delete gamestate.entities[i];
+            if (world.entities[i].state == 1) {
+                main.stages[0].removeChild(world.entities[i].getSprite());
+                delete world.entities[i];
             } else {
-                gamestate.entities[i].update(tFrame);
+                world.entities[i].update(tFrame);
             }
         }
     };

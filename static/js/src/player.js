@@ -1,6 +1,6 @@
 /* jshint undef: true, unused: true, strict: true */
 /* global define, console, window */
-define(['src/gamestate', 'lib/datastream'], function (gamestate, DataStream) {
+define(['src/world', 'lib/datastream'], function (world, DataStream) {
 
     "use strict";
 

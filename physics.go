@@ -24,7 +24,7 @@ func NewParticlePhysics() *ParticlePhysics {
 	p.forces = &v.Vec{}
 	p.Velocity = &v.Vec{}
 	p.InvMass = 1 / 1
-	p.damping = 0.99
+	p.damping = 0.999
 	return p
 }
 

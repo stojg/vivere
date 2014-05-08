@@ -34,7 +34,7 @@ func main() {
 		log.Fatal(http.ListenAndServe(":"+port, nil))
 	}()
 
-	for a := 0; a < 30; a++ {
+	for a := 0; a < 120; a++ {
 		NewRabbit(world)
 	}
 	world.GameLoop()

@@ -99,7 +99,6 @@ define(["lib/pixi"], function (pixi) {
                 return;
             }
 
-
             this.sprite.position = this.getInterpolated(fromSnapshot, latestSnapshot, coef);
             this.deleteOldSnapshots(fromSnapshot.timestamp);
         };
