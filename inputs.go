@@ -16,8 +16,10 @@ type BunnyAI struct {
 }
 
 func (ai *BunnyAI) Update(e *Entity, elapsed float64) {
-	t := &v.Vec{1, 0}
-	ai.physics.AddForce(t)
+	center := &v.Vec{500, 300}
+	center.Sub(e.Position)
+	center.Normalize().Scale(4)
+	ai.physics.AddForce(center)
 }
 
 func NewBunnyAI(physics interface{}) *BunnyAI {

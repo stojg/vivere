@@ -13,18 +13,17 @@ func (c *Physics) Update(e *Entity, elapsed float64) {
 
 type ParticlePhysics struct {
 	Physics
-	InvMass float64
-	forces *v.Vec
+	InvMass  float64
+	forces   *v.Vec
 	Velocity *v.Vec
-	damping float64
-
+	damping  float64
 }
 
 func NewParticlePhysics() *ParticlePhysics {
 	p := &ParticlePhysics{}
 	p.forces = &v.Vec{}
-	p.Velocity= &v.Vec{}
-	p.InvMass = 1/1
+	p.Velocity = &v.Vec{}
+	p.InvMass = 1 / 1
 	p.damping = 0.99
 	return p
 }
@@ -39,8 +38,8 @@ func (c *ParticlePhysics) Update(entity *Entity, elapsed float64) {
 	c.ClearForces()
 }
 
-func (p * ParticlePhysics) AddForce(force *v.Vec) {
-	p.forces.Add(force);
+func (p *ParticlePhysics) AddForce(force *v.Vec) {
+	p.forces.Add(force)
 }
 
 func (p *ParticlePhysics) ClearForces() {
