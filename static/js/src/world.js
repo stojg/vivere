@@ -8,8 +8,6 @@ define(['src/entity'], function (entity) {
 
     world.entities = [];
 
-    world.messageQueue = [];
-
     world.serverTick = 0;
 
     world.update = function(buf, main) {
@@ -27,7 +25,7 @@ define(['src/entity'], function (entity) {
                     // we are changing entity, send update to previous entity
                     id = buf.readFloat32();
                     if(typeof world.entities[id] == 'undefined') {
-                        world.entities[id] = entity.create(2, 10);
+                        world.entities[id] = entity.create(2, 120);
                         main.stages[0].addChild(world.entities[id].getSprite());
                     }
                     commands[id] = {}
@@ -43,13 +41,9 @@ define(['src/entity'], function (entity) {
                     break;
             }
         }
-
         for (id in commands) {
             world.entities[id].serverUpdate(commands[id]);
         }
     };
-
     return world;
-
-
 });

@@ -61,7 +61,7 @@ define(["lib/pixi"], function (pixi) {
 
         /**
          *
-         * @param mSec
+         * @param tFrame
          */
         this.update = function (tFrame) {
             var coef,
@@ -87,7 +87,6 @@ define(["lib/pixi"], function (pixi) {
             }
 
             var fromSnapshot = this.getPreviousState(interpolationTime, latestSnapshot);
-
             if(fromSnapshot === false) {
                 this.sprite.position = latestSnapshot.position;
                 return;
@@ -100,6 +99,7 @@ define(["lib/pixi"], function (pixi) {
             }
 
             this.sprite.position = this.getInterpolated(fromSnapshot, latestSnapshot, coef);
+
             this.deleteOldSnapshots(fromSnapshot.timestamp);
         };
 
@@ -115,7 +115,7 @@ define(["lib/pixi"], function (pixi) {
             // delete older than fromSnapshot
             for (var key in this.snapshots) {
                 if (this.snapshots[key].timestamp < timestamp) {
-                    delete(this.snapshots[key]);
+                    this.snapshots.splice(key,1);
                 }
             }
         };
@@ -147,18 +147,15 @@ define(["lib/pixi"], function (pixi) {
          */
         this.getPreviousState = function(timestamp, toState) {
             var fromSnapshot;
-
             if(typeof toState == 'undefined' || toState === false) {
                 return false;
             }
-
             for (var key in this.snapshots) {
-                if (timestamp > this.snapshots[key].timestamp && this.snapshots[key].tick != toState.tick) {
+                if (timestamp > this.snapshots[key].timestamp) {
                     fromSnapshot = this.snapshots[key];
                     break;
                 }
             }
-
             if (typeof fromSnapshot == 'undefined') {
                 return false;
             }
