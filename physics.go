@@ -35,6 +35,11 @@ func (c *ParticlePhysics) Update(entity *Entity, elapsed float64) {
 	entity.Position.AddScaledVector(c.Velocity, elapsed)
 	c.Velocity.AddScaledVector(c.forces, elapsed)
 	c.Velocity.Scale(math.Pow(c.damping, elapsed))
+
+	// clamp velocity
+	if c.Velocity.Length() > 160 {
+		c.Velocity.Normalize().Scale(10)
+	}
 	c.ClearForces()
 }
 
