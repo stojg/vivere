@@ -3,13 +3,14 @@ package main
 import (
 	v "github.com/stojg/vivere/vec"
 )
+
 type Geometry interface {
 	Collision(b Geometry) (penetration float64, normal *v.Vec)
 }
 
 type Circle struct {
-	Radius float64
 	Position *v.Vec
+	Radius float64
 }
 
 func (c *Circle) Collision(b Geometry) (penetration float64, normal *v.Vec) {
@@ -30,3 +31,8 @@ func (a *Circle) VsCircle(b *Circle) (penetration float64, normal *v.Vec) {
 	return penetration, normal
 }
 
+type Rectangle struct {
+	Position *v.Vec
+	Height float64
+	Width float64
+}

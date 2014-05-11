@@ -19,32 +19,6 @@ func (c *Collision) Detect(a *Entity, b *Entity) (cp *CollisionPair, hit bool) {
 	return
 }
 
-func (c *Collision) CircleCircle(a *Circle, b *Circle) (pen float64, normal *v.Vec) {
-	distanceVec := a.Position.NewSub(b.Position)
-	distance := distanceVec.Length()
-	pen = a.Radius + b.Radius - distance
-	normal = distanceVec.Normalize()
-	return pen, normal
-}
-
-func (c *Collision) RectangleRectangle(a *Entity, b *Entity)  (pen float64, normal *v.Vec) {
-
-
-
-
-	return
-}
-
-func (c *Collision) CircleLine(a *Entity, b *Entity)  (pen float64, normal *v.Vec) {
-
-	return
-}
-
-func (c *Collision) CircleLineSegment(a *Entity, b *Entity) (pen float64, normal *v.Vec) {
-
-	return
-}
-
 type CollisionPair struct {
 	a           *Entity
 	b           *Entity

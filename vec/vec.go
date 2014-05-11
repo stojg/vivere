@@ -39,6 +39,10 @@ func (a *Vec) Normalize() *Vec {
 	return a
 }
 
+func (a *Vec) Clone() *Vec {
+	return &Vec{a[0], a[1]}
+}
+
 func (a *Vec) Length() float64 {
 	return math.Sqrt(a[0]*a[0] + a[1]*a[1])
 }
