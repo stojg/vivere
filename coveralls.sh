@@ -3,7 +3,7 @@
 ./make.sh
 
 echo "mode: set" > acc.out
-for Dir in $(find ./* -maxdepth 0 -type d -and -not -iname "Godeps");
+for Dir in $(find . -maxdepth 2 -type f -iname "*_test.go");
 do
 	if ls $Dir/*.go &> /dev/null;
 	then
