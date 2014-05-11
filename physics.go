@@ -16,7 +16,7 @@ type ParticlePhysics struct {
 	InvMass  float64
 	forces   *v.Vec
 	Velocity *v.Vec
-	damping  float64
+	Damping  float64
 }
 
 func NewParticlePhysics() *ParticlePhysics {
@@ -24,7 +24,7 @@ func NewParticlePhysics() *ParticlePhysics {
 	p.forces = &v.Vec{}
 	p.Velocity = &v.Vec{}
 	p.InvMass = 1 / 1
-	p.damping = 0.999
+	p.Damping = 0.999
 	return p
 }
 
@@ -34,7 +34,7 @@ func (c *ParticlePhysics) Update(entity *Entity, elapsed float64) {
 	}
 	entity.Position.AddScaledVector(c.Velocity, elapsed)
 	c.Velocity.AddScaledVector(c.forces, elapsed)
-	c.Velocity.Scale(math.Pow(c.damping, elapsed))
+	c.Velocity.Scale(math.Pow(c.Damping, elapsed))
 
 	// clamp velocity
 	if c.Velocity.Length() > 160 {
