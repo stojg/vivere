@@ -1,6 +1,5 @@
 # Vivere
 
-[![Build Status](https://travis-ci.org/stojg/vivere.svg?branch=master)](https://travis-ci.org/stojg/vivere)
 [![Build Status](https://drone.io/github.com/stojg/vivere/status.png)](https://drone.io/github.com/stojg/vivere/latest)
 [![Coverage Status](https://coveralls.io/repos/stojg/vivere/badge.png?branch=master)](https://coveralls.io/r/stojg/vivere?branch=master)
 
