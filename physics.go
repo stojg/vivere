@@ -38,9 +38,8 @@ func (c *ParticlePhysics) Update(entity *Entity, elapsed float64) {
 
 	// clamp velocity
 	if c.Velocity.Length() > 160 {
-		c.Velocity.Normalize().Scale(10)
+		c.Velocity.Normalize().Scale(160)
 	}
-	c.ClearForces()
 }
 
 func (p *ParticlePhysics) AddForce(force *v.Vec) {

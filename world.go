@@ -16,6 +16,7 @@ type World struct {
 	Tick          uint64
 	newPlayerChan chan *client.Client
 	debug         bool
+	collisionDetector	*Collider
 }
 
 func NewWorld(debug bool) *World {
@@ -23,6 +24,7 @@ func NewWorld(debug bool) *World {
 	w.entities = &EntityList{}
 	w.FPS = 60
 	w.debug = debug
+	w.collisionDetector = &Collider{}
 	return w
 }
 
@@ -38,9 +40,12 @@ func (w *World) GameLoop() {
 			previousTime = currentTime
 
 			w.Tick += 1
+			w.ResolveCollisions(w.Collisions(), elapsedTime)
+
 			for _, entity := range w.entities.GetAll() {
 				entity.Update(elapsedTime)
 			}
+
 			// Send world state updates to the clients
 			if math.Mod(float64(w.Tick), 3) == 0 {
 				state := w.Serialize()
@@ -54,11 +59,35 @@ func (w *World) GameLoop() {
 					p.Ping()
 				}
 			}
+
+			for _, entity := range w.entities.GetAll() {
+				entity.physics.(*ParticlePhysics).ClearForces()
+			}
+
+
 		case newPlayer := <-w.newPlayerChan:
 			w.players = append(w.players, newPlayer)
 			w.Log("[+] New client connected")
 		}
 	}
+}
+
+func (w *World) Collisions() ([]*CollisionPair) {
+	collisions := make([]*CollisionPair,0)
+	for aIdx, a := range world.entities.GetAll() {
+		for bIdx := aIdx+1; bIdx <= uint16(len(world.entities.GetAll())); bIdx++ {
+			collision, hit := w.collisionDetector.Detect(a, world.entities.Get(bIdx))
+			if hit {
+				collisions = append(collisions, collision)
+			}
+		}
+	}
+	return collisions
+}
+
+func (w *World) ResolveCollisions(collisions []*CollisionPair, duration float64) {
+	cr := ContactResolver{}
+	cr.ResolveContacts(collisions, duration, 20)
 }
 
 func (w *World) SetNewClients(e chan *client.Client) {

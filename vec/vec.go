@@ -65,6 +65,10 @@ func (v *Vec) Sub(b *Vec) *Vec {
 	return v
 }
 
+func (v *Vec) NewSub(b *Vec) *Vec {
+	return &Vec{(*v)[0] - (*b)[0], (*v)[1] - (*b)[1]}
+}
+
 func (a *Vec) Copy(b *Vec) (*Vec, error) {
 	if len(a) != len(b) {
 		return a, errors.New("Vec: Can't copy values between two Vec with different size")
@@ -79,6 +83,10 @@ func (vec *Vec) Invert() *Vec {
 	vec[0] = -vec[0]
 	vec[1] = -vec[1]
 	return vec
+}
+
+func (vec *Vec) NewInvert() *Vec {
+	return &Vec{-vec[0], -vec[1]}
 }
 
 func (a *Vec) Equals(b *Vec) bool {
@@ -102,6 +110,10 @@ func Dot(a, b *Vec) float64 {
 	return (*a)[0]*(*b)[0] + (*a)[1]*(*b)[1]
 }
 
+func (v *Vec) Dot(b *Vec) float64 {
+	return (*v)[0]*(*b)[0] + (*v)[1]*(*b)[1]
+}
+
 func (v *Vec) SquaredNormal() float64 {
 	return Dot(v, v)
 }
@@ -122,10 +134,24 @@ func (v *Vec) Scale(alpha float64) *Vec {
 	return v
 }
 
+func (v *Vec) NewScale(alpha float64) *Vec {
+	result := &Vec{}
+	result.Copy(v)
+	(*result)[0] *= alpha
+	(*result)[1] *= alpha
+	return result
+}
+
 func (v *Vec) AddScaledVector(b *Vec, t float64) *Vec {
 	(*v)[0] += (*b)[0] * t
 	(*v)[1] += (*b)[1] * t
 	return v
+}
+
+func (v *Vec) ToDirection(b *Vec) *Vec {
+	newVec := &Vec{}
+	newVec.Copy(b)
+	return newVec.Normalize().Scale(v.Length())
 }
 
 func (v *Vec) Clear() *Vec {
