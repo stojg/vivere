@@ -80,6 +80,7 @@ define(["lib/pixi"], function (pixi) {
             }
 
             this.state = latestSnapshot.state;
+            this.sprite.rotation = latestSnapshot.orientation
 
             if (this.interpolationDelay <= 0) {
                 this.sprite.position = latestSnapshot.position;

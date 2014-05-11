@@ -34,7 +34,7 @@ func main() {
 		log.Fatal(http.ListenAndServe(":"+port, nil))
 	}()
 
-	for a := 0; a < 50; a++ {
+	for a := 0; a < 40; a++ {
 		NewRabbit(world)
 	}
 	world.GameLoop()
@@ -46,7 +46,7 @@ func NewRabbit(world *World) {
 	ent.input = NewBunnyAI(ent.physics)
 	ent.graphics = NewBunnyGraphic()
 	ent.Position.Set(rand.Float64()*1000, rand.Float64()*600)
-	ent.orientation = 0
+	ent.Orientation = 0
 }
 
 // webserver is a http.HandleFunc for serving static files over http

@@ -37,7 +37,7 @@ define(['src/entity'], function (entity) {
                     break;
                 // INST_SET_ROTATION
                 case 3:
-                    commands[id].rotation = buf.readFloat32();
+                    commands[id].orientation = buf.readFloat32();
                     break;
             }
         }
