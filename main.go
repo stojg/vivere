@@ -42,9 +42,13 @@ func main() {
 
 func NewRabbit(world *World) {
 	ent := world.entities.NewEntity()
-	ent.physics = NewParticlePhysics()
+	physics := NewParticlePhysics()
+	physics.InvMass = rand.Float64()*3
+	ent.physics = physics
+
 	ent.input = NewBunnyAI(ent.physics)
 	ent.graphics = NewBunnyGraphic()
+
 	ent.Position.Set(rand.Float64()*1000, rand.Float64()*600)
 	ent.Orientation = 0
 }
