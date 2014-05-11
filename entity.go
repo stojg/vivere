@@ -37,7 +37,6 @@ func (gol *EntityList) NewEntity() *Entity {
 	g.physics = &NullComponent{}
 	g.graphics = &NullComponent{}
 	g.input = &NullComponent{}
-	g.collision = &NullComponent{}
 	gol.Add(g)
 	return g
 }
@@ -72,10 +71,9 @@ type Entity struct {
 	Position    *v.Vec
 	orientation float64
 	scale       *v.Vec
-	Radius		float64
+	Radius      float64
 	input       Component
 	physics     Component
-	collision   Component
 	graphics    Component
 }
 
@@ -86,7 +84,6 @@ func (g *Entity) ID() uint16 {
 func (ent *Entity) Update(elapsed float64) {
 	ent.input.Update(ent, elapsed)
 	ent.physics.Update(ent, elapsed)
-	ent.collision.Update(ent, elapsed)
 	ent.graphics.Update(ent, elapsed)
 }
 

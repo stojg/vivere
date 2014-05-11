@@ -34,7 +34,7 @@ func main() {
 		log.Fatal(http.ListenAndServe(":"+port, nil))
 	}()
 
-	for a := 0; a < 250; a++ {
+	for a := 0; a < 50; a++ {
 		NewRabbit(world)
 	}
 	world.GameLoop()
@@ -44,7 +44,6 @@ func NewRabbit(world *World) {
 	ent := world.entities.NewEntity()
 	ent.physics = NewParticlePhysics()
 	ent.input = NewBunnyAI(ent.physics)
-	ent.collision = NewArcadeCollision()
 	ent.graphics = NewBunnyGraphic()
 	ent.Position.Set(rand.Float64()*1000, rand.Float64()*600)
 	ent.orientation = 0

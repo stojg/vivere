@@ -2,34 +2,11 @@ package main
 
 import (
 	v "github.com/stojg/vivere/vec"
-//	"log"
 )
 
 type Collision struct{}
 
-func (c *Collision) Update(e *Entity, elapsed float64) {
-	// do nothing
-}
-
-type CollisionPair struct {
-	a *Entity
-	b *Entity
-	restitution float64
-	pen float64
-	normal *v.Vec
-}
-
-type ContactResolver struct {}
-
-func (cr *ContactResolver) ResolveContacts(contactList []*CollisionPair, duration float64, maxIterations int) {
-	for _, pair := range contactList {
-		pair.Resolve(duration)
-	}
-}
-
-type Collider struct {}
-
-func (c *Collider) Detect(a *Entity, b *Entity) (cp *CollisionPair, hit bool) {
+func (c *Collision) Detect(a *Entity, b *Entity) (cp *CollisionPair, hit bool) {
 	cp = &CollisionPair{}
 	cp.a = a
 	cp.b = b
@@ -39,6 +16,22 @@ func (c *Collider) Detect(a *Entity, b *Entity) (cp *CollisionPair, hit bool) {
 		hit = true
 	}
 	return
+}
+
+func (c *Collision) CircleCircle(a *Entity, b *Entity) (pen float64, normal *v.Vec) {
+	distanceVec := a.Position.NewSub(b.Position)
+	distance := distanceVec.Length()
+	pen = a.Radius + b.Radius - distance
+	normal = distanceVec.Normalize()
+	return pen, normal
+}
+
+type CollisionPair struct {
+	a           *Entity
+	b           *Entity
+	restitution float64
+	pen         float64
+	normal      *v.Vec
 }
 
 func (c *CollisionPair) CalculateSeparatingVelocity() float64 {
@@ -83,7 +76,7 @@ func (c *CollisionPair) resolveVelocity(duration float64) {
 	separatingVelocity := c.CalculateSeparatingVelocity()
 
 	// The objects are already separating, NOP
-	if(separatingVelocity > 0 ) {
+	if separatingVelocity > 0 {
 		return
 	}
 
@@ -126,34 +119,10 @@ func (c *CollisionPair) resolveVelocity(duration float64) {
 	var impulsePerIMass *v.Vec
 	impulsePerIMass = c.normal.NewScale(impulse)
 
-
 	temp := impulsePerIMass.NewScale(c.a.physics.(*ParticlePhysics).InvMass)
 	c.a.physics.(*ParticlePhysics).Velocity.Add(temp)
 	if c.b != nil {
 		temp = impulsePerIMass.NewScale(-c.b.physics.(*ParticlePhysics).InvMass)
 		c.b.physics.(*ParticlePhysics).Velocity.Add(temp)
 	}
-}
-
-func (c *Collider) CircleCircle(a *Entity, b *Entity) (pen float64, normal *v.Vec) {
-	distanceVec := a.Position.NewSub(b.Position)
-	distance := distanceVec.Length()
-	pen = a.Radius + b.Radius - distance
-	normal = distanceVec.Normalize()
-	return pen, normal
-}
-
-type ArcadeCollision struct {
-	collider *Collider
-}
-
-func NewArcadeCollision() *ArcadeCollision {
-	ac := &ArcadeCollision{}
-	ac.collider = &Collider{}
-	return ac
-}
-
-func (c *ArcadeCollision) Update(e *Entity, elapsed float64) {
-
-
 }
