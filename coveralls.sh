@@ -3,10 +3,11 @@
 ./make.sh
 
 echo "mode: set" > acc.out
-for Dir in $(find . -maxdepth 2 -type f -iname "*_test.go");
+for Dir in $(find . -maxdepth 1 -type d);
 do
 	if ls $Dir/*.go &> /dev/null;
 	then
+	    echo "testing $Dir"
 		returnval=`go test -coverprofile=profile.out $Dir`
 		echo ${returnval}
 		if [[ ${returnval} != *FAIL* ]]
