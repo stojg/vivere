@@ -33,9 +33,9 @@ func (gol *EntityList) NewEntity() *Entity {
 	g.id = (gol.nextID)
 	g.Position = &v.Vec{0, 0}
 	g.scale = &v.Vec{1, 1}
-	g.Radius = 15
 	g.physics = &NullComponent{}
 	g.graphics = &NullComponent{}
+	g.geometry = &Circle{Position: g.Position, Radius: 15}
 	g.input = &NullComponent{}
 	gol.Add(g)
 	return g
@@ -71,7 +71,7 @@ type Entity struct {
 	Position    *v.Vec
 	orientation float64
 	scale       *v.Vec
-	Radius      float64
+	geometry	Geometry
 	input       Component
 	physics     Component
 	graphics    Component

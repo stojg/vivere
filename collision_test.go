@@ -15,12 +15,12 @@ func (s *CollisionTestSuite) TestNoCircleCollision(c *C) {
 	a := &Entity{}
 	a.physics = &ParticlePhysics{}
 	a.Position = &v.Vec{0, 0}
-	a.Radius = 5
+	a.geometry = &Circle{Position: a.Position, Radius: 5}
 
 	b := &Entity{}
 	b.physics = &ParticlePhysics{}
 	b.Position = &v.Vec{10, 0}
-	b.Radius = 5
+	b.geometry = &Circle{Position: b.Position, Radius: 5}
 
 	pair, hit := collider.Detect(a, b)
 	c.Assert(hit, Equals, false)
@@ -34,12 +34,12 @@ func (s *CollisionTestSuite) TestCircleCollision(c *C) {
 	a := &Entity{}
 	a.physics = &ParticlePhysics{}
 	a.Position = &v.Vec{0, 0}
-	a.Radius = 5
+	a.geometry = &Circle{Position: a.Position, Radius: 5}
 
 	b := &Entity{}
 	b.physics = &ParticlePhysics{}
 	b.Position = &v.Vec{9, 0}
-	b.Radius = 5
+	b.geometry = &Circle{Position: b.Position, Radius: 5}
 
 	pair, hit := collider.Detect(a, b)
 	c.Assert(hit, Equals, true)
@@ -53,12 +53,12 @@ func (s *CollisionTestSuite) TestCollisionResolve(c *C) {
 	a := &Entity{}
 	a.physics = &ParticlePhysics{Velocity: &v.Vec{10, 0}, InvMass: 1, forces: &v.Vec{}}
 	a.Position = &v.Vec{0, 0}
-	a.Radius = 5
+	a.geometry = &Circle{Position: a.Position, Radius: 5}
 
 	b := &Entity{}
 	b.physics = &ParticlePhysics{Velocity: &v.Vec{0, 0}, InvMass: 1, forces: &v.Vec{}}
 	b.Position = &v.Vec{9, 0}
-	b.Radius = 5
+	b.geometry = &Circle{Position: b.Position, Radius: 5}
 
 	pair, hit := collider.Detect(a, b)
 	c.Assert(hit, Equals, true)
@@ -78,12 +78,12 @@ func (s *CollisionTestSuite) TestCollisionResolveOpposite(c *C) {
 	a := &Entity{}
 	a.physics = &ParticlePhysics{Velocity: &v.Vec{5, 0}, InvMass: 1, forces: &v.Vec{}}
 	a.Position = &v.Vec{0, 0}
-	a.Radius = 5
+	a.geometry = &Circle{Position: a.Position, Radius: 5}
 
 	b := &Entity{}
 	b.physics = &ParticlePhysics{Velocity: &v.Vec{-5, 0}, InvMass: 1, forces: &v.Vec{}}
 	b.Position = &v.Vec{7, 0}
-	b.Radius = 5
+	b.geometry = &Circle{Position: b.Position, Radius: 5}
 
 	pair, hit := collider.Detect(a, b)
 	c.Assert(hit, Equals, true)
