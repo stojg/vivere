@@ -45,6 +45,10 @@ define(["lib/pixi"], function (pixi) {
          */
         this.serverUpdate = function (message) {
             this.server.push(message);
+            // biggest size of the queue is 20 history items, roughtly one sec
+            if(this.server.length > 20 ){
+                this.server.unshift();
+            }
         };
 
         /**
