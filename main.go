@@ -43,7 +43,7 @@ func main() {
 func NewRabbit(world *World) {
 	ent := world.entities.NewEntity()
 	physics := NewParticlePhysics()
-	physics.InvMass = rand.Float64()*3
+	physics.InvMass = rand.Float64() * 3
 	ent.physics = physics
 
 	ent.input = NewBunnyAI(ent.physics)

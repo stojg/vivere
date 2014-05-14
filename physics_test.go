@@ -15,7 +15,7 @@ func (s *PhysicsTestSuite) TestNoForcesDontMove(c *C) {
 	ent.physics.(*ParticlePhysics).InvMass = 1
 	ent.Update(1)
 	ent.Update(1)
-	c.Assert(ent.Position, DeepEquals, &Vector3{0,0})
+	c.Assert(ent.Position, DeepEquals, &Vector3{0, 0})
 }
 
 func (s *PhysicsTestSuite) TestNoForcesMove(c *C) {
@@ -24,10 +24,10 @@ func (s *PhysicsTestSuite) TestNoForcesMove(c *C) {
 	ent.physics = NewParticlePhysics()
 	ent.physics.(*ParticlePhysics).InvMass = 1
 	ent.physics.(*ParticlePhysics).Damping = 1
-	ent.physics.(*ParticlePhysics).AddForce(&Vector3{1,0})
+	ent.physics.(*ParticlePhysics).AddForce(&Vector3{1, 0})
 	ent.Update(1)
 	ent.Update(1)
-	c.Assert(ent.Position, DeepEquals, &Vector3{1,0})
+	c.Assert(ent.Position, DeepEquals, &Vector3{1, 0})
 }
 
 func (s *PhysicsTestSuite) TestToHeavyToMove(c *C) {
@@ -36,8 +36,8 @@ func (s *PhysicsTestSuite) TestToHeavyToMove(c *C) {
 	ent.physics = NewParticlePhysics()
 	ent.physics.(*ParticlePhysics).InvMass = 0
 	ent.physics.(*ParticlePhysics).Damping = 1
-	ent.physics.(*ParticlePhysics).AddForce(&Vector3{1,0})
+	ent.physics.(*ParticlePhysics).AddForce(&Vector3{1, 0})
 	ent.Update(1)
 	ent.Update(1)
-	c.Assert(ent.Position, DeepEquals, &Vector3{0,0})
+	c.Assert(ent.Position, DeepEquals, &Vector3{0, 0})
 }

@@ -71,7 +71,7 @@ type Entity struct {
 	Position    *Vector3
 	Orientation float64
 	scale       *Vector3
-	geometry	Geometry
+	geometry    Geometry
 	input       Component
 	physics     Component
 	graphics    Component
@@ -94,8 +94,8 @@ func (ent *Entity) Changed() bool {
 type Literal byte
 
 const (
-	INST_ENTITY_ID    Literal = 1
-	INST_SET_POSITION Literal = 2
+	INST_ENTITY_ID       Literal = 1
+	INST_SET_POSITION    Literal = 2
 	INST_SET_ORIENTATION Literal = 3
 )
 

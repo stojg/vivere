@@ -6,7 +6,7 @@ type Geometry interface {
 
 type Circle struct {
 	Position *Vector3
-	Radius float64
+	Radius   float64
 }
 
 func (c *Circle) Collision(b Geometry) (penetration float64, normal *Vector3) {
@@ -29,6 +29,6 @@ func (a *Circle) VsCircle(b *Circle) (penetration float64, normal *Vector3) {
 
 type Rectangle struct {
 	Position *Vector3
-	Height float64
-	Width float64
+	Height   float64
+	Width    float64
 }

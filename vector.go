@@ -3,6 +3,7 @@ package main
 import (
 	"math"
 )
+
 type Vector3 [3]float64
 
 func NewVector3(x, y, z float64) *Vector3 {
@@ -87,3 +88,10 @@ func (v *Vector3) Clear() *Vector3 {
 	return v
 }
 
+func (v *Vector3) VectorProduct(vector *Vector3) *Vector3 {
+	result := &Vector3{}
+	result[0] = v[1]*vector[2] - v[2]*vector[1]
+	result[1] = v[2]*vector[0] - v[0]*vector[2]
+	result[2] = v[0]*vector[1] - v[1]*vector[0]
+	return result
+}
