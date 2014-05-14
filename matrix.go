@@ -3,15 +3,14 @@ package main
 import (
 	"math"
 )
-type Matrix3 [9]float64
 
+type Matrix3 [9]float64
 
 var real_epsilon float64
 
 func init() {
 	real_epsilon = 0.00001
 }
-
 
 func (m *Matrix3) TransformVector3(v *Vector3) *Vector3 {
 	newVec := &Vector3{}
@@ -100,23 +99,23 @@ func (orig *Matrix3) Transpose(m *Matrix3) *Matrix3 {
 }
 
 func (data *Matrix3) SetOrientation(q *Quaternion) {
-	data[0] = 1 - (2*q.j*q.j + 2*q.k*q.k);
-	data[1] = 2*q.i*q.j + 2*q.k*q.r;
-	data[2] = 2*q.i*q.k - 2*q.j*q.r;
-	data[3] = 2*q.i*q.j - 2*q.k*q.r;
-	data[4] = 1 - (2*q.i*q.i  + 2*q.k*q.k);
-	data[5] = 2*q.j*q.k + 2*q.i*q.r;
-	data[6] = 2*q.i*q.k + 2*q.j*q.r;
-	data[7] = 2*q.j*q.k - 2*q.i*q.r;
-	data[8] = 1 - (2*q.i*q.i  + 2*q.j*q.j);
+	data[0] = 1 - (2*q.j*q.j + 2*q.k*q.k)
+	data[1] = 2*q.i*q.j + 2*q.k*q.r
+	data[2] = 2*q.i*q.k - 2*q.j*q.r
+	data[3] = 2*q.i*q.j - 2*q.k*q.r
+	data[4] = 1 - (2*q.i*q.i + 2*q.k*q.k)
+	data[5] = 2*q.j*q.k + 2*q.i*q.r
+	data[6] = 2*q.i*q.k + 2*q.j*q.r
+	data[7] = 2*q.j*q.k - 2*q.i*q.r
+	data[8] = 1 - (2*q.i*q.i + 2*q.j*q.j)
 }
 
 func (m *Matrix3) LinearInterpolate(a, b *Matrix3, prop float64) *Matrix3 {
 	result := &Matrix3{}
 	for i := uint8(0); i < 9; i++ {
-		result[i] = a[i] * (1-prop) + b[i] * prop;
+		result[i] = a[i]*(1-prop) + b[i]*prop
 	}
-	return result;
+	return result
 }
 
 type Matrix4 [12]float64
@@ -189,20 +188,20 @@ func (this *Matrix4) Inverse(m *Matrix4) *Matrix4 {
 }
 
 func (data *Matrix4) SetOrientation(q *Quaternion, pos *Vector3) {
-	data[0] = 1 - (2*q.j*q.j + 2*q.k*q.k);
-	data[1] = 2*q.i*q.j + 2*q.k*q.r;
-	data[2] = 2*q.i*q.k - 2*q.j*q.r;
-	data[3] = pos[0];
+	data[0] = 1 - (2*q.j*q.j + 2*q.k*q.k)
+	data[1] = 2*q.i*q.j + 2*q.k*q.r
+	data[2] = 2*q.i*q.k - 2*q.j*q.r
+	data[3] = pos[0]
 
-	data[4] = 2*q.i*q.j - 2*q.k*q.r;
-	data[5] = 1 - (2*q.i*q.i  + 2*q.k*q.k);
-	data[6] = 2*q.j*q.k + 2*q.i*q.r;
-	data[7] = pos[1];
+	data[4] = 2*q.i*q.j - 2*q.k*q.r
+	data[5] = 1 - (2*q.i*q.i + 2*q.k*q.k)
+	data[6] = 2*q.j*q.k + 2*q.i*q.r
+	data[7] = pos[1]
 
-	data[8] = 2*q.i*q.k + 2*q.j*q.r;
-	data[9] = 2*q.j*q.k - 2*q.i*q.r;
-	data[10] = 1 - (2*q.i*q.i  + 2*q.j*q.j);
-	data[11] = pos[2];
+	data[8] = 2*q.i*q.k + 2*q.j*q.r
+	data[9] = 2*q.j*q.k - 2*q.i*q.r
+	data[10] = 1 - (2*q.i*q.i + 2*q.j*q.j)
+	data[11] = pos[2]
 }
 
 /**
@@ -220,30 +219,30 @@ func (data *Matrix4) SetOrientation(q *Quaternion, pos *Vector3) {
  */
 func (data *Matrix4) TransformInverse(vector *Vector3) *Vector3 {
 	tmp := &Vector3{}
-	tmp[0] -= data[3];
-	tmp[1] -= data[7];
-	tmp[2] -= data[11];
+	tmp[0] -= data[3]
+	tmp[1] -= data[7]
+	tmp[2] -= data[11]
 
 	result := &Vector3{}
-	result[0] = tmp[0] * data[0] + tmp[1] * data[4] + tmp[2] * data[8]
-	result[1] = tmp[0] * data[1] +  tmp[1] * data[5] + tmp[2] * data[9]
-	result[2] =  tmp[0] * data[2] + tmp[1] * data[6] + tmp[2] * data[10]
+	result[0] = tmp[0]*data[0] + tmp[1]*data[4] + tmp[2]*data[8]
+	result[1] = tmp[0]*data[1] + tmp[1]*data[5] + tmp[2]*data[9]
+	result[2] = tmp[0]*data[2] + tmp[1]*data[6] + tmp[2]*data[10]
 	return result
 }
 
 func (data *Matrix4) TransformDirection(vector *Vector3) *Vector3 {
 	result := &Vector3{}
-	result[0] = vector[0] * data[0] + vector[1] * data[1] + vector[2] * data[2]
-	result[1] = vector[0] * data[4] + vector[1] * data[5] + vector[2] * data[6]
-	result[1] = vector[0] * data[8] + vector[1] * data[9] + vector[2] * data[10]
+	result[0] = vector[0]*data[0] + vector[1]*data[1] + vector[2]*data[2]
+	result[1] = vector[0]*data[4] + vector[1]*data[5] + vector[2]*data[6]
+	result[1] = vector[0]*data[8] + vector[1]*data[9] + vector[2]*data[10]
 	return result
 }
 
-func (data *Matrix4)  TransformInverseDirection(vector *Vector3 ) *Vector3 {
+func (data *Matrix4) TransformInverseDirection(vector *Vector3) *Vector3 {
 	result := &Vector3{}
-	result[0] = vector[0] * data[0] + vector[1] * data[4] + vector[2] * data[8]
-	result[1] = vector[0] * data[1] + vector[1] * data[5] + vector[2] * data[9]
-	result[1] = vector[0] * data[2] + vector[1] * data[6] + vector[2] * data[10]
+	result[0] = vector[0]*data[0] + vector[1]*data[4] + vector[2]*data[8]
+	result[1] = vector[0]*data[1] + vector[1]*data[5] + vector[2]*data[9]
+	result[1] = vector[0]*data[2] + vector[1]*data[6] + vector[2]*data[10]
 	return result
 }
 
@@ -260,43 +259,42 @@ func NewQuaternion(r, i, j, k float64) *Quaternion {
 }
 
 func (q *Quaternion) Normalize() {
-	 d := q.r*q.r+q.i*q.i+q.j*q.j+q.k*q.k;
+	d := q.r*q.r + q.i*q.i + q.j*q.j + q.k*q.k
 
 	// Check for zero length quaternion, and use the no-rotation
 	// quaternion in that case.
-	if (d < real_epsilon) {
-		q.r = 1;
-		return;
+	if d < real_epsilon {
+		q.r = 1
+		return
 	}
 
-	d = 1.0/math.Sqrt(d);
-	q.r *= d;
-	q.i *= d;
-	q.j *= d;
-	q.k *= d;
+	d = 1.0 / math.Sqrt(d)
+	q.r *= d
+	q.i *= d
+	q.j *= d
+	q.k *= d
 }
 
 func (q *Quaternion) Multiply(multiplier *Quaternion) {
-	q.r = q.r*multiplier.r - q.i*multiplier.i - q.j*multiplier.j - q.k*multiplier.k;
-	q.i = q.r*multiplier.i + q.i*multiplier.r + q.j*multiplier.k - q.k*multiplier.j;
-	q.j = q.r*multiplier.j + q.j*multiplier.r + q.k*multiplier.i - q.i*multiplier.k;
-	q.k = q.r*multiplier.k + q.k*multiplier.r + q.i*multiplier.j - q.j*multiplier.i;
+	q.r = q.r*multiplier.r - q.i*multiplier.i - q.j*multiplier.j - q.k*multiplier.k
+	q.i = q.r*multiplier.i + q.i*multiplier.r + q.j*multiplier.k - q.k*multiplier.j
+	q.j = q.r*multiplier.j + q.j*multiplier.r + q.k*multiplier.i - q.i*multiplier.k
+	q.k = q.r*multiplier.k + q.k*multiplier.r + q.i*multiplier.j - q.j*multiplier.i
 }
 
 func (q *Quaternion) AddScaledVector(vector *Vector3, scale float64) {
-	newQ := &Quaternion{0, vector[0] * scale, vector[1] * scale, vector[2] * scale};
+	newQ := &Quaternion{0, vector[0] * scale, vector[1] * scale, vector[2] * scale}
 	newQ.Multiply(q)
-	q.r += newQ.r * 0.5;
-	q.i += newQ.i * 0.5;
-	q.j += newQ.j * 0.5;
-	q.k += newQ.k * 0.5;
+	q.r += newQ.r * 0.5
+	q.i += newQ.i * 0.5
+	q.j += newQ.j * 0.5
+	q.k += newQ.k * 0.5
 }
 
 func (q *Quaternion) RotateByVector(vector *Vector3) {
-	newQ := &Quaternion{0, vector[0], vector[1], vector[2]};
+	newQ := &Quaternion{0, vector[0], vector[1], vector[2]}
 	q.Multiply(newQ)
 }
-
 
 func LocalToWorld(local *Vector3, transform *Matrix4) *Vector3 {
 	return transform.TransformVector3(local)
