@@ -22,7 +22,7 @@ type World struct {
 func NewWorld(debug bool) *World {
 	w := &World{}
 	w.entities = &EntityList{}
-	w.FPS = 60
+	w.FPS = 120
 	w.debug = debug
 	w.collision = &Collision{}
 	return w
@@ -48,7 +48,7 @@ func (w *World) GameLoop() {
 			w.ResolveCollisions(w.Collisions(), elapsedTime)
 
 			// Send world state updates to the clients
-			if math.Mod(float64(w.Tick), 3) == 0 {
+			if math.Mod(float64(w.Tick), 6) == 0 {
 				state := w.Serialize()
 				for _, p := range w.players {
 					p.Update(state)

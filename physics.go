@@ -1,7 +1,6 @@
 package main
 
 import (
-	v "github.com/stojg/vivere/vec"
 	"math"
 )
 
@@ -14,15 +13,15 @@ func (c *Physics) Update(e *Entity, elapsed float64) {
 type ParticlePhysics struct {
 	Physics
 	InvMass  float64
-	forces   *v.Vec
-	Velocity *v.Vec
+	forces   *Vector3
+	Velocity *Vector3
 	Damping  float64
 }
 
 func NewParticlePhysics() *ParticlePhysics {
 	p := &ParticlePhysics{}
-	p.forces = &v.Vec{}
-	p.Velocity = &v.Vec{}
+	p.forces = &Vector3{}
+	p.Velocity = &Vector3{}
 	p.InvMass = 1 / 1
 	p.Damping = 0.999
 	return p
@@ -42,7 +41,7 @@ func (c *ParticlePhysics) Update(entity *Entity, elapsed float64) {
 	}
 }
 
-func (p *ParticlePhysics) AddForce(force *v.Vec) {
+func (p *ParticlePhysics) AddForce(force *Vector3) {
 	p.forces.Add(force)
 }
 

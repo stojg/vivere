@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	v "github.com/stojg/vivere/vec"
 )
 
 type Component interface {
@@ -31,9 +30,9 @@ func (gol *EntityList) NewEntity() *Entity {
 	gol.nextID++
 	g := &Entity{}
 	g.id = (gol.nextID)
-	g.Position = &v.Vec{0, 0}
+	g.Position = &Vector3{0, 0, 0}
 	g.Orientation = 0
-	g.scale = &v.Vec{1, 1}
+	g.scale = &Vector3{1, 1, 1}
 	g.physics = &NullComponent{}
 	g.graphics = &NullComponent{}
 	g.geometry = &Circle{Position: g.Position, Radius: 15}
@@ -69,9 +68,9 @@ func (gol *EntityList) Length() int {
 
 type Entity struct {
 	id          uint16
-	Position    *v.Vec
+	Position    *Vector3
 	Orientation float64
-	scale       *v.Vec
+	scale       *Vector3
 	geometry	Geometry
 	input       Component
 	physics     Component
@@ -119,9 +118,9 @@ func (ent *Entity) binaryStream(buf *bytes.Buffer, lit Literal, val interface{})
 		binary.Write(buf, binary.LittleEndian, float32(val.(float32)))
 	case float64:
 		binary.Write(buf, binary.LittleEndian, float32(val.(float64)))
-	case *v.Vec:
-		binary.Write(buf, binary.LittleEndian, float32(val.(*v.Vec)[0]))
-		binary.Write(buf, binary.LittleEndian, float32(val.(*v.Vec)[1]))
+	case *Vector3:
+		binary.Write(buf, binary.LittleEndian, float32(val.(*Vector3)[0]))
+		binary.Write(buf, binary.LittleEndian, float32(val.(*Vector3)[1]))
 	default:
 		panic(fmt.Errorf("%c", val))
 	}

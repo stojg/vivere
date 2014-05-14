@@ -1,19 +1,15 @@
 package main
 
-import (
-	v "github.com/stojg/vivere/vec"
-)
-
 type Geometry interface {
-	Collision(b Geometry) (penetration float64, normal *v.Vec)
+	Collision(b Geometry) (penetration float64, normal *Vector3)
 }
 
 type Circle struct {
-	Position *v.Vec
+	Position *Vector3
 	Radius float64
 }
 
-func (c *Circle) Collision(b Geometry) (penetration float64, normal *v.Vec) {
+func (c *Circle) Collision(b Geometry) (penetration float64, normal *Vector3) {
 	switch b.(type) {
 	case *Circle:
 		return c.VsCircle(b.(*Circle))
@@ -23,8 +19,8 @@ func (c *Circle) Collision(b Geometry) (penetration float64, normal *v.Vec) {
 	return
 }
 
-func (a *Circle) VsCircle(b *Circle) (penetration float64, normal *v.Vec) {
-	distanceVec := a.Position.NewSub(b.Position)
+func (a *Circle) VsCircle(b *Circle) (penetration float64, normal *Vector3) {
+	distanceVec := a.Position.Clone().Sub(b.Position)
 	distance := distanceVec.Length()
 	penetration = a.Radius + b.Radius - distance
 	normal = distanceVec.Normalize()
@@ -32,7 +28,7 @@ func (a *Circle) VsCircle(b *Circle) (penetration float64, normal *v.Vec) {
 }
 
 type Rectangle struct {
-	Position *v.Vec
+	Position *Vector3
 	Height float64
 	Width float64
 }

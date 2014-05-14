@@ -1,12 +1,17 @@
 package main
 
-import (
-	v "github.com/stojg/vivere/vec"
-)
+type CollisionPair struct {
+	a           *Entity
+	b           *Entity
+	restitution float64
+	pen         float64
+	normal      *Vector3
+}
 
 type Collision struct{}
 
 func (c *Collision) Detect(a *Entity, b *Entity) (cp *CollisionPair, hit bool) {
+
 	cp = &CollisionPair{}
 	cp.a = a
 	cp.b = b
@@ -19,16 +24,8 @@ func (c *Collision) Detect(a *Entity, b *Entity) (cp *CollisionPair, hit bool) {
 	return
 }
 
-type CollisionPair struct {
-	a           *Entity
-	b           *Entity
-	restitution float64
-	pen         float64
-	normal      *v.Vec
-}
-
 func (c *CollisionPair) CalculateSeparatingVelocity() float64 {
-	relativeVel := v.Vec{}
+	relativeVel := Vector3{}
 	relativeVel.Copy(c.a.physics.(*ParticlePhysics).Velocity)
 	if c.b != nil {
 		relativeVel.Sub(c.b.physics.(*ParticlePhysics).Velocity)
@@ -56,11 +53,11 @@ func (c *CollisionPair) resolveInterpenetration() {
 		return
 	}
 
-	movePerIMass := c.normal.NewScale(c.pen / totalInvMass)
+	movePerIMass := c.normal.Clone().Scale(c.pen / totalInvMass)
 
-	c.a.Position.Add(movePerIMass.NewScale(c.a.physics.(*ParticlePhysics).InvMass))
+	c.a.Position.Add(movePerIMass.Clone().Scale(c.a.physics.(*ParticlePhysics).InvMass))
 	if c.b != nil {
-		c.b.Position.Add(movePerIMass.NewScale(-c.b.physics.(*ParticlePhysics).InvMass))
+		c.b.Position.Add(movePerIMass.Clone().Scale(-c.b.physics.(*ParticlePhysics).InvMass))
 	}
 }
 
@@ -77,7 +74,7 @@ func (c *CollisionPair) resolveVelocity(duration float64) {
 	newSepVelocity := -separatingVelocity * c.restitution
 
 	// Check the velocity build up due to acceleration only
-	accCausedVelocity := &v.Vec{}
+	accCausedVelocity := &Vector3{}
 	accCausedVelocity.Copy(c.a.physics.(*ParticlePhysics).forces)
 	if c.b != nil {
 		accCausedVelocity.Sub(c.b.physics.(*ParticlePhysics).forces)
@@ -109,13 +106,13 @@ func (c *CollisionPair) resolveVelocity(duration float64) {
 	var impulse float64
 	impulse = deltaVelocity / totalInvMass
 
-	var impulsePerIMass *v.Vec
-	impulsePerIMass = c.normal.NewScale(impulse)
+	var impulsePerIMass *Vector3
+	impulsePerIMass = c.normal.Clone().Scale(impulse)
 
-	temp := impulsePerIMass.NewScale(c.a.physics.(*ParticlePhysics).InvMass)
+	temp := impulsePerIMass.Clone().Scale(c.a.physics.(*ParticlePhysics).InvMass)
 	c.a.physics.(*ParticlePhysics).Velocity.Add(temp)
 	if c.b != nil {
-		temp = impulsePerIMass.NewScale(-c.b.physics.(*ParticlePhysics).InvMass)
+		temp = impulsePerIMass.Clone().Scale(-c.b.physics.(*ParticlePhysics).InvMass)
 		c.b.physics.(*ParticlePhysics).Velocity.Add(temp)
 	}
 }
