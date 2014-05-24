@@ -42,8 +42,8 @@ func NewEntity() *Entity {
 	g.scale = &Vector3{1, 1, 1}
 	g.physics = &NullComponent{}
 	g.graphics = &NullComponent{}
-//	g.geometry = &Circle{Radius: 15}
-	g.geometry = &Rectangle{SizeX: 32, SizeY: 32, SizeZ: 32}
+	g.geometry = &Circle{Radius: 15}
+//	g.geometry = &Rectangle{SizeX: 32, SizeY: 32, SizeZ: 32}
 	g.input = &NullComponent{}
 	return g
 }
