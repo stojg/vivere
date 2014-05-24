@@ -28,9 +28,11 @@ func NewBunnyGraphic() *BunnyGraphics {
 
 func (c *BunnyGraphics) Update(entity *Entity, elapsed float64) {
 
-	targetDirection := math.Atan2(entity.Velocity[0], entity.Velocity[1])
-	//deltaOrientation := (entity.Orientation - targetDirection)
-	//log.Println(deltaOrientation)
-	// Orientation is in the direction
-	entity.Orientation = targetDirection
+	if entity.Model == 2 {
+		targetDirection := math.Atan2(entity.Velocity[0], entity.Velocity[1])
+		//deltaOrientation := (entity.Orientation - targetDirection)
+		//log.Println(deltaOrientation)
+		// Orientation is in the direction
+		entity.Orientation = targetDirection
+	}
 }

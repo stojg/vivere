@@ -39,6 +39,10 @@ define(['src/entity'], function (entity) {
                 case 3:
                     commands[id].orientation = buf.readFloat32();
                     break;
+                // INST_SET_MODEL
+                case 4:
+                    commands[id].model = buf.readFloat32();
+                    break;
             }
         }
         for (id in commands) {

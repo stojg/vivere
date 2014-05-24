@@ -5,21 +5,16 @@ type Circle struct {
 }
 
 type Rectangle struct {
-	SizeX    float64
-	SizeY    float64
-	SizeZ    float64
-	MinPoint struct{ X, Y, Z float64 }
-	MaxPoint struct{ X, Y, Z float64 }
+	HalfSize Vector3
+	MinPoint Vector3
+	MaxPoint Vector3
 }
 
 func (r *Rectangle) ToWorld(position *Vector3) {
-	halfX := r.SizeX / 2
-	halfY := r.SizeY / 2
-	halfZ := r.SizeZ / 2
-	r.MinPoint.X = position[0] - halfX
-	r.MaxPoint.X = position[0] + halfX
-	r.MinPoint.Y = position[1] - halfY
-	r.MaxPoint.Y = position[1] + halfY
-	r.MinPoint.Z = position[2] - halfZ
-	r.MaxPoint.Z = position[2] + halfZ
+	r.MinPoint[0] = position[0] - r.HalfSize[0]
+	r.MaxPoint[0] = position[0] + r.HalfSize[0]
+	r.MinPoint[1] = position[1] - r.HalfSize[1]
+	r.MaxPoint[1] = position[1] + r.HalfSize[1]
+	r.MinPoint[2] = position[2] - r.HalfSize[2]
+	r.MaxPoint[2] = position[2] + r.HalfSize[2]
 }

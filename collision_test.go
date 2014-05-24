@@ -76,12 +76,12 @@ func (s *CollisionTestSuite) TestAABBHit(c *C) {
 
 	a := &Entity{}
 	a.Position = &Vector3{0, 0, 0}
-	a.geometry = &Rectangle{SizeX: 4, SizeY: 4, SizeZ: 4}
+	a.geometry = &Rectangle{HalfSize: Vector3{4,4,4}}
 	a.geometry.(*Rectangle).ToWorld(a.Position)
 
 	b := &Entity{}
-	b.Position = &Vector3{1, 0, 0}
-	b.geometry = &Rectangle{SizeX: 4, SizeY: 4, SizeZ: 4}
+	b.Position = &Vector3{5, 0, 0}
+	b.geometry = &Rectangle{HalfSize: Vector3{4,4,4}}
 	b.geometry.(*Rectangle).ToWorld(b.Position)
 
 	pair, hit := collider.Detect(a, b)
@@ -95,16 +95,50 @@ func (s *CollisionTestSuite) TestAABBNoHit(c *C) {
 
 	a := &Entity{}
 	a.Position = &Vector3{0, 0, 0}
-	a.geometry = &Rectangle{SizeX: 4, SizeY: 4, SizeZ: 4}
+	a.geometry = &Rectangle{HalfSize: Vector3{4,4,4}}
 
 	b := &Entity{}
 	b.Position = &Vector3{10, 0, 0}
-	b.geometry = &Rectangle{SizeX: 4, SizeY: 4, SizeZ: 4}
+	b.geometry = &Rectangle{HalfSize: Vector3{4,4,4}}
 
 	pair, hit := collider.Detect(a, b)
 	c.Assert(hit, Equals, false)
 	c.Assert(pair.penetration, Equals, float64(0))
 	c.Assert(pair.normal, DeepEquals, &Vector3{0, 0, 0})
+}
+
+func (s *CollisionTestSuite) TestAABBvsCircle(c *C) {
+	collider := &CollisionDetector{}
+
+	a := &Entity{}
+	a.Position = &Vector3{0, 0, 0}
+	a.geometry = &Circle{Radius: 4}
+
+	b := &Entity{}
+	b.Position = &Vector3{10, 0, 0}
+	b.geometry = &Rectangle{HalfSize: Vector3{2,2,2}}
+
+	pair, hit := collider.Detect(a, b)
+	c.Assert(hit, Equals, false)
+	c.Assert(pair.penetration, Equals, float64(0))
+	c.Assert(pair.normal, DeepEquals, &Vector3{0, 0, 0})
+}
+
+func (s *CollisionTestSuite) TestAABBvsCircleHit(c *C) {
+	collider := &CollisionDetector{}
+
+	a := &Entity{}
+	a.Position = &Vector3{0, 0, 0}
+	a.geometry = &Circle{Radius: 4}
+
+	b := &Entity{}
+	b.Position = &Vector3{4, 0, 0}
+	b.geometry = &Rectangle{HalfSize: Vector3{2,2,2}}
+
+	pair, hit := collider.Detect(a, b)
+	c.Assert(hit, Equals, true)
+	c.Assert(pair.penetration, Equals, float64(-3))
+	c.Assert(pair.normal, DeepEquals, &Vector3{1, 0, 0})
 }
 
 func (s *CollisionTestSuite) TestCollisionResolve(c *C) {

@@ -18,20 +18,21 @@ func (c *CollisionDetector) Detect(a *Entity, b *Entity) (cp *Collision, hit boo
 		switch b.geometry.(type) {
 		case *Circle:
 			c.CircleVsCircle(cp)
+		case *Rectangle:
+			c.CircleVsRectangle(cp)
 		}
 	case *Rectangle:
 		switch b.geometry.(type) {
 		case *Rectangle:
 			c.RectangleVsRectangle(cp)
+		case *Circle:
+			c.RectangleVsCircle(cp)
 		}
 	default:
 		panic("unknown collision geometry")
 	}
-
 	cp.restitution = 0.5
-	if cp.penetration > 0 {
-		hit = true
-	}
+	hit = cp.IsIntersecting
 	return
 }
 
@@ -47,6 +48,42 @@ func (c *CollisionDetector) CircleVsCircle(col *Collision) {
 		col.IsIntersecting = true
 	}
 	col.normal = distanceVec.Normalize()
+}
+
+func (c *CollisionDetector) CircleVsRectangle(contact *Collision) {
+	contact.a, contact.b = contact.b, contact.a
+	c.RectangleVsCircle(contact)
+}
+
+func (c *CollisionDetector) RectangleVsCircle(contact *Collision) {
+
+	rectA := contact.a.geometry.(*Rectangle)
+	rectA.ToWorld(contact.a.Position)
+
+	contact.normal = &Vector3{}
+
+	circleB := contact.b.geometry.(*Circle)
+	p := contact.b.Position
+
+	closestPoint := &Vector3{}
+	for i:=0; i<3 ; i++ {
+		v := p[i]
+		if v < rectA.MinPoint[i] {
+			v = rectA.MinPoint[i]
+		}
+		if v > rectA.MaxPoint[i] {
+			v = rectA.MaxPoint[i]
+		}
+		closestPoint[i] = v
+	}
+
+	distVec := closestPoint.Sub(p)
+	if distVec.SquareLength() > circleB.Radius * circleB.Radius {
+		return
+	}
+	contact.normal = distVec.Normalize()
+	contact.penetration = distVec.Length() - circleB.Radius
+	contact.IsIntersecting = true
 }
 
 func (c *CollisionDetector) RectangleVsRectangle(contact *Collision) {
@@ -67,17 +104,17 @@ func (c *CollisionDetector) RectangleVsRectangle(contact *Collision) {
 	// (0, 0, 1)                    A1 (= B2) [Z Axis]
 	contact.normal = &Vector3{}
 	// [X Axis]
-	if !c.TestAxisStatic(UnitX, rectA.MinPoint.X, rectA.MaxPoint.X, rectB.MinPoint.X, rectB.MaxPoint.X, mtvAxis, &mtvDistance) {
+	if !c.TestAxisStatic(UnitX, rectA.MinPoint[0], rectA.MaxPoint[0], rectB.MinPoint[0], rectB.MaxPoint[0], mtvAxis, &mtvDistance) {
 		return
 	}
 
 	// [Y Axis]
-	if !c.TestAxisStatic(UnitY, rectA.MinPoint.Y, rectA.MaxPoint.Y, rectB.MinPoint.Y, rectB.MaxPoint.Y, mtvAxis, &mtvDistance) {
+	if !c.TestAxisStatic(UnitY, rectA.MinPoint[1], rectA.MaxPoint[1], rectB.MinPoint[1], rectB.MaxPoint[1], mtvAxis, &mtvDistance) {
 		return
 	}
 
 	// [Z Axis]
-	if !c.TestAxisStatic(UnitZ, rectA.MinPoint.Z, rectA.MaxPoint.Z, rectB.MinPoint.Z, rectB.MaxPoint.Z, mtvAxis, &mtvDistance) {
+	if !c.TestAxisStatic(UnitZ, rectA.MinPoint[2], rectA.MaxPoint[2], rectB.MinPoint[2], rectB.MaxPoint[2], mtvAxis, &mtvDistance) {
 		return
 	}
 

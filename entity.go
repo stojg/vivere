@@ -43,7 +43,7 @@ func NewEntity() *Entity {
 	g.physics = &NullComponent{}
 	g.graphics = &NullComponent{}
 	g.geometry = &Circle{Radius: 15}
-//	g.geometry = &Rectangle{SizeX: 32, SizeY: 32, SizeZ: 32}
+//	g.geometry = &Rectangle{HalfSize: Vector3{16,16,16}}
 	g.input = &NullComponent{}
 	return g
 }
@@ -83,6 +83,7 @@ type Entity struct {
 	input       Component
 	physics     Component
 	graphics    Component
+	Model 	uint16
 }
 
 func (g *Entity) ID() uint16 {
@@ -105,6 +106,7 @@ const (
 	INST_ENTITY_ID       Literal = 1
 	INST_SET_POSITION    Literal = 2
 	INST_SET_ORIENTATION Literal = 3
+	INST_SET_TYPE Literal = 4
 )
 
 func (ent *Entity) Serialize() *bytes.Buffer {
@@ -112,6 +114,7 @@ func (ent *Entity) Serialize() *bytes.Buffer {
 	ent.binaryStream(buf, INST_ENTITY_ID, ent.id)
 	ent.binaryStream(buf, INST_SET_POSITION, ent.Position)
 	ent.binaryStream(buf, INST_SET_ORIENTATION, ent.Orientation)
+	ent.binaryStream(buf, INST_SET_TYPE, ent.Model)
 	return buf
 }
 

@@ -4,9 +4,16 @@ define(["lib/pixi"], function (pixi) {
 
     'use strict';
 
+    var modelToImage = [];
+
+    modelToImage[1] = "sprites/square.png";
+    modelToImage[2] = "sprites/arrow.png";
+
     var GameObject = function (texture) {
 
-        this.texture = new pixi.Texture.fromImage(texture);
+        this.model = 0;
+
+        this.texture = new pixi.Texture.fromImage("sprites/square.png");
 
         this.sprite = new pixi.Sprite(this.texture);
 
@@ -85,6 +92,11 @@ define(["lib/pixi"], function (pixi) {
 
             this.state = latestSnapshot.state;
             this.sprite.rotation = latestSnapshot.orientation
+
+            if(this.model != latestSnapshot.model) {
+                this.model = latestSnapshot.model;
+                this.sprite.texture = new pixi.Texture.fromImage(modelToImage[this.model]);
+            }
 
             if (this.interpolationDelay <= 0) {
                 this.sprite.position = latestSnapshot.position;
@@ -214,11 +226,9 @@ define(["lib/pixi"], function (pixi) {
             interpolationDelay = 0;
         }
 
-        if (type === this.BUNNY) {
-            go = new GameObject("sprites/arrow.png");
-            go.interpolationDelay = interpolationDelay;
-            return go;
-        }
+        go = new GameObject();
+        go.interpolationDelay = interpolationDelay;
+        return go;
 
         throw new Error("Tried to create a model without an exiting type '" + type + "'");
     };

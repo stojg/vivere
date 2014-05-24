@@ -68,6 +68,11 @@ func (a *Vector3) Length() float64 {
 	return math.Sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2])
 }
 
+func (a *Vector3) SquareLength() float64 {
+	return a[0]*a[0] + a[1]*a[1] + a[2]*a[2]
+}
+
+
 func (a *Vector3) Normalize() *Vector3 {
 	length := a.Length()
 	if length > 0 {

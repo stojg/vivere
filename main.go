@@ -42,6 +42,12 @@ func main() {
 
 func NewRabbit(world *World) {
 	ent := world.entities.NewEntity()
+	ent.Model = uint16(rand.Float32()+1.5)
+	if ent.Model == 1 {
+		ent.geometry = &Rectangle{HalfSize: Vector3{16,16,16}}
+	} else {
+		ent.geometry = &Circle{Radius: 15}
+	}
 	physics := NewParticlePhysics()
 	physics.InvMass = rand.Float64() * 3
 	ent.physics = physics
