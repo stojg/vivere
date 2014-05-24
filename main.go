@@ -34,22 +34,22 @@ func main() {
 		log.Fatal(http.ListenAndServe(":"+port, nil))
 	}()
 
-	for a := 0; a < 60; a++ {
-		NewRabbit(world)
+	for a := 0; a < 25; a++ {
+		NewThingie(world)
 	}
 
-	for a := 0; a < 10; a++ {
+	for a := 0; a < 5; a++ {
 		NewObstacle(world)
 	}
 
 	world.GameLoop()
 }
 
-func NewRabbit(world *World) {
+func NewThingie(world *World) {
 	ent := world.entities.NewEntity()
-	ent.Model =2
+	ent.Model = 2
 	physics := NewParticlePhysics()
-	physics.InvMass = 2
+	physics.InvMass = rand.Float64()*5 + 0.1
 	ent.geometry = &Circle{Radius: 15}
 	ent.physics = physics
 	ent.input = NewBunnyAI(ent.physics)
@@ -63,7 +63,7 @@ func NewObstacle(world *World) {
 	ent.Model = 1
 	physics := NewParticlePhysics()
 	physics.InvMass = 0
-	ent.geometry = &Rectangle{HalfSize: Vector3{16,16,16}}
+	ent.geometry = &Rectangle{HalfSize: Vector3{16, 16, 16}}
 	ent.physics = physics
 	ent.Position.Set(rand.Float64()*1000, rand.Float64()*-600, 0)
 }

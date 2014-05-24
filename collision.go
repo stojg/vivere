@@ -2,7 +2,7 @@ package main
 
 import (
 	"math"
-//	"fmt"
+	//	"fmt"
 )
 
 type CollisionDetector struct{}
@@ -66,7 +66,7 @@ func (c *CollisionDetector) RectangleVsCircle(contact *Collision) {
 	p := contact.b.Position
 
 	closestPoint := &Vector3{}
-	for i:=0; i<3 ; i++ {
+	for i := 0; i < 3; i++ {
 		v := p[i]
 		if v < rectA.MinPoint[i] {
 			v = rectA.MinPoint[i]
@@ -78,7 +78,7 @@ func (c *CollisionDetector) RectangleVsCircle(contact *Collision) {
 	}
 
 	distVec := closestPoint.Sub(p)
-	if distVec.SquareLength() > circleB.Radius * circleB.Radius {
+	if distVec.SquareLength() > circleB.Radius*circleB.Radius {
 		return
 	}
 	contact.normal = distVec.Normalize()
@@ -165,7 +165,6 @@ func (c *CollisionDetector) TestAxisStatic(axis Vector3, minA, maxA, minB, maxB 
 
 	// The mtd vector for that axis
 	sep := axis.Scale(overlap / axisLengthSquared)
-
 
 	// The mtd vector length squared
 	sepLengthSquared := sep.Dot(sep)

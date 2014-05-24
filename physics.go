@@ -12,9 +12,10 @@ func (c *Physics) Update(e *Entity, elapsed float64) {
 
 type ParticlePhysics struct {
 	Physics
-	InvMass float64
-	forces  *Vector3
-	Damping float64
+	InvMass   float64
+	forces    *Vector3
+	rotations float64
+	Damping   float64
 }
 
 func NewParticlePhysics() *ParticlePhysics {
@@ -33,9 +34,13 @@ func (c *ParticlePhysics) Update(entity *Entity, elapsed float64) {
 	entity.Velocity.AddScaledVector(c.forces, elapsed)
 	entity.Velocity.Scale(math.Pow(c.Damping, elapsed))
 
+	entity.Orientation += entity.Rotation * elapsed
+	entity.Rotation += c.rotations * elapsed
+	entity.Rotation *= 0.9
+
 	// clamp velocity
-	if entity.Velocity.Length() > 160 {
-		entity.Velocity.Normalize().Scale(160)
+	if entity.Velocity.Length() > entity.MaxSpeed {
+		entity.Velocity.Normalize().Scale(entity.MaxSpeed)
 	}
 }
 
@@ -45,6 +50,14 @@ func (p *ParticlePhysics) AddForce(force *Vector3) {
 
 func (p *ParticlePhysics) ClearForces() {
 	p.forces.Clear()
+}
+
+func (p *ParticlePhysics) AddRotation(rot float64) {
+	p.rotations += rot
+}
+
+func (p *ParticlePhysics) ClearRotations() {
+	p.rotations = 0
 }
 
 type RigidBody struct {

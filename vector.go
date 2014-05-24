@@ -64,6 +64,14 @@ func (a *Vector3) Sub(b *Vector3) *Vector3 {
 	return a
 }
 
+func (a *Vector3) NewSub(b *Vector3) *Vector3 {
+	vec := &Vector3{}
+	vec[0] = (*a)[0] - (*b)[0]
+	vec[1] = (*a)[1] - (*b)[1]
+	vec[2] = (*a)[2] - (*b)[2]
+	return vec
+}
+
 func (a *Vector3) Length() float64 {
 	return math.Sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2])
 }
@@ -71,7 +79,6 @@ func (a *Vector3) Length() float64 {
 func (a *Vector3) SquareLength() float64 {
 	return a[0]*a[0] + a[1]*a[1] + a[2]*a[2]
 }
-
 
 func (a *Vector3) Normalize() *Vector3 {
 	length := a.Length()
@@ -105,4 +112,11 @@ func (v *Vector3) VectorProduct(vector *Vector3) *Vector3 {
 	result[1] = v[2]*vector[0] - v[0]*vector[2]
 	result[2] = v[0]*vector[1] - v[1]*vector[0]
 	return result
+}
+
+func OrientationAsVector(orientation float64) *Vector3 {
+	vec := &Vector3{}
+	vec[0] = math.Cos(orientation)
+	vec[1] = math.Sin(orientation)
+	return vec
 }

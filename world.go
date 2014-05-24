@@ -63,6 +63,7 @@ func (w *World) GameLoop() {
 
 			for _, entity := range w.entities.GetAll() {
 				entity.physics.(*ParticlePhysics).ClearForces()
+				entity.physics.(*ParticlePhysics).ClearRotations()
 			}
 
 		case newPlayer := <-w.newPlayerChan:

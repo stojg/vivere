@@ -24,7 +24,7 @@ define(function () {
         }
 
         // Let's open a web socket to the server
-        conn = new window.WebSocket("wss://" + document.location.host + "/ws/");
+        conn = new window.WebSocket("ws://" + document.location.host + "/ws/");
         conn.binaryType = "arraybuffer";
         conn.onopen = function (data) {
             console.log("connection was opened to '" + data.currentTarget.URL + '"');

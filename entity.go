@@ -35,15 +35,19 @@ func (gol *EntityList) NewEntity() *Entity {
 }
 
 func NewEntity() *Entity {
-	g := &Entity{}
-	g.Position = &Vector3{0, 0, 0}
-	g.Orientation = 0
-	g.Velocity = &Vector3{}
-	g.scale = &Vector3{1, 1, 1}
-	g.physics = &NullComponent{}
-	g.graphics = &NullComponent{}
-	g.input = &NullComponent{}
-	return g
+	ent := &Entity{}
+	ent.Position = &Vector3{0, 0, 0}
+	ent.Orientation = 0
+	ent.Velocity = &Vector3{}
+	ent.Rotation = 0
+	ent.MaxAcceleration = 20
+	ent.MaxSpeed = 200
+	ent.MaxRotation = 10
+	ent.scale = &Vector3{1, 1, 1}
+	ent.physics = &NullComponent{}
+	ent.graphics = &NullComponent{}
+	ent.input = &NullComponent{}
+	return ent
 }
 
 func (gol *EntityList) Add(i *Entity) bool {
@@ -72,16 +76,20 @@ func (gol *EntityList) Length() int {
 }
 
 type Entity struct {
-	id          uint16
-	Position    *Vector3
-	Orientation float64
-	Velocity    *Vector3
-	scale       *Vector3
-	geometry    interface{}
-	input       Component
-	physics     Component
-	graphics    Component
-	Model 	uint16
+	id              uint16
+	Position        *Vector3
+	Orientation     float64
+	Velocity        *Vector3
+	Rotation        float64
+	MaxAcceleration float64
+	MaxSpeed        float64
+	MaxRotation     float64
+	scale           *Vector3
+	geometry        interface{}
+	input           Component
+	physics         Component
+	graphics        Component
+	Model           uint16
 }
 
 func (g *Entity) ID() uint16 {
@@ -104,7 +112,7 @@ const (
 	INST_ENTITY_ID       Literal = 1
 	INST_SET_POSITION    Literal = 2
 	INST_SET_ORIENTATION Literal = 3
-	INST_SET_TYPE Literal = 4
+	INST_SET_TYPE        Literal = 4
 )
 
 func (ent *Entity) Serialize() *bytes.Buffer {
