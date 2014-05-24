@@ -215,7 +215,7 @@ define(["lib/pixi"], function (pixi) {
         }
 
         if (type === this.BUNNY) {
-            go = new GameObject("sprites/bunny.png");
+            go = new GameObject("sprites/arrow.png");
             go.interpolationDelay = interpolationDelay;
             return go;
         }
