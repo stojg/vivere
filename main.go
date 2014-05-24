@@ -37,26 +37,35 @@ func main() {
 	for a := 0; a < 60; a++ {
 		NewRabbit(world)
 	}
+
+	for a := 0; a < 10; a++ {
+		NewObstacle(world)
+	}
+
 	world.GameLoop()
 }
 
 func NewRabbit(world *World) {
 	ent := world.entities.NewEntity()
-	ent.Model = uint16(rand.Float32()+1.5)
-	if ent.Model == 1 {
-		ent.geometry = &Rectangle{HalfSize: Vector3{16,16,16}}
-	} else {
-		ent.geometry = &Circle{Radius: 15}
-	}
+	ent.Model =2
 	physics := NewParticlePhysics()
-	physics.InvMass = rand.Float64() * 3
+	physics.InvMass = 2
+	ent.geometry = &Circle{Radius: 15}
 	ent.physics = physics
-
 	ent.input = NewBunnyAI(ent.physics)
 	ent.graphics = NewBunnyGraphic()
-
 	ent.Position.Set(rand.Float64()*1000, rand.Float64()*-600, 0)
 	ent.Orientation = 0
+}
+
+func NewObstacle(world *World) {
+	ent := world.entities.NewEntity()
+	ent.Model = 1
+	physics := NewParticlePhysics()
+	physics.InvMass = 0
+	ent.geometry = &Rectangle{HalfSize: Vector3{16,16,16}}
+	ent.physics = physics
+	ent.Position.Set(rand.Float64()*1000, rand.Float64()*-600, 0)
 }
 
 // webserver is a http.HandleFunc for serving static files over http
