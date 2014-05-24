@@ -1,34 +1,25 @@
 package main
 
-type Geometry interface {
-	Collision(b Geometry) (penetration float64, normal *Vector3)
-}
-
 type Circle struct {
-	Position *Vector3
-	Radius   float64
-}
-
-func (c *Circle) Collision(b Geometry) (penetration float64, normal *Vector3) {
-	switch b.(type) {
-	case *Circle:
-		return c.VsCircle(b.(*Circle))
-	default:
-		panic("unknown collision geometry")
-	}
-	return
-}
-
-func (a *Circle) VsCircle(b *Circle) (penetration float64, normal *Vector3) {
-	distanceVec := a.Position.Clone().Sub(b.Position)
-	distance := distanceVec.Length()
-	penetration = a.Radius + b.Radius - distance
-	normal = distanceVec.Normalize()
-	return penetration, normal
+	Radius float64
 }
 
 type Rectangle struct {
-	Position *Vector3
-	Height   float64
-	Width    float64
+	SizeX    float64
+	SizeY    float64
+	SizeZ    float64
+	MinPoint struct{ X, Y, Z float64 }
+	MaxPoint struct{ X, Y, Z float64 }
+}
+
+func (r *Rectangle) ToWorld(position *Vector3) {
+	halfX := r.SizeX / 2
+	halfY := r.SizeY / 2
+	halfZ := r.SizeZ / 2
+	r.MinPoint.X = position[0] - halfX
+	r.MaxPoint.X = position[0] + halfX
+	r.MinPoint.Y = position[1] - halfY
+	r.MaxPoint.Y = position[1] + halfY
+	r.MinPoint.Z = position[2] - halfZ
+	r.MaxPoint.Z = position[2] + halfZ
 }

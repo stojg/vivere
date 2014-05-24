@@ -75,6 +75,7 @@ func (s *TestSuite) TestSerialize(c *C) {
 	c.Assert(literal, Equals, byte(INST_SET_POSITION))
 	binary.Read(buf, binary.LittleEndian, &expected)
 	c.Assert(float32(10), Equals, expected)
+	// We expect the server to run with y + 1 is up and the client is rendering it in screen coordinates
 	binary.Read(buf, binary.LittleEndian, &expected)
-	c.Assert(float32(20), Equals, expected)
+	c.Assert(float32(-20), Equals, expected)
 }

@@ -28,16 +28,23 @@ func NewEntityList() *EntityList {
 
 func (gol *EntityList) NewEntity() *Entity {
 	gol.nextID++
-	g := &Entity{}
+	g := NewEntity()
 	g.id = (gol.nextID)
+	gol.Add(g)
+	return g
+}
+
+func NewEntity() *Entity {
+	g := &Entity{}
 	g.Position = &Vector3{0, 0, 0}
 	g.Orientation = 0
+	g.Velocity = &Vector3{}
 	g.scale = &Vector3{1, 1, 1}
 	g.physics = &NullComponent{}
 	g.graphics = &NullComponent{}
-	g.geometry = &Circle{Position: g.Position, Radius: 15}
+//	g.geometry = &Circle{Radius: 15}
+	g.geometry = &Rectangle{SizeX: 32, SizeY: 32, SizeZ: 32}
 	g.input = &NullComponent{}
-	gol.Add(g)
 	return g
 }
 
@@ -70,8 +77,9 @@ type Entity struct {
 	id          uint16
 	Position    *Vector3
 	Orientation float64
+	Velocity    *Vector3
 	scale       *Vector3
-	geometry    Geometry
+	geometry    interface{}
 	input       Component
 	physics     Component
 	graphics    Component
@@ -120,7 +128,8 @@ func (ent *Entity) binaryStream(buf *bytes.Buffer, lit Literal, val interface{})
 		binary.Write(buf, binary.LittleEndian, float32(val.(float64)))
 	case *Vector3:
 		binary.Write(buf, binary.LittleEndian, float32(val.(*Vector3)[0]))
-		binary.Write(buf, binary.LittleEndian, float32(val.(*Vector3)[1]))
+		// Server works in y + 1 is up direction
+		binary.Write(buf, binary.LittleEndian, float32(-val.(*Vector3)[1]))
 	default:
 		panic(fmt.Errorf("%c", val))
 	}

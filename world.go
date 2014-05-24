@@ -16,7 +16,7 @@ type World struct {
 	Tick          uint64
 	newPlayerChan chan *client.Client
 	debug         bool
-	collision     *Collision
+	collision     *CollisionDetector
 }
 
 func NewWorld(debug bool) *World {
@@ -24,7 +24,7 @@ func NewWorld(debug bool) *World {
 	w.entities = &EntityList{}
 	w.FPS = 120
 	w.debug = debug
-	w.collision = &Collision{}
+	w.collision = &CollisionDetector{}
 	return w
 }
 
@@ -72,8 +72,8 @@ func (w *World) GameLoop() {
 	}
 }
 
-func (w *World) Collisions() []*CollisionPair {
-	collisions := make([]*CollisionPair, 0)
+func (w *World) Collisions() []*Collision {
+	collisions := make([]*Collision, 0)
 	for aIdx, a := range world.entities.GetAll() {
 		for bIdx := aIdx + 1; bIdx <= uint16(len(world.entities.GetAll())); bIdx++ {
 			collision, hit := w.collision.Detect(a, world.entities.Get(bIdx))
@@ -85,7 +85,7 @@ func (w *World) Collisions() []*CollisionPair {
 	return collisions
 }
 
-func (w *World) ResolveCollisions(collisions []*CollisionPair, duration float64) {
+func (w *World) ResolveCollisions(collisions []*Collision, duration float64) {
 	for _, pair := range collisions {
 		pair.Resolve(duration)
 	}

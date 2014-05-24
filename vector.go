@@ -6,6 +6,12 @@ import (
 
 type Vector3 [3]float64
 
+var (
+	UnitX = Vector3{1, 0, 0}
+	UnitY = Vector3{0, 1, 0}
+	UnitZ = Vector3{0, 0, 1}
+)
+
 func NewVector3(x, y, z float64) *Vector3 {
 	e := &Vector3{}
 	e[0] = x
