@@ -25,7 +25,7 @@ require(["src/server", 'lib/pixi', 'src/entity', "src/world", "src/player", "src
      * Initialize the renderer and the gamestate
      */
     main.init = function () {
-        this.pixi = pixi.autoDetectRenderer(1000, 600);
+        this.pixi = pixi.autoDetectRenderer(1024, 640);
         document.body.appendChild(this.pixi.view);
         this.stages[0] = new pixi.Stage(0x666666);
         this.lastTick = window.performance.now();

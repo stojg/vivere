@@ -2,11 +2,16 @@ package main
 
 import (
 	"math"
+	"math/rand"
 )
 
 type SteeringOutput struct {
 	linear  *Vector3
 	angular float64
+}
+
+type Steering interface {
+	GetSteering() *SteeringOutput
 }
 
 func NewSteeringOutput() *SteeringOutput {
@@ -18,6 +23,13 @@ func NewSteeringOutput() *SteeringOutput {
 type Seek struct {
 	character *Entity
 	target    *Entity
+}
+
+func NewSeek(character, target *Entity) *Seek {
+	s := &Seek{}
+	s.character = character
+	s.target = target
+	return s
 }
 
 func (s *Seek) GetSteering() *SteeringOutput {
@@ -137,6 +149,29 @@ func (s *Align) MapToRange(rotation float64) float64 {
 	return rotation
 }
 
+type Face struct {
+	Align
+}
+
+func (s *Face) GetSteering() *SteeringOutput {
+
+	// 1. Calculate the target to delegate to align
+
+	// Work out the direction to target
+	direction := s.target.Position.NewSub(s.character.Position)
+
+	// Check for zero direction
+	if direction.SquareLength() == 0 {
+		return NewSteeringOutput()
+	}
+
+	// Put the target together
+	s.Align.target = NewEntity()
+	s.Align.target.Orientation = math.Atan2(direction[0], direction[1])
+
+	return s.Align.GetSteering()
+}
+
 type LookWhereYoureGoing struct {
 	character *Entity
 }
@@ -154,4 +189,57 @@ func (s *LookWhereYoureGoing) GetSteering() *SteeringOutput {
 	align.character = s.character
 	align.target = target
 	return align.GetSteering()
+}
+
+type Wander struct {
+	Face
+	WanderOffset      float64 // forward offset of the wander circle
+	WanderRadius      float64 // radius of the wander circle
+	WanderRate        float64 // holds the max rate at which  the wander orientation can change
+	WanderOrientation float64 // Holds the current orientation of the wander target
+}
+
+func NewWander(character *Entity, offset, radius, rate float64) *Wander {
+	w := &Wander{}
+	w.Align.character = character
+	w.WanderOffset = offset
+	w.WanderRadius = radius
+	w.WanderRate = rate
+	w.WanderOrientation = character.Orientation
+	return w
+}
+
+func (s *Wander) GetSteering() *SteeringOutput {
+	// Calculate the center of the wander circle
+	target := NewEntity()
+	target.Position = s.character.Position.Clone()
+
+	// Offset the character with the offset in the direction of the character orientation
+	currentHeading := OrientationAsVector(s.character.Orientation)
+
+	targetCenter := currentHeading.Scale(s.WanderOffset)
+	target.Position.Add(targetCenter)
+
+	// Update the wander orientation
+	s.WanderOrientation += s.randomBinomial() * s.WanderRate
+
+	// From the center draw a vector in the direction of the current wanderOrientation
+	offset := OrientationAsVector(s.WanderOrientation).Scale(s.WanderRadius)
+
+	target.Position.Add(offset)
+
+	s.Face.target = target
+	s.Face.timeToTarget = 0.1
+	s.Face.targetRadius = 0.1
+	s.Face.slowRadius = 0.3
+	s.Face.character = s.character
+
+	steering := s.Face.GetSteering()
+
+	steering.linear = OrientationAsVector(s.character.Orientation).Scale(s.character.MaxAcceleration)
+	return steering
+}
+
+func (s *Wander) randomBinomial() float64 {
+	return rand.Float64() - rand.Float64()
 }

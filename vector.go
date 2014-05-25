@@ -50,6 +50,14 @@ func (a *Vector3) Add(b *Vector3) *Vector3 {
 	return a
 }
 
+func (a *Vector3) NewAdd(b *Vector3) *Vector3 {
+	vec := &Vector3{}
+	vec[0] = (*a)[0] + (*b)[0]
+	vec[1] = (*a)[1] + (*b)[1]
+	vec[2] = (*a)[2] + (*b)[2]
+	return vec
+}
+
 func (v *Vector3) AddScaledVector(b *Vector3, t float64) *Vector3 {
 	(*v)[0] += (*b)[0] * t
 	(*v)[1] += (*b)[1] * t
@@ -114,9 +122,13 @@ func (v *Vector3) VectorProduct(vector *Vector3) *Vector3 {
 	return result
 }
 
+func (v *Vector3) AsOrientation() float64 {
+	return math.Atan2(v[0], v[1])
+}
+
 func OrientationAsVector(orientation float64) *Vector3 {
 	vec := &Vector3{}
-	vec[0] = math.Cos(orientation)
-	vec[1] = math.Sin(orientation)
+	vec[0] = math.Sin(orientation)
+	vec[1] = math.Cos(orientation)
 	return vec
 }

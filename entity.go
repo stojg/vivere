@@ -40,8 +40,8 @@ func NewEntity() *Entity {
 	ent.Orientation = 0
 	ent.Velocity = &Vector3{}
 	ent.Rotation = 0
-	ent.MaxAcceleration = 20
-	ent.MaxSpeed = 200
+	ent.MaxAcceleration = 40
+	ent.MaxSpeed = 30
 	ent.MaxRotation = 10
 	ent.scale = &Vector3{1, 1, 1}
 	ent.physics = &NullComponent{}
