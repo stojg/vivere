@@ -5,21 +5,25 @@ import (
 	"math/rand"
 )
 
+// SteeringOutput describes wished changes in velocity (linear) and rotation (angular)
 type SteeringOutput struct {
 	linear  *Vector3
 	angular float64
 }
 
+// Steering is the interface for all steering behaviour
 type Steering interface {
 	GetSteering() *SteeringOutput
 }
 
+// NewSteeringOutput returns a new zero initialized SteeringOutput
 func NewSteeringOutput() *SteeringOutput {
 	so := &SteeringOutput{}
 	so.linear = &Vector3{}
 	return so
 }
 
+// Seek makes the character to go full speed against the target
 type Seek struct {
 	character *Entity
 	target    *Entity
@@ -32,6 +36,7 @@ func NewSeek(character, target *Entity) *Seek {
 	return s
 }
 
+// GetSteering returns a linear steering
 func (s *Seek) GetSteering() *SteeringOutput {
 	steering := NewSteeringOutput()
 	// Get the direction to the target
@@ -43,11 +48,13 @@ func (s *Seek) GetSteering() *SteeringOutput {
 	return steering
 }
 
+// Flee makes the character to flee from the target
 type Flee struct {
 	character *Entity
 	target    *Entity
 }
 
+// GetSteering returns a linear steering
 func (s *Flee) GetSteering() *SteeringOutput {
 	steering := &SteeringOutput{}
 	steering.linear = s.character.Position.NewSub(s.target.Position)
@@ -57,6 +64,7 @@ func (s *Flee) GetSteering() *SteeringOutput {
 	return steering
 }
 
+// Arrive tries to get the character to arrive slowly at a target
 type Arrive struct {
 	character    *Entity
 	target       *Entity
@@ -65,18 +73,17 @@ type Arrive struct {
 	timeToTarget float64
 }
 
+// GetSteering returns a linear steering
 func (s *Arrive) GetSteering() *SteeringOutput {
 	// Get a new steering output
 	steering := NewSteeringOutput()
 	// Get the direction to the target
 	direction := s.target.Position.NewSub(s.character.Position)
 	distance := direction.Length()
-
 	// We have arrived, no output
 	if distance < s.targetRadius {
 		return steering
 	}
-
 	// We are outside the slow radius, so full speed ahead
 	var targetSpeed float64
 	if distance > s.slowRadius {
@@ -84,19 +91,17 @@ func (s *Arrive) GetSteering() *SteeringOutput {
 	} else {
 		targetSpeed = s.character.MaxSpeed * distance / s.slowRadius
 	}
-
 	// The target velocity combines speed and direction
 	targetVelocity := direction
 	targetVelocity.Normalize()
 	targetVelocity.Scale(targetSpeed)
-
 	// Acceleration tries to get to the target velocity
 	steering.linear = targetVelocity.NewSub(s.character.Velocity)
 	steering.linear.Scale(1 / s.timeToTarget)
-
 	return steering
 }
 
+// Align ensures that the character have the same orientation as the target
 type Align struct {
 	character    *Entity
 	target       *Entity
@@ -105,6 +110,7 @@ type Align struct {
 	timeToTarget float64 // 0.1
 }
 
+// GetSteering returns the angular steering to mimic the targets orientation
 func (s *Align) GetSteering() *SteeringOutput {
 	// Get a new steering output
 	steering := NewSteeringOutput()
@@ -149,33 +155,32 @@ func (s *Align) MapToRange(rotation float64) float64 {
 	return rotation
 }
 
+// Face turns the character so it 'looks' at the target
 type Face struct {
 	Align
 }
 
+// GetSteering returns a angular steering
 func (s *Face) GetSteering() *SteeringOutput {
-
 	// 1. Calculate the target to delegate to align
-
 	// Work out the direction to target
 	direction := s.target.Position.NewSub(s.character.Position)
-
 	// Check for zero direction
 	if direction.SquareLength() == 0 {
 		return NewSteeringOutput()
 	}
-
 	// Put the target together
 	s.Align.target = NewEntity()
 	s.Align.target.Orientation = math.Atan2(direction[0], direction[1])
-
 	return s.Align.GetSteering()
 }
 
+// LookWhereYoureGoing turns the character so it faces the direction the character is moving
 type LookWhereYoureGoing struct {
 	character *Entity
 }
 
+// GetSteering returns a angular steering
 func (s *LookWhereYoureGoing) GetSteering() *SteeringOutput {
 	if s.character.Velocity.Length() == 0 {
 		return NewSteeringOutput()
@@ -191,6 +196,7 @@ func (s *LookWhereYoureGoing) GetSteering() *SteeringOutput {
 	return align.GetSteering()
 }
 
+// Wander lets the character wander around
 type Wander struct {
 	Face
 	WanderOffset      float64 // forward offset of the wander circle
@@ -199,6 +205,7 @@ type Wander struct {
 	WanderOrientation float64 // Holds the current orientation of the wander target
 }
 
+// NewWander returns a new Wander behaviour
 func NewWander(character *Entity, offset, radius, rate float64) *Wander {
 	w := &Wander{}
 	w.Align.character = character
@@ -209,37 +216,39 @@ func NewWander(character *Entity, offset, radius, rate float64) *Wander {
 	return w
 }
 
+// GetSteering returns a new linear and angular steering for wander
 func (s *Wander) GetSteering() *SteeringOutput {
-	// Calculate the center of the wander circle
+	// 1. Calculate the center of the wander circle
 	target := NewEntity()
 	target.Position = s.character.Position.Clone()
 
 	// Offset the character with the offset in the direction of the character orientation
 	currentHeading := OrientationAsVector(s.character.Orientation)
-
 	targetCenter := currentHeading.Scale(s.WanderOffset)
 	target.Position.Add(targetCenter)
 
-	// Update the wander orientation
+	// Update the wander orientation with a small random value
 	s.WanderOrientation += s.randomBinomial() * s.WanderRate
 
-	// From the center draw a vector in the direction of the current wanderOrientation
+	// From the center of the circle draw a vector in the direction of the current wanderOrientation
 	offset := OrientationAsVector(s.WanderOrientation).Scale(s.WanderRadius)
-
 	target.Position.Add(offset)
 
+	// Delegate to face
 	s.Face.target = target
 	s.Face.timeToTarget = 0.1
-	s.Face.targetRadius = 0.1
-	s.Face.slowRadius = 0.3
+	s.Face.targetRadius = 0.05
+	s.Face.slowRadius = 0.2
 	s.Face.character = s.character
 
+	// Get the new orientation
 	steering := s.Face.GetSteering()
-
+	// Set the linear output to the current facing direction of the character
 	steering.linear = OrientationAsVector(s.character.Orientation).Scale(s.character.MaxAcceleration)
 	return steering
 }
 
+// randomBinomial get a random number between -1 and + 1
 func (s *Wander) randomBinomial() float64 {
 	return rand.Float64() - rand.Float64()
 }
