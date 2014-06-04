@@ -2,6 +2,7 @@ package main
 
 import (
 	. "gopkg.in/check.v1"
+	"testing"
 )
 
 type CollisionTestSuite struct{}
@@ -24,6 +25,23 @@ func (s *CollisionTestSuite) TestCircleVsCircleMiss(c *C) {
 	c.Assert(collision.normal, DeepEquals, &Vector3{})
 }
 
+func BenchmarkTestCircleVsCircleMiss(testing *testing.B) {
+	collision := &Collision{}
+	collision.a = NewEntity()
+	collision.a.Position = &Vector3{0, 0}
+	collision.a.geometry = &Circle{Radius: 4}
+	collision.b = NewEntity()
+	collision.b.Position = &Vector3{10, 0}
+	collision.b.geometry = &Circle{Radius: 5}
+	collision.normal = &Vector3{}
+	collider := &CollisionDetector{}
+
+	testing.ResetTimer()
+	for i := 0; i < testing.N; i++ {
+		collider.CircleVsCircle(collision)
+	}
+}
+
 func (s *CollisionTestSuite) TestCircleVsCircleHit(c *C) {
 	contact := &Collision{}
 	contact.a = NewEntity()
@@ -39,7 +57,7 @@ func (s *CollisionTestSuite) TestCircleVsCircleHit(c *C) {
 	c.Assert(contact.normal, DeepEquals, &Vector3{-1, 0, 0})
 }
 
-func (s *CollisionTestSuite) TestNoCircleCollision(c *C) {
+func (s *CollisionTestSuite) TestNoCircleCircleCollision(c *C) {
 	collider := &CollisionDetector{}
 	a := &Entity{}
 	a.Position = &Vector3{0, 0, 0}
@@ -53,6 +71,22 @@ func (s *CollisionTestSuite) TestNoCircleCollision(c *C) {
 	c.Assert(hit, Equals, false)
 	c.Assert(pair.penetration, Equals, float64(0))
 	c.Assert(pair.normal, DeepEquals, &Vector3{})
+}
+
+func BenchmarkNoCircleCircleCollision(testing *testing.B) {
+	collider := &CollisionDetector{}
+	a := &Entity{}
+	a.Position = &Vector3{0, 0, 0}
+	a.geometry = &Circle{Radius: 4}
+
+	b := &Entity{}
+	b.Position = &Vector3{10, 0, 0}
+	b.geometry = &Circle{Radius: 5}
+
+	testing.ResetTimer()
+	for i := 0; i < testing.N; i++ {
+		collider.Detect(a, b)
+	}
 }
 
 func (s *CollisionTestSuite) TestCircleCollision(c *C) {
@@ -70,6 +104,23 @@ func (s *CollisionTestSuite) TestCircleCollision(c *C) {
 	c.Assert(hit, Equals, true)
 	c.Assert(pair.penetration, Equals, float64(1))
 	c.Assert(pair.normal, DeepEquals, &Vector3{-1, 0, 0})
+}
+
+func BenchmarkCircleCollision(testing *testing.B) {
+	collider := &CollisionDetector{}
+
+	a := &Entity{}
+	a.Position = &Vector3{0, 0, 0}
+	a.geometry = &Circle{Radius: 5}
+
+	b := &Entity{}
+	b.Position = &Vector3{9, 0, 0}
+	b.geometry = &Circle{Radius: 5}
+
+	testing.ResetTimer()
+	for i := 0; i < testing.N; i++ {
+		collider.Detect(a, b)
+	}
 }
 
 func (s *CollisionTestSuite) TestAABBHit(c *C) {
@@ -91,6 +142,25 @@ func (s *CollisionTestSuite) TestAABBHit(c *C) {
 	c.Assert(pair.normal, DeepEquals, &Vector3{-1, 0, 0})
 }
 
+func BenchmarkAABBHit(testing *testing.B) {
+	collider := &CollisionDetector{}
+
+	a := &Entity{}
+	a.Position = &Vector3{0, 0, 0}
+	a.geometry = &Rectangle{HalfSize: Vector3{4, 4, 4}}
+	a.geometry.(*Rectangle).ToWorld(a.Position)
+
+	b := &Entity{}
+	b.Position = &Vector3{5, 0, 0}
+	b.geometry = &Rectangle{HalfSize: Vector3{4, 4, 4}}
+	b.geometry.(*Rectangle).ToWorld(b.Position)
+
+	testing.ResetTimer()
+	for i := 0; i < testing.N; i++ {
+		collider.Detect(a, b)
+	}
+}
+
 func (s *CollisionTestSuite) TestAABBNoHit(c *C) {
 	collider := &CollisionDetector{}
 
@@ -106,6 +176,23 @@ func (s *CollisionTestSuite) TestAABBNoHit(c *C) {
 	c.Assert(hit, Equals, false)
 	c.Assert(pair.penetration, Equals, float64(0))
 	c.Assert(pair.normal, DeepEquals, &Vector3{0, 0, 0})
+}
+
+func BenchmarkAABBMiss(testing *testing.B) {
+	collider := &CollisionDetector{}
+
+	a := &Entity{}
+	a.Position = &Vector3{0, 0, 0}
+	a.geometry = &Rectangle{HalfSize: Vector3{4, 4, 4}}
+
+	b := &Entity{}
+	b.Position = &Vector3{10, 0, 0}
+	b.geometry = &Rectangle{HalfSize: Vector3{4, 4, 4}}
+
+	testing.ResetTimer()
+	for i := 0; i < testing.N; i++ {
+		collider.Detect(a, b)
+	}
 }
 
 func (s *CollisionTestSuite) TestAABBvsCircleMiss(c *C) {
@@ -167,6 +254,30 @@ func (s *CollisionTestSuite) TestCollisionResolve(c *C) {
 	c.Assert(a.Position, DeepEquals, &Vector3{-0.5, 0})
 	c.Assert(b.Velocity, DeepEquals, &Vector3{10, 0, 0})
 	c.Assert(b.Position, DeepEquals, &Vector3{9.5, 0})
+}
+
+func BenchmarkCollisionResolve(testing *testing.B) {
+	collider := &CollisionDetector{}
+
+	a := &Entity{}
+	a.Velocity = &Vector3{10, 0, 0}
+	a.physics = &ParticlePhysics{InvMass: 1, forces: &Vector3{}}
+	a.Position = &Vector3{0, 0, 0}
+	a.geometry = &Circle{Radius: 5}
+
+	b := &Entity{}
+	b.Velocity = &Vector3{0, 0, 0}
+	b.physics = &ParticlePhysics{InvMass: 1, forces: &Vector3{}}
+	b.Position = &Vector3{9, 0, 0}
+	b.geometry = &Circle{Radius: 5}
+
+	pair, _ := collider.Detect(a, b)
+	pair.restitution = 1
+	testing.ResetTimer()
+	for i := 0; i < testing.N; i++ {
+		pair.Resolve(1)
+	}
+
 }
 
 func (s *CollisionTestSuite) TestCollisionResolveOpposite(c *C) {
