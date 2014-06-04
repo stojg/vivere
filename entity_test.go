@@ -47,14 +47,6 @@ func (s *TestSuite) TestList(c *C) {
 	c.Assert(gol.Length(), Equals, 0)
 }
 
-func (s *TestSuite) TestSimpleUpdate(c *C) {
-	gol := NewEntityList()
-	g := gol.NewEntity()
-	c.Assert(g.Changed(), Equals, true)
-	//	g.orientation = 2
-	//	c.Assert(g.Changed(), Equals, true)
-}
-
 func (s *TestSuite) TestSerialize(c *C) {
 	gol := NewEntityList()
 	g := gol.NewEntity()

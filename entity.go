@@ -102,13 +102,21 @@ func (g *Entity) ID() uint16 {
 }
 
 func (ent *Entity) Update(elapsed float64) {
+	ent.prevPosition.Set(ent.Position[0], ent.Position[1], ent.Position[2])
+	ent.prevOrientation = ent.Orientation
+	ent.changed = false
+
 	ent.input.Update(ent, elapsed)
 	ent.physics.Update(ent, elapsed)
 	ent.graphics.Update(ent, elapsed)
+
+	if ent.prevPosition.Equals(ent.Position) == false || ent.prevOrientation != ent.Orientation {
+		ent.changed = true
+	}
 }
 
 func (ent *Entity) Changed() bool {
-	return true
+	return ent.changed
 }
 
 type Literal byte

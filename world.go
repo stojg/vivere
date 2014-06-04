@@ -110,11 +110,11 @@ func (w *World) Log(message string) {
 	}
 }
 
-func (w *World) Serialize() *bytes.Buffer {
+func (w *World) Serialize(serializeAll bool) *bytes.Buffer {
 	buf := &bytes.Buffer{}
 	binary.Write(buf, binary.LittleEndian, float32(w.Tick))
 	for _, entity := range w.entities.GetAll() {
-		if entity.Changed() {
+		if entity.Changed() || serializeAll {
 			buf.Write(entity.Serialize().Bytes())
 		}
 	}
