@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	. "github.com/volkerp/goquadtree/quadtree"
 	"fmt"
 )
 
@@ -90,6 +91,10 @@ type Entity struct {
 	physics         Component
 	graphics        Component
 	Model           uint16
+}
+
+func (g *Entity) BoundingBox() BoundingBox {
+	return NewBoundingBox(10, 20, 0, 10)
 }
 
 func (g *Entity) ID() uint16 {

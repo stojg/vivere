@@ -9,18 +9,19 @@ type CollisionTestSuite struct{}
 var _ = Suite(&CollisionTestSuite{})
 
 func (s *CollisionTestSuite) TestCircleVsCircleMiss(c *C) {
-	contact := &Collision{}
-	contact.a = NewEntity()
-	contact.a.Position = &Vector3{0, 0}
-	contact.a.geometry = &Circle{Radius: 5}
-	contact.b = NewEntity()
-	contact.b.Position = &Vector3{10, 0}
-	contact.b.geometry = &Circle{Radius: 5}
+	collision := &Collision{}
+	collision.a = NewEntity()
+	collision.a.Position = &Vector3{0, 0}
+	collision.a.geometry = &Circle{Radius: 4}
+	collision.b = NewEntity()
+	collision.b.Position = &Vector3{10, 0}
+	collision.b.geometry = &Circle{Radius: 5}
+	collision.normal = &Vector3{}
 	collider := &CollisionDetector{}
-	collider.CircleVsCircle(contact)
-	c.Assert(contact.IsIntersecting, Equals, false)
-	c.Assert(contact.penetration, Equals, float64(0))
-	c.Assert(contact.normal, DeepEquals, &Vector3{-1, 0, 0})
+	collider.CircleVsCircle(collision)
+	c.Assert(collision.IsIntersecting, Equals, false)
+	c.Assert(collision.penetration, Equals, float64(0))
+	c.Assert(collision.normal, DeepEquals, &Vector3{})
 }
 
 func (s *CollisionTestSuite) TestCircleVsCircleHit(c *C) {
@@ -42,7 +43,7 @@ func (s *CollisionTestSuite) TestNoCircleCollision(c *C) {
 	collider := &CollisionDetector{}
 	a := &Entity{}
 	a.Position = &Vector3{0, 0, 0}
-	a.geometry = &Circle{Radius: 5}
+	a.geometry = &Circle{Radius: 4}
 
 	b := &Entity{}
 	b.Position = &Vector3{10, 0, 0}
@@ -51,7 +52,7 @@ func (s *CollisionTestSuite) TestNoCircleCollision(c *C) {
 	pair, hit := collider.Detect(a, b)
 	c.Assert(hit, Equals, false)
 	c.Assert(pair.penetration, Equals, float64(0))
-	c.Assert(pair.normal, DeepEquals, &Vector3{-1, 0, 0})
+	c.Assert(pair.normal, DeepEquals, &Vector3{})
 }
 
 func (s *CollisionTestSuite) TestCircleCollision(c *C) {
@@ -86,7 +87,7 @@ func (s *CollisionTestSuite) TestAABBHit(c *C) {
 
 	pair, hit := collider.Detect(a, b)
 	c.Assert(hit, Equals, true)
-	c.Assert(pair.penetration, Equals, float64(3))
+	c.Assert(pair.penetration, Equals, float64(3.0029999999999997))
 	c.Assert(pair.normal, DeepEquals, &Vector3{-1, 0, 0})
 }
 
@@ -107,7 +108,7 @@ func (s *CollisionTestSuite) TestAABBNoHit(c *C) {
 	c.Assert(pair.normal, DeepEquals, &Vector3{0, 0, 0})
 }
 
-func (s *CollisionTestSuite) TestAABBvsCircle(c *C) {
+func (s *CollisionTestSuite) TestAABBvsCircleMiss(c *C) {
 	collider := &CollisionDetector{}
 
 	a := &Entity{}
@@ -137,7 +138,7 @@ func (s *CollisionTestSuite) TestAABBvsCircleHit(c *C) {
 
 	pair, hit := collider.Detect(a, b)
 	c.Assert(hit, Equals, true)
-	c.Assert(pair.penetration, Equals, float64(-3))
+	c.Assert(pair.penetration, Equals, float64(-2))
 	c.Assert(pair.normal, DeepEquals, &Vector3{1, 0, 0})
 }
 

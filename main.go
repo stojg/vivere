@@ -38,7 +38,7 @@ func main() {
 		log.Fatal(http.ListenAndServe(":"+port, nil))
 	}()
 
-	for a := 0; a < 80; a++ {
+	for a := 0; a < 100; a++ {
 		NewThingie(world)
 	}
 
@@ -72,11 +72,9 @@ func main() {
 func NewThingie(world *World) {
 	ent := world.entities.NewEntity()
 	ent.Model = 2
-	physics := NewParticlePhysics()
-	physics.InvMass = rand.Float64()*5 + 0.1
 	ent.geometry = &Circle{Radius: 15}
-	ent.physics = physics
-	ent.input = NewBunnyAI(ent.physics)
+	ent.physics = NewParticlePhysics(rand.Float64()*5 + 0.1)
+	ent.input = NewSimpleAI(ent.physics)
 	ent.graphics = NewBunnyGraphic()
 	ent.Position.Set(rand.Float64()*960-32, rand.Float64()*-576-32, 0)
 	ent.Orientation = (rand.Float64() * math.Pi * 2) - math.Pi
@@ -85,11 +83,8 @@ func NewThingie(world *World) {
 func NewObstacle(world *World) *Entity {
 	ent := world.entities.NewEntity()
 	ent.Model = 1
-	physics := NewParticlePhysics()
-	physics.InvMass = 0
 	ent.geometry = &Rectangle{HalfSize: Vector3{16, 16, 16}}
-	ent.physics = physics
-	ent.Position.Set(rand.Float64()*800+64, rand.Float64()*-400+64, 0)
+	ent.physics = NewParticlePhysics(0)
 	return ent
 }
 

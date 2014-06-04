@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"github.com/stojg/vivere/client"
+//	"github.com/volkerp/goquadtree/quadtree"
 	"log"
 	"math"
 	"time"
@@ -28,47 +29,54 @@ func NewWorld(debug bool) *World {
 	return w
 }
 
-func (w *World) GameLoop() {
-	ticker := time.NewTicker(time.Duration(int(1e9) / int(w.FPS)))
+func (world *World) GameLoop() {
+	ticker := time.NewTicker(time.Duration(int(1e9) / int(world.FPS)))
 	previousTime := time.Now()
 	for {
 		select {
 		case <-ticker.C:
+
+//			qT := quadtree.NewQuadTree(quadtree.NewBoundingBox(0,1000,0,-1000))
+
+//			for _, a := range world.entities.GetAll() {
+//				qT.Add(a)
+//			}
+
 			// Get the elapsed time since the last tick
 			currentTime := time.Now()
 			elapsedTime := float64(currentTime.Sub(previousTime)/time.Millisecond) / 1000
 			previousTime = currentTime
 
-			w.Tick += 1
+			world.Tick += 1
 
-			for _, entity := range w.entities.GetAll() {
+			for _, entity := range world.entities.GetAll() {
 				entity.Update(elapsedTime)
 			}
 
-			w.ResolveCollisions(w.Collisions(), elapsedTime)
+			world.ResolveCollisions(world.Collisions(), elapsedTime)
 
 			// Send world state updates to the clients
-			if math.Mod(float64(w.Tick), 6) == 0 {
-				state := w.Serialize()
-				for _, p := range w.players {
+			if math.Mod(float64(world.Tick), 6) == 0 {
+				state := world.Serialize()
+				for _, p := range world.players {
 					p.Update(state)
 				}
 			}
 			// Ping the clients every second to get the RTT
-			if math.Mod(float64(w.Tick), float64(w.FPS)) == 0 {
-				for _, p := range w.players {
+			if math.Mod(float64(world.Tick), float64(world.FPS)) == 0 {
+				for _, p := range world.players {
 					p.Ping()
 				}
 			}
 
-			for _, entity := range w.entities.GetAll() {
+			for _, entity := range world.entities.GetAll() {
 				entity.physics.(*ParticlePhysics).ClearForces()
 				entity.physics.(*ParticlePhysics).ClearRotations()
 			}
 
-		case newPlayer := <-w.newPlayerChan:
-			w.players = append(w.players, newPlayer)
-			w.Log("[+] New client connected")
+		case newPlayer := <-world.newPlayerChan:
+			world.players = append(world.players, newPlayer)
+			world.Log("[+] New client connected")
 		}
 	}
 }

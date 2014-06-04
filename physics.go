@@ -4,24 +4,17 @@ import (
 	"math"
 )
 
-type Physics struct{}
-
-func (c *Physics) Update(e *Entity, elapsed float64) {
-
-}
-
 type ParticlePhysics struct {
-	Physics
 	InvMass   float64
 	forces    *Vector3
 	rotations float64
 	Damping   float64
 }
 
-func NewParticlePhysics() *ParticlePhysics {
+func NewParticlePhysics(invMass float64) *ParticlePhysics {
 	p := &ParticlePhysics{}
 	p.forces = &Vector3{}
-	p.InvMass = 1 / 1
+	p.InvMass = invMass
 	p.Damping = 0.999
 	return p
 }

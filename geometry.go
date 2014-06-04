@@ -10,6 +10,7 @@ type Rectangle struct {
 	MaxPoint Vector3
 }
 
+// ToWorld sets the min and max points of this rectangle in world coordinates
 func (r *Rectangle) ToWorld(position *Vector3) {
 	r.MinPoint[0] = position[0] - r.HalfSize[0]
 	r.MaxPoint[0] = position[0] + r.HalfSize[0]
