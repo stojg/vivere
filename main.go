@@ -66,6 +66,17 @@ func main() {
 		t.Position[1] = float64(a*-32) + 16
 	}
 
+	go func() {
+		for {
+			select {
+			case newPlayer := <-world.newPlayerChan:
+				newPlayer.Update(world.Serialize(true))
+				world.players = append(world.players, newPlayer)
+				world.Log("[+] New client connected")
+			}
+		}
+	}()
+
 	world.GameLoop()
 }
 

@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"github.com/stojg/vivere/client"
-//	"github.com/volkerp/goquadtree/quadtree"
+	"github.com/volkerp/goquadtree/quadtree"
 	"log"
-	"math"
 	"time"
 )
 
@@ -20,6 +19,11 @@ type World struct {
 	collision     *CollisionDetector
 }
 
+const (
+	SEC_PER_UPDATE  float64 = 0.016
+	SEC_PER_MESSAGE float64 = 0.05
+)
+
 func NewWorld(debug bool) *World {
 	w := &World{}
 	w.entities = &EntityList{}
@@ -30,74 +34,89 @@ func NewWorld(debug bool) *World {
 }
 
 func (world *World) GameLoop() {
-	ticker := time.NewTicker(time.Duration(int(1e9) / int(world.FPS)))
 	previousTime := time.Now()
+	var updateLag float64 = 0
+	var msgLag float64 = SEC_PER_UPDATE
 	for {
-		select {
-		case <-ticker.C:
+		// Get the elapsed time since the last tick
+		currentTime := time.Now()
+		elapsedTime := currentTime.Sub(previousTime).Seconds()
+		previousTime = currentTime
 
-//			qT := quadtree.NewQuadTree(quadtree.NewBoundingBox(0,1000,0,-1000))
+		updateLag -= elapsedTime
+		msgLag += elapsedTime
 
-//			for _, a := range world.entities.GetAll() {
-//				qT.Add(a)
-//			}
+		qT := quadtree.NewQuadTree(quadtree.NewBoundingBox(0, 1000, 0, -1000))
+		for _, entity := range world.entities.GetAll() {
+			qT.Add(entity)
+		}
 
-			// Get the elapsed time since the last tick
-			currentTime := time.Now()
-			elapsedTime := float64(currentTime.Sub(previousTime)/time.Millisecond) / 1000
-			previousTime = currentTime
+		for _, entity := range world.entities.GetAll() {
+			entity.Update(elapsedTime)
+		}
 
-			world.Tick += 1
+		// Collisions
+		collisions := world.Collisions(&qT)
+		for _, pair := range collisions {
+			pair.Resolve(elapsedTime)
+		}
 
-			for _, entity := range world.entities.GetAll() {
-				entity.Update(elapsedTime)
+		for _, entity := range world.entities.GetAll() {
+			entity.physics.(*ParticlePhysics).ClearForces()
+			entity.physics.(*ParticlePhysics).ClearRotations()
+		}
+		updateLag -= SEC_PER_UPDATE
+
+		// //Ping the clients every second to get the RTT
+		// if math.Mod(float64(world.Tick), float64(world.FPS)) == 0 {
+		// for _, p := range world.players {
+		// p.Ping()
+		// }
+		// }
+
+		if msgLag >= SEC_PER_MESSAGE {
+			state := world.Serialize(false)
+			for _, player := range world.players {
+				player.Update(state)
 			}
+			msgLag -= SEC_PER_MESSAGE
+		}
 
-			world.ResolveCollisions(world.Collisions(), elapsedTime)
+		// Check if the game loop took longer than 16ms
+		cycleTime := time.Now().Sub(previousTime).Seconds()
+		reminder := SEC_PER_UPDATE - cycleTime
+		if reminder > 0 {
+			time.Sleep(time.Duration(reminder*1000) * time.Millisecond)
+		} else {
 
-			// Send world state updates to the clients
-			if math.Mod(float64(world.Tick), 6) == 0 {
-				state := world.Serialize()
-				for _, p := range world.players {
-					p.Update(state)
-				}
-			}
-			// Ping the clients every second to get the RTT
-			if math.Mod(float64(world.Tick), float64(world.FPS)) == 0 {
-				for _, p := range world.players {
-					p.Ping()
-				}
-			}
-
-			for _, entity := range world.entities.GetAll() {
-				entity.physics.(*ParticlePhysics).ClearForces()
-				entity.physics.(*ParticlePhysics).ClearRotations()
-			}
-
-		case newPlayer := <-world.newPlayerChan:
-			world.players = append(world.players, newPlayer)
-			world.Log("[+] New client connected")
 		}
 	}
 }
 
-func (w *World) Collisions() []*Collision {
+func (w *World) Collisions(tree *quadtree.QuadTree) []*Collision {
 	collisions := make([]*Collision, 0)
-	for aIdx, a := range world.entities.GetAll() {
-		for bIdx := aIdx + 1; bIdx <= uint16(len(world.entities.GetAll())); bIdx++ {
-			collision, hit := w.collision.Detect(a, world.entities.Get(bIdx))
+	checked := make(map[string]bool, 0)
+
+	for _, a := range world.entities.GetAll() {
+		if a.Changed() == false {
+			continue
+		}
+		t := tree.Query(a.BoundingBox())
+		for _, b := range t {
+			hashA := string(a.id) + ":" + string(b.(*Entity).id)
+			hashB := string(b.(*Entity).id) + ":" + string(a.id)
+			if checked[hashA] || checked[hashB] {
+				continue
+			}
+			checked[hashA], checked[hashB] = true, true
+			collision, hit := w.collision.Detect(a, b.(*Entity))
 			if hit {
 				collisions = append(collisions, collision)
 			}
 		}
 	}
-	return collisions
-}
 
-func (w *World) ResolveCollisions(collisions []*Collision, duration float64) {
-	for _, pair := range collisions {
-		pair.Resolve(duration)
-	}
+	return collisions
 }
 
 func (w *World) SetNewClients(e chan *client.Client) {
