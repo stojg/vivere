@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	. "github.com/volkerp/goquadtree/quadtree"
 	"fmt"
+	. "github.com/volkerp/goquadtree/quadtree"
 )
 
 type Component interface {
@@ -94,7 +94,7 @@ type Entity struct {
 }
 
 func (g *Entity) BoundingBox() BoundingBox {
-	return NewBoundingBox(10, 20, 0, 10)
+	return NewBoundingBox(g.Position[0]-16, g.Position[0]+16, g.Position[1]-16, g.Position[0]+16)
 }
 
 func (g *Entity) ID() uint16 {
