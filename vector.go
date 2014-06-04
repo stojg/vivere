@@ -122,6 +122,19 @@ func (v *Vector3) VectorProduct(vector *Vector3) *Vector3 {
 	return result
 }
 
+func (v *Vector3) Equals(z *Vector3) bool {
+	if v[0] != z[0] {
+		return false
+	}
+	if v[1] != z[1] {
+		return false
+	}
+	if v[2] != z[2] {
+		return false
+	}
+	return true
+}
+
 func (v *Vector3) AsOrientation() float64 {
 	return math.Atan2(v[0], v[1])
 }
