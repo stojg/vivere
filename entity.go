@@ -48,6 +48,7 @@ func NewEntity() *Entity {
 	ent.physics = &NullComponent{}
 	ent.graphics = &NullComponent{}
 	ent.input = &NullComponent{}
+	ent.prevPosition = &Vector3{0, 0, 0}
 	return ent
 }
 
@@ -91,6 +92,9 @@ type Entity struct {
 	physics         Component
 	graphics        Component
 	Model           uint16
+	changed         bool
+	prevPosition    *Vector3
+	prevOrientation float64
 }
 
 func (g *Entity) BoundingBox() BoundingBox {
