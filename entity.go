@@ -95,10 +95,15 @@ type Entity struct {
 	changed         bool
 	prevPosition    *Vector3
 	prevOrientation float64
+	bBox            BoundingBox
 }
 
 func (g *Entity) BoundingBox() BoundingBox {
-	return NewBoundingBox(g.Position[0]-16, g.Position[0]+16, g.Position[1]-16, g.Position[0]+16)
+	g.bBox.MinX = g.Position[0] - 16
+	g.bBox.MaxX = g.Position[0] + 16
+	g.bBox.MinY = g.Position[1] - 16
+	g.bBox.MaxY = g.Position[1] + 16
+	return g.bBox
 }
 
 func (g *Entity) ID() uint16 {
