@@ -10,11 +10,15 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"runtime/pprof"
+	"flag"
 )
 
 var port string
 
 var world *World
+
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
@@ -31,7 +35,7 @@ func init() {
 	c.Init(32, int(world.sizeX/32), int(world.sizeY/32))
 	world.SetMap(c.GetMap())
 
-	for a := 0; a < 100; a++ {
+	for a := 0; a < 20; a++ {
 		ent := NewThingie(world)
 		for world.Collision(ent) {
 			ent.Position.Set(rand.Float64()*960, rand.Float64()*-576-32, 0)
@@ -44,6 +48,16 @@ func init() {
 // Main only contains the necessary wiring for bootstrapping the
 // engine
 func main() {
+
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
 	go func() {
 		log.Fatal(http.ListenAndServe(":"+port, nil))
