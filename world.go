@@ -4,19 +4,23 @@ import (
 	"bytes"
 	"encoding/binary"
 	"github.com/stojg/vivere/client"
+	"github.com/stojg/vivere/creator"
 	"github.com/volkerp/goquadtree/quadtree"
 	"log"
 	"time"
+	//	"fmt"
 )
 
 type World struct {
 	entities      *EntityList
 	players       []*client.Client
-	FPS           uint8
 	Tick          uint64
 	newPlayerChan chan *client.Client
 	debug         bool
 	collision     *CollisionDetector
+	heightMap     [][]*creator.Tile
+	sizeX         float64
+	sizeY         float64
 }
 
 const (
@@ -24,12 +28,13 @@ const (
 	SEC_PER_MESSAGE float64 = 0.05
 )
 
-func NewWorld(debug bool) *World {
+func NewWorld(debug bool, sizeX, sizeY float64) *World {
 	w := &World{}
 	w.entities = &EntityList{}
-	w.FPS = 120
 	w.debug = debug
 	w.collision = &CollisionDetector{}
+	w.sizeX = sizeX
+	w.sizeY = sizeY
 	return w
 }
 
@@ -46,7 +51,9 @@ func (world *World) GameLoop() {
 		updateLag -= elapsedTime
 		msgLag += elapsedTime
 
-		qT := quadtree.NewQuadTree(quadtree.NewBoundingBox(0, 1000, 0, -1000))
+		world.Tick += 1
+
+		qT := quadtree.NewQuadTree(quadtree.NewBoundingBox(-6400.0, 6400.0, -6400.0, 6400.0))
 		for _, entity := range world.entities.GetAll() {
 			qT.Add(entity)
 		}
@@ -87,10 +94,45 @@ func (world *World) GameLoop() {
 		reminder := SEC_PER_UPDATE - cycleTime
 		if reminder > 0 {
 			time.Sleep(time.Duration(reminder*1000) * time.Millisecond)
-		} else {
-
+		} else if world.debug {
+			log.Printf("lag %f", reminder*1000)
 		}
 	}
+}
+
+func (world *World) SetMap(heightMap [][]*creator.Tile) {
+	world.heightMap = heightMap
+	for x := range world.heightMap {
+		for y := range world.heightMap[x] {
+			if world.heightMap[x][y].Value() < 0.6 {
+				continue
+			}
+			ent := world.entities.NewEntity()
+			ent.Model = 1
+			ent.geometry = &Rectangle{HalfSize: Vector3{16, 16, 16}}
+			ent.physics = NewParticlePhysics(0)
+			posX := world.heightMap[x][y].Position()[0] - float64(world.sizeX/2)
+			posY := world.heightMap[x][y].Position()[1] - float64(world.sizeY/2)
+			ent.Position.Set(posX, posY, 0)
+		}
+	}
+}
+
+func (w *World) Collision(a *Entity) bool {
+	qT := quadtree.NewQuadTree(quadtree.NewBoundingBox(-w.sizeX/2, w.sizeX/2, -w.sizeY/2, w.sizeY/2))
+	for _, b := range world.entities.GetAll() {
+		qT.Add(b)
+	}
+	for _, b := range world.entities.GetAll() {
+		if a == b {
+			continue
+		}
+		_, hit := w.collision.Detect(a, b)
+		if hit {
+			return true
+		}
+	}
+	return false
 }
 
 func (w *World) Collisions(tree *quadtree.QuadTree) []*Collision {
