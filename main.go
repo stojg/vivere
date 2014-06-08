@@ -35,7 +35,7 @@ func init() {
 	c.Init(32, int(world.sizeX/32), int(world.sizeY/32))
 	world.SetMap(c.GetMap())
 
-	for a := 0; a < 20; a++ {
+	for a := 0; a < 100; a++ {
 		ent := NewThingie(world)
 		for world.Collision(ent) {
 			ent.Position.Set(rand.Float64()*960, rand.Float64()*-576-32, 0)
