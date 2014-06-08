@@ -98,11 +98,14 @@ func (w *World) Collisions(tree *quadtree.QuadTree) []*Collision {
 	checked := make(map[string]bool, 0)
 
 	for _, a := range world.entities.GetAll() {
-		if a.Changed() == false {
+		if !a.Changed() {
 			continue
 		}
 		t := tree.Query(a.BoundingBox())
 		for _, b := range t {
+			if a == b {
+				continue
+			}
 			hashA := string(a.id) + ":" + string(b.(*Entity).id)
 			hashB := string(b.(*Entity).id) + ":" + string(a.id)
 			if checked[hashA] || checked[hashB] {

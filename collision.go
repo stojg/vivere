@@ -33,28 +33,41 @@ func (c *CollisionDetector) Detect(a *Entity, b *Entity) (collision *Collision, 
 	return
 }
 
-func (c *CollisionDetector) CircleVsCircle(contact *Collision) {
+func (colDec *CollisionDetector) CircleVsCircle(contact *Collision) {
 	cA := contact.a.geometry.(*Circle)
 	cB := contact.b.geometry.(*Circle)
-	distanceVec := contact.a.Position.Clone().Sub(contact.b.Position)
 
+	var c [3]float64
+	c[0] = contact.a.Position[0] - contact.b.Position[0]
+	c[1] = contact.a.Position[1] - contact.b.Position[1]
+	c[2] = contact.a.Position[2] - contact.b.Position[2]
+
+	sqrLength := c[0]*c[0] + c[1]*c[1] + c[2]*c[2]
 	// Early out to avoid expensive sqrt
-	if distanceVec.SquareLength() > (cA.Radius+cB.Radius)*(cA.Radius+cB.Radius) {
+	if sqrLength > (cA.Radius+cB.Radius)*(cA.Radius+cB.Radius) {
 		return
 	}
-	contact.penetration = cA.Radius + cB.Radius - distanceVec.Length()
-	contact.normal = distanceVec.Normalize()
+
+	length := math.Sqrt(sqrLength)
+
+	c[0] *= 1 / length
+	c[1] *= 1 / length
+	c[2] *= 1 / length
+
+	contact.penetration = cA.Radius + cB.Radius - length
+	contact.normal = &Vector3{c[0], c[1], c[2]}
 	contact.IsIntersecting = true
 }
 
-func (c *CollisionDetector) CircleVsRectangle(contact *Collision) {
-	contact.a, contact.b = contact.b, contact.a
-	c.RectangleVsCircle(contact)
+func (c *CollisionDetector) CircleVsRectangle(collision *Collision) {
+	collision.a, collision.b = collision.b, collision.a
+	c.RectangleVsCircle(collision)
 }
 
-func (c *CollisionDetector) RectangleVsCircle(contact *Collision) {
+func (colDetector *CollisionDetector) RectangleVsCircle(contact *Collision) {
 	rA := contact.a.geometry.(*Rectangle)
 	rA.ToWorld(contact.a.Position)
+
 	cB := contact.b.geometry.(*Circle)
 	contact.normal = &Vector3{}
 
@@ -68,13 +81,21 @@ func (c *CollisionDetector) RectangleVsCircle(contact *Collision) {
 		}
 	}
 
-	distanceVec := closestPoint.Sub(contact.b.Position)
+	var c [3]float64
+	c[0] = closestPoint[0] - contact.b.Position[0]
+	c[1] = closestPoint[1] - contact.b.Position[1]
+	c[2] = closestPoint[2] - contact.b.Position[2]
+	sqrLength := c[0]*c[0] + c[1]*c[1] + c[2]*c[2]
 	// Early out to avoid expensive sqrt
-	if distanceVec.SquareLength() > cB.Radius*cB.Radius {
+	if sqrLength > cB.Radius*cB.Radius {
 		return
 	}
-	contact.penetration = distanceVec.Length() - cB.Radius
-	contact.normal = distanceVec.Normalize()
+	length := math.Sqrt(sqrLength)
+	c[0] *= 1 / length
+	c[1] *= 1 / length
+	c[2] *= 1 / length
+	contact.penetration = length - cB.Radius
+	contact.normal = &Vector3{c[0], c[1], c[2]}
 	contact.IsIntersecting = true
 }
 
@@ -119,17 +140,18 @@ func (c *CollisionDetector) RectangleVsRectangle(contact *Collision) {
 // * Keep the smallest intersection/penetration value
 func (c *CollisionDetector) testAxisSeparation(axis Vector3, minA, maxA, minB, maxB float64, mtvAxis *Vector3, mtvDistance *float64) bool {
 
-	axisLengthSquared := axis.Dot(&axis)
+	//	axisLengthSquared := axis.Dot(&axis)
+	axisLengthSquared := axis[0]*axis[0] + axis[1]*axis[1] + axis[2]*axis[2]
 
 	// If the axis is degenerate then ignore
 	if axisLengthSquared < 1.0e-8 {
-		return true
+		return false
 	}
 
 	// Calculate the two possible overlap ranges
 	// Either we overlap on the left or the right sides
-	d0 := (maxB - minA) // 'Left' side
-	d1 := (maxA - minB) // 'Right' side
+	d0 := maxB - minA // 'Left' side
+	d1 := maxA - minB // 'Right' side
 
 	// Intervals do not overlap, so no intersection
 	if d0 <= 0.0 || d1 <= 0.0 {
@@ -145,16 +167,19 @@ func (c *CollisionDetector) testAxisSeparation(axis Vector3, minA, maxA, minB, m
 	}
 
 	// The mtd vector for that axis
-	sep := axis.Scale(overlap / axisLengthSquared)
+	var sep [3]float64
+	sep[0] = axis[0] * (overlap / axisLengthSquared)
+	sep[1] = axis[1] * (overlap / axisLengthSquared)
+	sep[2] = axis[2] * (overlap / axisLengthSquared)
 
 	// The mtd vector length squared
-	sepLengthSquared := sep.Dot(sep)
+	sepLengthSquared := sep[0]*sep[0] + sep[1]*sep[1] + sep[2]*sep[2]
 
 	// If that vector is smaller than our computed Minimum Translation
 	// Distance use that vector as our current MTV distance
 	if sepLengthSquared < *mtvDistance {
 		*mtvDistance = math.Sqrt(sepLengthSquared)
-		mtvAxis.Copy(sep)
+		mtvAxis.Set(sep[0], sep[1], sep[2])
 	}
 	return true
 }
