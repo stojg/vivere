@@ -39,7 +39,6 @@ func NewWorld(debug bool, sizeX, sizeY float64) *World {
 }
 
 func (world *World) GameLoop() {
-	start := time.Now()
 	previousTime := time.Now()
 	var updateLag float64 = 0
 	var msgLag float64 = SEC_PER_UPDATE
@@ -97,10 +96,6 @@ func (world *World) GameLoop() {
 			time.Sleep(time.Duration(reminder*1000) * time.Millisecond)
 		} else if world.debug {
 //			log.Printf("lag %f", reminder*1000)
-		}
-
-		if time.Now().Sub(start)* time.Second < 10  {
-			return
 		}
 	}
 }
