@@ -93,7 +93,7 @@ func (world *World) GameLoop() {
 		cycleTime := time.Now().Sub(previousTime).Seconds()
 		reminder := SEC_PER_UPDATE - cycleTime
 		if reminder > 0 {
-			time.Sleep(time.Duration(reminder*1000) * time.Millisecond)
+//			time.Sleep(time.Duration(reminder*1000) * time.Millisecond)
 		} else if world.debug {
 //			log.Printf("lag %f", reminder*1000)
 		}
