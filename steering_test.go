@@ -23,7 +23,7 @@ func TestMapToRange(t *testing.T) {
 	for i, tt := range rotationTest {
 		s := a.MapToRange(tt.in)
 		if s != tt.out {
-			t.Errorf("%d MapToRange(%d) => %d, want %q", i, tt.in, s, tt.out)
+			t.Errorf("%d MapToRange(%f) => %f, want %f", i, tt.in, s, tt.out)
 		}
 	}
 
