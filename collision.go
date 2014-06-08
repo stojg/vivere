@@ -38,11 +38,15 @@ func (colDec *CollisionDetector) CircleVsCircle(contact *Collision) {
 	cB := contact.b.geometry.(*Circle)
 
 	var c [3]float64
-	c[0] = contact.a.Position[0] - contact.b.Position[0]
-	c[1] = contact.a.Position[1] - contact.b.Position[1]
-	c[2] = contact.a.Position[2] - contact.b.Position[2]
+	for i := range c {
+		c[i] = contact.a.Position[i] - contact.b.Position[i]
+	}
 
 	sqrLength := c[0]*c[0] + c[1]*c[1] + c[2]*c[2]
+	if sqrLength < 1.0e-8 {
+		return
+	}
+
 	// Early out to avoid expensive sqrt
 	if sqrLength > (cA.Radius+cB.Radius)*(cA.Radius+cB.Radius) {
 		return
@@ -50,9 +54,9 @@ func (colDec *CollisionDetector) CircleVsCircle(contact *Collision) {
 
 	length := math.Sqrt(sqrLength)
 
-	c[0] *= 1 / length
-	c[1] *= 1 / length
-	c[2] *= 1 / length
+	for i := range c {
+		c[i] *= 1 / length
+	}
 
 	contact.penetration = cA.Radius + cB.Radius - length
 	contact.normal = &Vector3{c[0], c[1], c[2]}
@@ -82,18 +86,26 @@ func (colDetector *CollisionDetector) RectangleVsCircle(contact *Collision) {
 	}
 
 	var c [3]float64
-	c[0] = closestPoint[0] - contact.b.Position[0]
-	c[1] = closestPoint[1] - contact.b.Position[1]
-	c[2] = closestPoint[2] - contact.b.Position[2]
+	for i := range c {
+		c[i] = closestPoint[i] - contact.b.Position[i]
+	}
+
 	sqrLength := c[0]*c[0] + c[1]*c[1] + c[2]*c[2]
+
+	if sqrLength < 1.0e-8 {
+		return
+	}
+
 	// Early out to avoid expensive sqrt
 	if sqrLength > cB.Radius*cB.Radius {
 		return
 	}
+
 	length := math.Sqrt(sqrLength)
-	c[0] *= 1 / length
-	c[1] *= 1 / length
-	c[2] *= 1 / length
+	for i := range c {
+		c[i] *= 1 / length
+	}
+
 	contact.penetration = length - cB.Radius
 	contact.normal = &Vector3{c[0], c[1], c[2]}
 	contact.IsIntersecting = true
