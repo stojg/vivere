@@ -2,6 +2,7 @@ package main
 
 import (
 	"code.google.com/p/go.net/websocket"
+	"flag"
 	"github.com/stojg/vivere/client"
 	"github.com/stojg/vivere/creator"
 	"log"
@@ -9,9 +10,8 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"time"
 	"runtime/pprof"
-	"flag"
+	"time"
 )
 
 var port string
