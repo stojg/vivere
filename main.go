@@ -38,34 +38,6 @@ func main() {
 		log.Fatal(http.ListenAndServe(":"+port, nil))
 	}()
 
-	for a := 0; a < 100; a++ {
-		NewThingie(world)
-	}
-
-	for a := 0; a < 32; a++ {
-		t := NewObstacle(world)
-		t.Position[0] = float64(a*32) + 16
-		t.Position[1] = -16
-	}
-
-	for a := 1; a < 32; a++ {
-		t := NewObstacle(world)
-		t.Position[0] = float64(a*32) + 16
-		t.Position[1] = -640 + 16
-	}
-
-	for a := 1; a < 21; a++ {
-		t := NewObstacle(world)
-		t.Position[0] = 16
-		t.Position[1] = float64(a*-32) + 16
-	}
-
-	for a := 1; a < 21; a++ {
-		t := NewObstacle(world)
-		t.Position[0] = 1024 - 16
-		t.Position[1] = float64(a*-32) + 16
-	}
-
 	go func() {
 		for {
 			select {
