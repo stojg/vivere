@@ -8,6 +8,10 @@ define(['src/world', 'lib/datastream'], function (world, DataStream) {
 
     var cmdSequence = 0;
 
+    var cameraPosition = [0, 0];
+
+    var cameraZoom = 1;
+
     /**
      *
      * @type {number}
@@ -16,12 +20,15 @@ define(['src/world', 'lib/datastream'], function (world, DataStream) {
         MOVE_DOWN = 1,
         MOVE_RIGHT = 2,
         MOVE_LEFT = 3,
+        ZOOM_IN = 4,
+        ZOOM_OUT = 5,
     // A byte, represents the actions
         actions = 0,
     // console.log the keypressed
         debug = false;
 
     /**
+     * http://www.javascriptkeycode.com/
      *
      * @type []int
      */
@@ -33,7 +40,9 @@ define(['src/world', 'lib/datastream'], function (world, DataStream) {
         68: MOVE_RIGHT, // d
         39: MOVE_RIGHT, // arrow right
         65: MOVE_LEFT, // a
-        37: MOVE_LEFT // arrow left
+        37: MOVE_LEFT, // arrow left
+        81: ZOOM_OUT, // q
+        69: ZOOM_IN //
     };
 
     /**
@@ -41,6 +50,40 @@ define(['src/world', 'lib/datastream'], function (world, DataStream) {
      * @param event
      */
     window.document.onkeydown = function (event) {
+
+        if(keycodeToAction[event.keyCode] === MOVE_LEFT){
+            cameraPosition[0] += 15;
+            return
+        }
+        if(keycodeToAction[event.keyCode] === MOVE_RIGHT){
+            cameraPosition[0] -= 15;
+            return
+        }
+        if(keycodeToAction[event.keyCode] === MOVE_UP){
+            cameraPosition[1] += 15;
+            return
+        }
+        if(keycodeToAction[event.keyCode] === MOVE_DOWN){
+            cameraPosition[1] -= 15;
+            return
+        }
+
+        if(keycodeToAction[event.keyCode] === ZOOM_IN){
+            cameraZoom -= 0.2;
+            if(cameraZoom < 0.5) {
+                cameraZoom = 0.5;
+            }
+            return
+        }
+
+        if(keycodeToAction[event.keyCode] === ZOOM_OUT){
+            cameraZoom += 0.2;
+            if(cameraZoom > 10) {
+                cameraZoom = 10;
+            }
+            return
+        }
+
         if (debug) {
             console.log(String.fromCharCode(event.keyCode), event.keyCode);
         }
@@ -67,6 +110,7 @@ define(['src/world', 'lib/datastream'], function (world, DataStream) {
      * @returns bool
      */
     player.sendUpdates = function (tickLength, websocket) {
+
         if (actions ==+ 0) {
             return false;
         }
@@ -86,8 +130,12 @@ define(['src/world', 'lib/datastream'], function (world, DataStream) {
         // a byte that represents the pressed buttons
         cmd.writeUint32(actions);
 
-        return websocket.send(cmd.buffer);
+        //return websocket.send(cmd.buffer);
     };
+
+    player.camera = function() {
+        return [cameraPosition, cameraZoom];
+    }
 
     return player;
 });

@@ -19,7 +19,7 @@ define(["src/world"], function (world) {
             }
 
             if (world.entities[i].state == 1) {
-                main.stages[0].removeChild(world.entities[i].getSprite());
+                main.stage.removeChild(world.entities[i].getSprite());
                 world.entities.splice(i, 1)
             } else {
                 world.entities[i].update(tFrame);

@@ -1,6 +1,6 @@
 /* jshint undef: true, unused: true, strict: true */
 /* global define */
-define(['src/entity'], function (entity) {
+define(['src/entity', "lib/pixi"], function (entity, PIXI) {
 
     "use strict";
 
@@ -8,14 +8,20 @@ define(['src/entity'], function (entity) {
 
     world.entities = [];
 
+    world.container = new PIXI.DisplayObjectContainer();
+
+    world.container.pivot = {x: -1024/2, y: -640/2};
+
+    world.camera = new PIXI.DisplayObjectContainer();
+
     world.serverTick = 0;
 
     world.update = function(buf, main) {
-
         // first byte is current servertick
         world.serverTick = buf.readFloat32();
 
         var id = 0;
+
         var commands = [];
 
         while(!buf.isEof()) {
@@ -26,7 +32,7 @@ define(['src/entity'], function (entity) {
                     id = buf.readFloat32();
                     if(typeof world.entities[id] == 'undefined') {
                         world.entities[id] = entity.create(2, 120);
-                        main.stages[0].addChild(world.entities[id].getSprite());
+                        this.container.addChild(world.entities[id].getSprite());
                     }
                     commands[id] = {}
                     commands[id].timestamp = window.performance.now();

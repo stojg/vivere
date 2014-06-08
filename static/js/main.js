@@ -19,7 +19,7 @@ require(["src/server", 'lib/pixi', 'src/entity', "src/world", "src/player", "src
     main.lastTick = window.performance.now();
     main.pixi = null;
     main.commandTick = 0;
-    main.stages = [];
+    main.stage = [];
 
     /**
      * Initialize the renderer and the gamestate
@@ -27,9 +27,9 @@ require(["src/server", 'lib/pixi', 'src/entity', "src/world", "src/player", "src
     main.init = function () {
         this.pixi = pixi.autoDetectRenderer(1024, 640);
         document.body.appendChild(this.pixi.view);
-        this.stages[0] = new pixi.Stage(0x666666);
+        this.stage = new pixi.Stage(0x666666);
+        this.stage.addChild(world.container);
         this.lastTick = window.performance.now();
-
 //        setTimeout(function(){
 //            window.cancelRequestAnimFrame(main.stopGameLoop);
 //            websocket.close();
@@ -40,11 +40,15 @@ require(["src/server", 'lib/pixi', 'src/entity', "src/world", "src/player", "src
     /**
      * Render the game
      */
-    main.render = function () {
+    main.render = function (elapsed) {
+        var camera = player.camera();
         main.frameCounter++;
-        for (var i = 0; i < this.stages.length; i++) {
-            this.pixi.render(this.stages[i]);
-        }
+        // https://github.com/anvaka/ngraph/blob/master/examples/pixi.js/03%20-%20Zoom%20And%20Pan/globalInput.js
+        world.container.position.x = camera[0][0];
+        world.container.position.y = camera[0][1];
+        world.container.scale.x = 1 / camera[1];
+        world.container.scale.y = 1 / camera[1];
+        this.pixi.render(this.stage);
     };
 
     /**
@@ -65,7 +69,7 @@ require(["src/server", 'lib/pixi', 'src/entity', "src/world", "src/player", "src
         main.stopGameLoop = window.requestAnimationFrame(gameloop);
         var elapsed = tFrame - main.lastTick;
         simulator.update(tFrame, main);
-        main.render();
+        main.render(tFrame);
         player.sendUpdates(elapsed, server);
         main.lastTick = tFrame;
     }
