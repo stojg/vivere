@@ -142,6 +142,7 @@ func (v *Vector3) AsOrientation() float64 {
 func OrientationAsVector(orientation float64) *Vector3 {
 	vec := &Vector3{}
 	vec[0] = math.Sin(orientation)
-	vec[1] = math.Cos(orientation)
+	vec[1] = 0
+	vec[2] = math.Cos(orientation)
 	return vec
 }

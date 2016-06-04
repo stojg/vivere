@@ -1,59 +1,114 @@
 /* jshint undef: true, unused: true, strict: true */
 /* global define */
-define(['src/entity', "lib/pixi"], function (entity, PIXI) {
+define(['src/entity', 'lib/babylon.2.3.max'], function (entity) {
 
     "use strict";
 
-    var world = {};
+    return function (scene) {
 
-    world.entities = [];
+        var blue = new BABYLON.StandardMaterial("texture1", scene);
+        blue.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.7);
+        blue.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0);
 
-    world.container = new PIXI.DisplayObjectContainer();
+        var pink = new BABYLON.StandardMaterial("texture1", scene);
+        pink.diffuseColor = new BABYLON.Color3(1.0, 0.2, 0.7);
+        pink.specularColor = new BABYLON.Color3(1.0, 0.2, 0.7);
 
-    world.container.pivot = {x: -1024/2, y: -640/2};
+        var red = new BABYLON.StandardMaterial("texture1", scene);
+        red.diffuseColor = new BABYLON.Color3(1.0, 0.2, 0.2);
+        red.specularColor = new BABYLON.Color3(1.0, 0.2, 0.2);
 
-    world.camera = new PIXI.DisplayObjectContainer();
+        var moccasin = new BABYLON.StandardMaterial("texture1", scene);
+        moccasin.diffuseColor = new BABYLON.Color3(1.0,0.9, 0.8);
+        moccasin.specularColor = new BABYLON.Color3(1.0,0.9, 0.8);
 
-    world.serverTick = 0;
+        var pinkLight = new BABYLON.StandardMaterial("texture1", scene);
+        pinkLight.diffuseColor = new BABYLON.Color3(.7, 0.3, .7);
+        pinkLight.specularColor = new BABYLON.Color3(.7, 0.3, .7);
 
-    world.update = function(buf, main) {
-        // first byte is current servertick
-        world.serverTick = buf.readFloat32();
+        this.templates = {};
 
-        var id = 0;
+        var box = BABYLON.Mesh.CreateBox("box", 1.0, scene, false, BABYLON.Mesh.DEFAULTSIDE);
+        box.scaling = new BABYLON.Vector3(30, 15, 30);
+        box.isVisible = false;
+        box.material = blue;
+        this.templates[1] = box;
 
-        var commands = [];
+        var pray = BABYLON.Mesh.CreateBox("box", 1.0, scene, false, BABYLON.Mesh.DEFAULTSIDE);
+        //var sphere = BABYLON.Mesh.CreateSphere("sphere", 20, 1.0, scene);
+        pray.scaling = new BABYLON.Vector3(30, 30, 30);
+        pray.isVisible = false;
+        pray.material = pink;
+        this.templates[2] = pray;
 
-        while(!buf.isEof()) {
-            switch(buf.readUint8()) {
-                // INST_ENTITY_ID
-                case 1:
-                    // we are changing entity, send update to previous entity
-                    id = buf.readFloat32();
-                    if(typeof world.entities[id] == 'undefined') {
-                        world.entities[id] = entity.create(2, 120);
-                        this.container.addChild(world.entities[id].getSprite());
-                    }
-                    commands[id] = {}
-                    commands[id].timestamp = window.performance.now();
-                    break;
-                // INST_SET_POSITION
-                case 2:
-                    commands[id].position = {x: buf.readFloat32(), y: buf.readFloat32()};
-                    break;
-                // INST_SET_ROTATION
-                case 3:
-                    commands[id].orientation = buf.readFloat32();
-                    break;
-                // INST_SET_MODEL
-                case 4:
-                    commands[id].model = buf.readFloat32();
-                    break;
+        var hunter = BABYLON.Mesh.CreateBox("box", 1.0, scene, false, BABYLON.Mesh.DEFAULTSIDE);
+        //var sphere = BABYLON.Mesh.CreateSphere("sphere", 20, 1.0, scene);
+        hunter.scaling = new BABYLON.Vector3(30, 30, 30);
+        hunter.isVisible = false;
+        hunter.material = red;
+        this.templates[3] = hunter;
+
+        var scared = BABYLON.Mesh.CreateBox("box", 1.0, scene, false, BABYLON.Mesh.DEFAULTSIDE);
+        //var sphere = BABYLON.Mesh.CreateSphere("sphere", 20, 1.0, scene);
+        scared.scaling = new BABYLON.Vector3(10, 10, 10);
+        scared.isVisible = false;
+        scared.material = moccasin;
+        this.templates[4] = scared;
+
+        var taken = BABYLON.Mesh.CreateBox("box", 1.0, scene, false, BABYLON.Mesh.DEFAULTSIDE);
+        //var sphere = BABYLON.Mesh.CreateSphere("sphere", 20, 1.0, scene);
+        taken.scaling = new BABYLON.Vector3(10, 10, 10);
+        taken.isVisible = false;
+        taken.material = pinkLight;
+        this.templates[5] = taken;
+
+        this.entities = [];
+
+        this.serverTick = 0;
+
+        this.update = function (buf, scene) {
+            // first byte is current servertick
+            this.serverTick = buf.readFloat32();
+
+            var commands = [];
+
+            var id = 0;
+            while (!buf.isEof()) {
+                var cmd = buf.readUint8();
+                switch (cmd) {
+                    // INST_ENTITY_ID
+                    case 1:
+                        // we are changing entity, set a new ID that will be used by all the following non 1 cmds
+                        id = buf.readFloat32();
+                        if (typeof this.entities[id] == 'undefined') {
+                            this.entities[id] = entity.create(id, 120, scene, this.templates);
+                        }
+                        commands[id] = {};
+                        commands[id].timestamp = window.performance.now();
+                        break;
+                    // INST_SET_POSITION
+                    case 2:
+                        commands[id].position = {x: buf.readFloat32(), y: buf.readFloat32(), z: buf.readFloat32()};
+                        break;
+                    // INST_SET_ROTATION
+                    case 3:
+                        commands[id].orientation = buf.readFloat32();
+                        break;
+                    // INST_SET_MODEL
+                    case 4:
+                        commands[id].model = buf.readFloat32();
+                        break;
+                    // INST_SET_SCALE
+                    case 5:
+                        commands[id].scale = {x: buf.readFloat32(), y: buf.readFloat32(), z: buf.readFloat32()};
+                        break;
+
+                }
+            }
+
+            for (id in commands) {
+                this.entities[id].serverUpdate(commands[id]);
             }
         }
-        for (id in commands) {
-            world.entities[id].serverUpdate(commands[id]);
-        }
     };
-    return world;
 });

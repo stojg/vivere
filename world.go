@@ -8,7 +8,6 @@ import (
 	"github.com/volkerp/goquadtree/quadtree"
 	"log"
 	"time"
-	//	"fmt"
 )
 
 type World struct {
@@ -93,9 +92,9 @@ func (world *World) GameLoop() {
 		cycleTime := time.Now().Sub(previousTime).Seconds()
 		reminder := SEC_PER_UPDATE - cycleTime
 		if reminder > 0 {
-//			time.Sleep(time.Duration(reminder*1000) * time.Millisecond)
-		} else if world.debug {
-//			log.Printf("lag %f", reminder*1000)
+			time.Sleep(time.Duration(reminder*1000) * time.Millisecond)
+			//} else if world.debug {
+			//log.Printf("lag %f", reminder*1000)
 		}
 	}
 }
@@ -103,17 +102,30 @@ func (world *World) GameLoop() {
 func (world *World) SetMap(heightMap [][]*creator.Tile) {
 	world.heightMap = heightMap
 	for x := range world.heightMap {
+		world.heightMap[x][0].Value = 0.71
+		world.heightMap[x][len(world.heightMap[x])-1].Value = 0.71
+	}
+	for y := range world.heightMap[0] {
+		world.heightMap[0][y].Value = 0.71
+		world.heightMap[len(world.heightMap[0])-1][y].Value = 0.71
+	}
+
+	for x := range world.heightMap {
 		for y := range world.heightMap[x] {
-			if world.heightMap[x][y].Value() < 0.6 {
+			height := world.heightMap[x][y].Value
+			if height < 0.7 {
 				continue
 			}
+			height = (height - 0.70) * 20
 			ent := world.entities.NewEntity()
 			ent.Model = 1
-			ent.geometry = &Rectangle{HalfSize: Vector3{16, 16, 16}}
+			size := float64(world.heightMap[x][y].Size)
+			ent.Scale.Set(size, size*height, size)
+			ent.geometry = &Rectangle{HalfSize: *ent.Scale.Clone().Scale(0.5)}
 			ent.physics = NewParticlePhysics(0)
 			posX := world.heightMap[x][y].Position()[0] - float64(world.sizeX/2)
 			posY := world.heightMap[x][y].Position()[1] - float64(world.sizeY/2)
-			ent.Position.Set(posX, posY, 0)
+			ent.Position.Set(posX, ent.Scale[1]/2, posY)
 		}
 	}
 }
@@ -143,11 +155,13 @@ func (w *World) Collisions(tree *quadtree.QuadTree) []*Collision {
 		if !a.Changed() {
 			continue
 		}
+
 		t := tree.Query(a.BoundingBox())
 		for _, b := range t {
 			if a == b {
 				continue
 			}
+
 			hashA := string(a.id) + ":" + string(b.(*Entity).id)
 			hashB := string(b.(*Entity).id) + ":" + string(a.id)
 			if checked[hashA] || checked[hashB] {
@@ -156,16 +170,13 @@ func (w *World) Collisions(tree *quadtree.QuadTree) []*Collision {
 			checked[hashA], checked[hashB] = true, true
 			collision, hit := w.collision.Detect(a, b.(*Entity))
 			if hit {
+
 				collisions = append(collisions, collision)
 			}
 		}
 	}
 
 	return collisions
-}
-
-func (w *World) SetNewClients(e chan *client.Client) {
-	w.newPlayerChan = e
 }
 
 func (w *World) Log(message string) {

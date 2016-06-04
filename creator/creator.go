@@ -14,56 +14,51 @@ const (
 )
 
 type Tile struct {
-	size  int
+	Size  int
 	x     int
 	y     int
-	value float64
+	Value float64
 }
 
 func NewTile(size, x, y int) *Tile {
 	t := &Tile{}
-	t.size = size
+	t.Size = size
 	t.x = x
 	t.y = y
 	return t
 }
 
 func (tile *Tile) Position() (position [2]float64) {
-	position[0] = float64(tile.x * tile.size)
-	position[1] = float64(tile.y * tile.size)
+	position[0] = float64(tile.x * tile.Size)
+	position[1] = float64(tile.y * tile.Size)
 	return position
-}
-
-
-func (tile *Tile) Value() float64 {
-	return tile.value
 }
 
 type Creator struct {
 	sizeX    int
-	sizeY    int
+	sizeZ    int
 	tileSize int
 	world    [][]*Tile
-	seed 	int64
+	seed     int64
 }
 
 func (c *Creator) Seed(seed int64 ) {
 	c.seed = seed
 }
 
-func (c *Creator) Init(tileSize, sizeX, sizeY int) {
+func (c *Creator) Init(tileSize, sizeX, sizeZ int) {
 	c.tileSize = tileSize
 	c.sizeX = sizeX
-	c.sizeY = sizeY
+	c.sizeZ = sizeZ
 	c.world = make([][]*Tile, c.sizeX)
 
 	n := NewPerlinNoise(c.seed)
 	for x := range c.world {
-		c.world[x] = make([]*Tile, c.sizeY)
+		c.world[x] = make([]*Tile, c.sizeZ)
 		for y := range c.world[x] {
-			v := n.At2d(float64(x)* 0.1, float64(y)* 0.1)
 			c.world[x][y] = NewTile(c.tileSize, x, y)
-			c.world[x][y].value = v * 0.5 + 0.5
+			v := n.At2d(float64(x)* 0.1, float64(y)* 0.1)
+			c.world[x][y].Value = v * 0.5 + 0.5
 		}
 	}
 }
@@ -76,8 +71,8 @@ func (c *Creator) Tile(x, y int) (tile *Tile, err error) {
 	if x > c.sizeX-1 || x < 0 {
 		err = errors.New("X is out of bounds, max " + string(c.sizeX-1))
 	}
-	if y > c.sizeY-1 || x < 0 {
-		err = errors.New("Y is out of bounds, max " + string(c.sizeY-1))
+	if y > c.sizeZ -1 || x < 0 {
+		err = errors.New("Y is out of bounds, max " + string(c.sizeZ -1))
 	}
 	tile = c.world[x][y]
 	return
@@ -86,6 +81,6 @@ func (c *Creator) Tile(x, y int) (tile *Tile, err error) {
 func (c *Creator) RandomPosition() []int {
 	result := make([]int, 2)
 	result[0] = rand.Intn(c.sizeX - 1)
-	result[1] = rand.Intn(c.sizeY - 1)
+	result[1] = rand.Intn(c.sizeZ - 1)
 	return result
 }

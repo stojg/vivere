@@ -41,10 +41,10 @@ func NewEntity() *Entity {
 	ent.Orientation = 0
 	ent.Velocity = &Vector3{}
 	ent.Rotation = 0
-	ent.MaxAcceleration = 40
-	ent.MaxSpeed = 30
+	ent.MaxAcceleration = 10
+	ent.MaxSpeed = 40
 	ent.MaxRotation = 10
-	ent.scale = &Vector3{1, 1, 1}
+	ent.Scale = &Vector3{15, 15, 15}
 	ent.physics = &NullComponent{}
 	ent.graphics = &NullComponent{}
 	ent.input = &NullComponent{}
@@ -86,7 +86,7 @@ type Entity struct {
 	MaxAcceleration float64
 	MaxSpeed        float64
 	MaxRotation     float64
-	scale           *Vector3
+	Scale           *Vector3
 	geometry        interface{}
 	input           Component
 	physics         Component
@@ -99,10 +99,12 @@ type Entity struct {
 }
 
 func (g *Entity) BoundingBox() BoundingBox {
-	g.bBox.MinX = g.Position[0] - 16
-	g.bBox.MaxX = g.Position[0] + 16
-	g.bBox.MinY = g.Position[1] - 16
-	g.bBox.MaxY = g.Position[1] + 16
+	g.bBox.MinX = g.Position[0] - g.Scale[0]/2
+	g.bBox.MaxX = g.Position[0] + g.Scale[0]/2
+	g.bBox.MinY = g.Position[1] - g.Scale[1]/2
+	g.bBox.MaxY = g.Position[1] + g.Scale[1]/2
+	g.bBox.MinZ = g.Position[2] - g.Scale[2]/2
+	g.bBox.MaxZ = g.Position[2] + g.Scale[2]/2
 	return g.bBox
 }
 
@@ -111,6 +113,7 @@ func (g *Entity) ID() uint16 {
 }
 
 func (ent *Entity) Update(elapsed float64) {
+	ent.Position[1] = ent.Scale[1]/2 - 1
 	ent.prevPosition.Set(ent.Position[0], ent.Position[1], ent.Position[2])
 	ent.prevOrientation = ent.Orientation
 	ent.changed = false
@@ -135,6 +138,7 @@ const (
 	INST_SET_POSITION    Literal = 2
 	INST_SET_ORIENTATION Literal = 3
 	INST_SET_TYPE        Literal = 4
+	INST_SET_SCALE       Literal = 5
 )
 
 func (ent *Entity) Serialize() *bytes.Buffer {
@@ -143,6 +147,7 @@ func (ent *Entity) Serialize() *bytes.Buffer {
 	ent.binaryStream(buf, INST_SET_POSITION, ent.Position)
 	ent.binaryStream(buf, INST_SET_ORIENTATION, ent.Orientation)
 	ent.binaryStream(buf, INST_SET_TYPE, ent.Model)
+	ent.binaryStream(buf, INST_SET_SCALE, ent.Scale)
 	return buf
 }
 
@@ -159,8 +164,8 @@ func (ent *Entity) binaryStream(buf *bytes.Buffer, lit Literal, val interface{})
 		binary.Write(buf, binary.LittleEndian, float32(val.(float64)))
 	case *Vector3:
 		binary.Write(buf, binary.LittleEndian, float32(val.(*Vector3)[0]))
-		// Server works in y + 1 is up direction
-		binary.Write(buf, binary.LittleEndian, float32(-val.(*Vector3)[1]))
+		binary.Write(buf, binary.LittleEndian, float32(val.(*Vector3)[1]))
+		binary.Write(buf, binary.LittleEndian, float32(val.(*Vector3)[2]))
 	default:
 		panic(fmt.Errorf("%c", val))
 	}

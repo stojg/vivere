@@ -1,25 +1,22 @@
 /* jshint undef: true, unused: true, strict: true */
 /* global define, console */
-define(["lib/pixi"], function (pixi) {
+define(["lib/babylon.2.3.max"], function () {
 
     'use strict';
 
-    var modelToImage = [];
+    var GameObject = function (id, scene, templates) {
 
-    modelToImage[1] = "sprites/square.png";
-    modelToImage[2] = "sprites/arrow.png";
+        this.id = id;
 
-    var GameObject = function (texture) {
+        this.scene = scene;
 
-        this.model = 0;
-
-        this.texture = new pixi.Texture.fromImage("sprites/square.png");
-
-        this.sprite = new pixi.Sprite(this.texture);
-
-        this.sprite.anchor = {x: 0.5, y: 0.5};
+        this.model = null;
 
         this.interpolationDelay = 0;
+
+        this.sprite = null;
+
+        this.templates = templates;
 
         /**
          *
@@ -53,7 +50,7 @@ define(["lib/pixi"], function (pixi) {
         this.serverUpdate = function (message) {
             this.server.push(message);
             // biggest size of the queue is 20 history items, roughtly one sec
-            if(this.server.length > 20 ){
+            if (this.server.length > 20) {
                 this.server.unshift();
             }
         };
@@ -61,7 +58,7 @@ define(["lib/pixi"], function (pixi) {
         /**
          *
          */
-        this.applyServerUpdates = function() {
+        this.applyServerUpdates = function () {
             // Move queued server updates to the snapshot array
             var msg = this.server.pop();
             while (typeof msg !== 'undefined') {
@@ -79,23 +76,38 @@ define(["lib/pixi"], function (pixi) {
                 latestSnapshot,
                 interpolationTime = tFrame - this.interpolationDelay;
 
-            if(typeof tFrame == 'undefined' || tFrame === 0) {
+            if (typeof tFrame == 'undefined' || tFrame === 0) {
                 return;
             }
+
 
             this.applyServerUpdates();
 
             latestSnapshot = this.getLatestState(tFrame);
-            if(latestSnapshot === false) {
+            if (latestSnapshot === false) {
                 return false;
             }
 
             this.state = latestSnapshot.state;
-            this.sprite.rotation = latestSnapshot.orientation
+            //this.sprite.rotation = latestSnapshot.orientation;
 
-            if(this.model != latestSnapshot.model) {
+            if (this.model != latestSnapshot.model) {
+                if(this.sprite) {
+                    this.sprite.dispose();
+                }
                 this.model = latestSnapshot.model;
-                this.sprite.texture = new pixi.Texture.fromImage(modelToImage[this.model]);
+
+                if (typeof this.templates[this.model] == 'undefined') {
+                    console.error("cant load template for model "+this.model);
+                    return;
+                }
+                this.sprite = this.templates[this.model].createInstance(this.id);
+                this.sprite.isVisible = true;
+            }
+
+            if (this.scale != latestSnapshot.scale) {
+                this.scale = latestSnapshot.scale;
+                this.sprite.scaling = this.scale;
             }
 
             if (this.interpolationDelay <= 0) {
@@ -104,13 +116,13 @@ define(["lib/pixi"], function (pixi) {
             }
 
             var fromSnapshot = this.getPreviousState(interpolationTime, latestSnapshot);
-            if(fromSnapshot === false) {
+            if (fromSnapshot === false) {
                 this.sprite.position = latestSnapshot.position;
                 return;
             }
 
             coef = (interpolationTime - fromSnapshot.timestamp) / (latestSnapshot.timestamp - fromSnapshot.timestamp);
-            if(coef < 0 || coef > 1) {
+            if (coef < 0 || coef > 1) {
                 this.sprite.position = latestSnapshot.position;
                 return;
             }
@@ -132,7 +144,7 @@ define(["lib/pixi"], function (pixi) {
             // delete older than fromSnapshot
             for (var key in this.snapshots) {
                 if (this.snapshots[key].timestamp < timestamp) {
-                    this.snapshots.splice(key,1);
+                    this.snapshots.splice(key, 1);
                 }
             }
         };
@@ -142,7 +154,7 @@ define(["lib/pixi"], function (pixi) {
          * @param timestamp
          * @returns {*}
          */
-        this.getLatestState = function(timestamp) {
+        this.getLatestState = function (timestamp) {
             var latestSnapshot;
             for (var key in this.snapshots) {
                 if (timestamp >= this.snapshots[key].timestamp) {
@@ -162,9 +174,9 @@ define(["lib/pixi"], function (pixi) {
          * @param toState
          * @returns {*}
          */
-        this.getPreviousState = function(timestamp, toState) {
+        this.getPreviousState = function (timestamp, toState) {
             var fromSnapshot;
-            if(typeof toState == 'undefined' || toState === false) {
+            if (typeof toState == 'undefined' || toState === false) {
                 return false;
             }
             for (var key in this.snapshots) {
@@ -186,10 +198,11 @@ define(["lib/pixi"], function (pixi) {
          * @param coef
          * @returns {{x: number, y: number}}
          */
-        this.getInterpolated = function(from, to, coef) {
-            var position = {x: 0, y: 0},
+        this.getInterpolated = function (from, to, coef) {
+            var position = {x: 0, y: 0, z: 0},
                 diffX,
-                diffY;
+                diffY,
+                diffZ;
 
             diffX = to.position.x - from.position.x;
             if (Math.abs(diffX) < 0.1) {
@@ -202,6 +215,13 @@ define(["lib/pixi"], function (pixi) {
                 position.y = from.position.y;
             } else {
                 position.y = from.position.y + coef * diffY;
+            }
+
+            diffZ = to.position.z - from.position.z;
+            if (Math.abs(diffZ) < 0.1) {
+                position.z = from.position.z;
+            } else {
+                position.z = from.position.z + coef * diffY;
             }
             return position;
         };
@@ -220,17 +240,16 @@ define(["lib/pixi"], function (pixi) {
 
     entity.BUNNY = 2;
 
-    entity.create = function (type, interpolationDelay) {
+    entity.create = function (id, interpolationDelay, scene, templates) {
         var go;
-        if(typeof interpolationDelay == 'undefined') {
+
+        if (typeof interpolationDelay == 'undefined') {
             interpolationDelay = 0;
         }
 
-        go = new GameObject();
+        go = new GameObject(id, scene, templates);
         go.interpolationDelay = interpolationDelay;
         return go;
-
-        throw new Error("Tried to create a model without an exiting type '" + type + "'");
     };
 
     return entity;

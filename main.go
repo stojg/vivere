@@ -1,16 +1,14 @@
 package main
 
 import (
-	"code.google.com/p/go.net/websocket"
-	"flag"
 	"github.com/stojg/vivere/client"
 	"github.com/stojg/vivere/creator"
+	"golang.org/x/net/websocket"
 	"log"
 	"math"
 	"math/rand"
 	"net/http"
 	"os"
-	"runtime/pprof"
 	"time"
 )
 
@@ -18,46 +16,10 @@ var port string
 
 var world *World
 
-var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
-	port = os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	world = NewWorld(true, 3200, 3200)
-	ch := client.NewClientHandler()
-	world.SetNewClients(ch.NewClients())
-
-	c := &creator.Creator{}
-	c.Seed(time.Now().UnixNano())
-	c.Init(32, int(world.sizeX/32), int(world.sizeY/32))
-	world.SetMap(c.GetMap())
-
-	for a := 0; a < 100; a++ {
-		ent := NewThingie(world)
-		for world.Collision(ent) {
-			ent.Position.Set(rand.Float64()*960, rand.Float64()*-576-32, 0)
-		}
-	}
-	http.Handle("/ws/", websocket.Handler(ch.Websocket))
-	http.HandleFunc("/", webserver)
-}
-
 // Main only contains the necessary wiring for bootstrapping the
 // engine
 func main() {
-
-	flag.Parse()
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	}
+	initWorld()
 
 	go func() {
 		log.Fatal(http.ListenAndServe(":"+port, nil))
@@ -73,27 +35,85 @@ func main() {
 			}
 		}
 	}()
-
 	world.GameLoop()
 }
 
-func NewThingie(world *World) *Entity {
+func initWorld() {
+	rand.Seed(time.Now().UTC().UnixNano())
+	port = os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	world = NewWorld(true, 3200, 3200)
+	ch := client.NewClientHandler()
+	world.newPlayerChan = ch.NewClients()
+
+	c := &creator.Creator{}
+	c.Seed(time.Now().UnixNano())
+	c.Init(32, int(world.sizeX/32), int(world.sizeY/32))
+	world.SetMap(c.GetMap())
+
+	for a := 0; a < 100; a++ {
+		ent := NewPray(world)
+		for world.Collision(ent) {
+			ent.Position.Set(rand.Float64()*1000-500, ent.Scale[1]/2, rand.Float64()*-1000-500)
+		}
+	}
+
+	hunter := NewHunter(world)
+	for world.Collision(hunter) {
+		hunter.Position.Set(rand.Float64()*1000-500, hunter.Scale[1]/2, rand.Float64()*-1000-500)
+	}
+
+	log.Println("World generated!")
+
+	http.Handle("/ws/", websocket.Handler(ch.Websocket))
+	http.HandleFunc("/", webserver)
+
+}
+
+func NewPray(world *World) *Entity {
+
+	spawnSizeX := float64(world.sizeX) * 0.8
+	spawnSizeY := float64(world.sizeY) * 0.8
+
+	halfX := spawnSizeX / 2
+	halfY := spawnSizeY / 2
+
 	ent := world.entities.NewEntity()
 	ent.Model = 2
-	ent.geometry = &Circle{Radius: 15}
+	ent.MaxAcceleration = 100
+	ent.MaxSpeed = 50
+	ent.Scale.Set(15, 15, 15)
+	ent.geometry = &Rectangle{HalfSize: *ent.Scale.Clone().Scale(0.5)}
 	ent.physics = NewParticlePhysics(rand.Float64()*5 + 0.1)
-	ent.input = NewSimpleAI(ent.physics)
+	ent.input = NewSimpleAI(world)
 	ent.graphics = NewBunnyGraphic()
-	ent.Position.Set(rand.Float64()*960, rand.Float64()*-576-32, 0)
+	ent.Position.Set(rand.Float64()*spawnSizeX-halfX, ent.Scale[1]/2-1, rand.Float64()*spawnSizeY-halfY)
 	ent.Orientation = (rand.Float64() * math.Pi * 2) - math.Pi
 	return ent
 }
 
-func NewObstacle(world *World) *Entity {
+func NewHunter(world *World) *Entity {
+
+	spawnSizeX := float64(world.sizeX) * 0.8
+	spawnSizeY := float64(world.sizeY) * 0.8
+
+	halfX := spawnSizeX / 2
+	halfY := spawnSizeY / 2
+
 	ent := world.entities.NewEntity()
-	ent.Model = 1
-	ent.geometry = &Rectangle{HalfSize: Vector3{16, 16, 16}}
-	ent.physics = NewParticlePhysics(0)
+	ent.Model = 3
+	ent.Scale.Set(30, 30, 30)
+	//ent.geometry = &Circle{Radius: 15}
+	ent.geometry = &Rectangle{HalfSize: *ent.Scale.Clone().Scale(0.5)}
+	ent.physics = NewParticlePhysics(0.1)
+	ent.input = NewHunterAI(world)
+	ent.MaxAcceleration = 100
+	ent.MaxSpeed = 100
+	ent.graphics = NewBunnyGraphic()
+	ent.Position.Set(rand.Float64()*spawnSizeX-halfX, ent.Scale[1]/2-1, rand.Float64()*spawnSizeY-halfY)
+	ent.Orientation = (rand.Float64() * math.Pi * 2) - math.Pi
 	return ent
 }
 

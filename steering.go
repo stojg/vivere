@@ -48,6 +48,13 @@ func (s *Seek) GetSteering() *SteeringOutput {
 	return steering
 }
 
+func NewFlee(character, target *Entity) *Flee {
+	return &Flee{
+		character: character,
+		target:    target,
+	}
+}
+
 // Flee makes the character to flee from the target
 type Flee struct {
 	character *Entity
@@ -171,7 +178,7 @@ func (s *Face) GetSteering() *SteeringOutput {
 	}
 	// Put the target together
 	s.Align.target = NewEntity()
-	s.Align.target.Orientation = math.Atan2(direction[0], direction[1])
+	s.Align.target.Orientation = math.Atan2(direction[0], direction[2])
 	return s.Align.GetSteering()
 }
 
@@ -186,7 +193,7 @@ func (s *LookWhereYoureGoing) GetSteering() *SteeringOutput {
 		return NewSteeringOutput()
 	}
 	target := NewEntity()
-	target.Orientation = math.Atan2(s.character.Velocity[0], s.character.Velocity[1])
+	target.Orientation = math.Atan2(s.character.Velocity[0], s.character.Velocity[2])
 	align := Align{}
 	align.targetRadius = 0.01
 	align.slowRadius = 0.04

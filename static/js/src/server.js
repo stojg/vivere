@@ -27,7 +27,7 @@ define(function () {
         conn = new window.WebSocket("ws://" + document.location.host + "/ws/");
         conn.binaryType = "arraybuffer";
         conn.onopen = function (data) {
-            console.log("connection was opened to '" + data.currentTarget.URL + '"');
+            console.log("connection was opened to '" + data.currentTarget.url + '"');
             onConnect();
         };
 
@@ -41,7 +41,7 @@ define(function () {
             onMessage(buf);
         };
         conn.onclose = function (event) {
-            console.log("connection was closed to '" + event.currentTarget.URL + '"');
+            console.log("connection was closed to '" + event.currentTarget.url + '"');
         };
     };
 
