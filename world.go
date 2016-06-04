@@ -7,6 +7,7 @@ import (
 	"github.com/stojg/vivere/creator"
 	"github.com/volkerp/goquadtree/quadtree"
 	"log"
+	"math"
 	"time"
 )
 
@@ -118,7 +119,7 @@ func (world *World) SetMap(heightMap [][]*creator.Tile) {
 			}
 			height = (height - 0.70) * 20
 			ent := world.entities.NewEntity()
-			ent.Model = 1
+			ent.Type = ENTITY_BLOCK
 			size := float64(world.heightMap[x][y].Size)
 			ent.Scale.Set(size, size*height, size)
 			ent.geometry = &Rectangle{HalfSize: *ent.Scale.Clone().Scale(0.5)}
@@ -162,8 +163,8 @@ func (w *World) Collisions(tree *quadtree.QuadTree) []*Collision {
 				continue
 			}
 
-			hashA := string(a.id) + ":" + string(b.(*Entity).id)
-			hashB := string(b.(*Entity).id) + ":" + string(a.id)
+			hashA := string(a.ID) + ":" + string(b.(*Entity).ID)
+			hashB := string(b.(*Entity).ID) + ":" + string(a.ID)
 			if checked[hashA] || checked[hashB] {
 				continue
 			}
@@ -177,6 +178,26 @@ func (w *World) Collisions(tree *quadtree.QuadTree) []*Collision {
 	}
 
 	return collisions
+}
+
+func (w *World) findClosest(me *Entity, t EntityType) (*Entity, float64) {
+	set := w.entities.GetAll()
+	var closest *Entity
+	closestDist := math.Inf(+1)
+	for _, ent := range set {
+		if ent.Type != t {
+			continue
+		}
+		distance := ent.Position.NewSub(me.Position).Length()
+		if distance < closestDist {
+			closest = ent
+			closestDist = distance
+		}
+	}
+	if closest != nil {
+		return closest, closestDist
+	}
+	return nil, 0
 }
 
 func (w *World) Log(message string) {

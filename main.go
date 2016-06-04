@@ -81,7 +81,7 @@ func NewPray(world *World) *Entity {
 	halfY := spawnSizeY / 2
 
 	ent := world.entities.NewEntity()
-	ent.Model = 2
+	ent.Type = 2
 	ent.MaxAcceleration = 100
 	ent.MaxSpeed = 50
 	ent.Scale.Set(15, 15, 15)
@@ -103,7 +103,7 @@ func NewHunter(world *World) *Entity {
 	halfY := spawnSizeY / 2
 
 	ent := world.entities.NewEntity()
-	ent.Model = 3
+	ent.Type = 3
 	ent.Scale.Set(30, 30, 30)
 	//ent.geometry = &Circle{Radius: 15}
 	ent.geometry = &Rectangle{HalfSize: *ent.Scale.Clone().Scale(0.5)}

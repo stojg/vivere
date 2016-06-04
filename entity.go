@@ -7,6 +7,17 @@ import (
 	. "github.com/volkerp/goquadtree/quadtree"
 )
 
+type EntityType uint16
+
+const (
+	ENTITY_NONE EntityType = iota
+	ENTITY_BLOCK
+	ENTITY_PRAY
+	ENTITY_HUNTER
+	ENTITY_SCARED
+	ENTITY_CAMO
+)
+
 type Component interface {
 	Update(ent *Entity, elapsed float64)
 }
@@ -30,7 +41,7 @@ func NewEntityList() *EntityList {
 func (gol *EntityList) NewEntity() *Entity {
 	gol.nextID++
 	g := NewEntity()
-	g.id = (gol.nextID)
+	g.ID = (gol.nextID)
 	gol.Add(g)
 	return g
 }
@@ -53,11 +64,11 @@ func NewEntity() *Entity {
 }
 
 func (gol *EntityList) Add(i *Entity) bool {
-	_, found := gol.set[i.ID()]
+	_, found := gol.set[i.ID]
 	if gol.set == nil {
 		gol.set = make(map[uint16]*Entity)
 	}
-	gol.set[i.ID()] = i
+	gol.set[i.ID] = i
 	return !found
 }
 
@@ -78,7 +89,7 @@ func (gol *EntityList) Length() int {
 }
 
 type Entity struct {
-	id              uint16
+	ID              uint16
 	Position        *Vector3
 	Orientation     float64
 	Velocity        *Vector3
@@ -86,12 +97,13 @@ type Entity struct {
 	MaxAcceleration float64
 	MaxSpeed        float64
 	MaxRotation     float64
+	Type            EntityType
 	Scale           *Vector3
+	Dead            bool
 	geometry        interface{}
 	input           Component
 	physics         Component
 	graphics        Component
-	Model           uint16
 	changed         bool
 	prevPosition    *Vector3
 	prevOrientation float64
@@ -106,10 +118,6 @@ func (g *Entity) BoundingBox() BoundingBox {
 	g.bBox.MinZ = g.Position[2] - g.Scale[2]/2
 	g.bBox.MaxZ = g.Position[2] + g.Scale[2]/2
 	return g.bBox
-}
-
-func (g *Entity) ID() uint16 {
-	return g.id
 }
 
 func (ent *Entity) Update(elapsed float64) {
@@ -143,10 +151,10 @@ const (
 
 func (ent *Entity) Serialize() *bytes.Buffer {
 	buf := &bytes.Buffer{}
-	ent.binaryStream(buf, INST_ENTITY_ID, ent.id)
+	ent.binaryStream(buf, INST_ENTITY_ID, ent.ID)
 	ent.binaryStream(buf, INST_SET_POSITION, ent.Position)
 	ent.binaryStream(buf, INST_SET_ORIENTATION, ent.Orientation)
-	ent.binaryStream(buf, INST_SET_TYPE, ent.Model)
+	ent.binaryStream(buf, INST_SET_TYPE, ent.Type)
 	ent.binaryStream(buf, INST_SET_SCALE, ent.Scale)
 	return buf
 }
@@ -158,6 +166,8 @@ func (ent *Entity) binaryStream(buf *bytes.Buffer, lit Literal, val interface{})
 		binary.Write(buf, binary.LittleEndian, byte(val.(uint8)))
 	case uint16:
 		binary.Write(buf, binary.LittleEndian, float32(val.(uint16)))
+	case EntityType:
+		binary.Write(buf, binary.LittleEndian, float32(val.(EntityType)))
 	case float32:
 		binary.Write(buf, binary.LittleEndian, float32(val.(float32)))
 	case float64:

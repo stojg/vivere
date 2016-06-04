@@ -15,11 +15,11 @@ var _ = Suite(&TestSuite{})
 func (s *TestSuite) TestGetNewAndIdGeneration(c *C) {
 	ol := NewEntityList()
 	ent := ol.NewEntity()
-	c.Assert(ent.ID(), Equals, uint16(1))
+	c.Assert(ent.ID, Equals, uint16(1))
 	ent = ol.NewEntity()
-	c.Assert(ent.ID(), Equals, uint16(2))
+	c.Assert(ent.ID, Equals, uint16(2))
 	ent = ol.NewEntity()
-	c.Assert(ent.ID(), Equals, uint16(3))
+	c.Assert(ent.ID, Equals, uint16(3))
 }
 
 func (s *TestSuite) TestSetPosition(c *C) {
@@ -41,10 +41,10 @@ func (s *TestSuite) TestSetScale(c *C) {
 
 func (s *TestSuite) TestList(c *C) {
 	gol := NewEntityList()
-	g := gol.NewEntity()
-	c.Assert(gol.Get(g.ID()), Equals, g)
+	ent := gol.NewEntity()
+	c.Assert(gol.Get(ent.ID), Equals, ent)
 	c.Assert(gol.Length(), Equals, 1)
-	gol.Remove(g.ID())
+	gol.Remove(ent.ID)
 	c.Assert(gol.Length(), Equals, 0)
 }
 
@@ -63,7 +63,7 @@ func TestEntitySerialize(t *testing.T) {
 		t.Errorf("INST_ENTITY_ID wasn't serialised")
 	}
 	binary.Read(buf, binary.LittleEndian, &value)
-	if g.id != uint16(value) {
+	if g.ID != uint16(value) {
 		t.Errorf("ID wasn't serialised properly")
 	}
 
@@ -101,7 +101,7 @@ func TestEntitySerialize(t *testing.T) {
 		t.Errorf("INST_SET_TYPE wasn't serialised")
 	}
 	binary.Read(buf, binary.LittleEndian, &value)
-	if float32(g.Model) != value {
+	if float32(g.Type) != value {
 		t.Errorf("Model wasn't serialised properly, got %v", value)
 	}
 

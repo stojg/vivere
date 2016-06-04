@@ -1,197 +1,208 @@
 package main
 
-import (
-	"math"
-	"time"
-)
+import "fmt"
 
-type State int
-
-const (
-	STATE_IDLE State = iota
-	STATE_FLEE
-	STATE_HUNT
-)
+type State struct {
+}
 
 func NewSimpleAI(world *World) *SimpleAI {
-	return &SimpleAI{
+	ai := &SimpleAI{
 		world: world,
 	}
+	return ai
 }
 
 type SimpleAI struct {
-	world *World
-	enemy *Entity
-	StatefulAI
 	SteeringAI
+	world  *World
+	enemy  *Entity
+	states []Stater
 }
 
 func (ai *SimpleAI) Update(me *Entity, elapsed float64) {
-
-	if ai.timePassed(100 * time.Millisecond) {
-		if ai.enemy != nil {
-			distance := ai.enemy.Position.NewSub(me.Position).Length()
-			if distance > 400 {
-				ai.changeState(STATE_IDLE)
-				ai.enemy = nil
-				ai.steering = NewWander(me, 200, 100, 0.1)
-			}
-		} else {
-			hunter, dist := ai.findHunter(me)
-			if hunter != nil && dist < 400 {
-				ai.changeState(STATE_FLEE)
-				ai.enemy = hunter
-				ai.steering = NewFlee(me, hunter)
-			}
-		}
-		ai.tick()
+	if len(ai.states) == 0 {
+		ai.states = append(ai.states, &PrayIdleState{})
+		ai.states[len(ai.states)-1].Enter(me)
 	}
 
-	if ai.steering == nil {
-		ai.steering = NewWander(me, 200, 100, 0.1)
+	state := ai.states[len(ai.states)-1].handleInputs(world)
+	if state != nil {
+		ai.states[len(ai.states)-1] = state
+		ai.states[len(ai.states)-1].Enter(me)
 	}
 
-	ai.steer(me)
+	steer := ai.states[len(ai.states)-1].Update(elapsed)
+
+	ai.steer(me, steer)
 }
 
-func (ai *SimpleAI) findHunter(me *Entity) (*Entity, float64) {
-	set := ai.world.entities.GetAll()
-	var closest *Entity
-	closestDist := math.Inf(+1)
-	for _, ent := range set {
-		if ent.Model != 3 {
-			continue
-		}
-		distance := ent.Position.NewSub(me.Position).Length()
-		if distance < closestDist {
-			closest = ent
-			closestDist = distance
+type PrayIdleState struct {
+	steering Steering
+	me       *Entity
+}
+
+func (state *PrayIdleState) handleInputs(w *World) Stater {
+	target, distance := world.findClosest(state.me, ENTITY_HUNTER)
+	if target != nil && distance < 200 {
+		return &PrayFleeState{
+			target: target,
 		}
 	}
-	if closest != nil {
-		return closest, closestDist
+	return nil
+}
+
+func (state *PrayIdleState) Enter(me *Entity) {
+	state.me = me
+	state.steering = NewWander(state.me, 200, 100, 0.1)
+}
+
+func (state *PrayIdleState) Exit(me *Entity) {
+	state.me = me
+}
+
+func (state *PrayIdleState) Update(elapsed float64) Steering {
+	return state.steering
+}
+
+type PrayFleeState struct {
+	steering Steering
+	me       *Entity
+	target   *Entity
+}
+
+func (state *PrayFleeState) handleInputs(w *World) Stater {
+	distance := state.target.Position.NewSub(state.me.Position).Length()
+	if distance > 300 {
+		return &PrayIdleState{}
 	}
-	return nil, 0
+	return nil
+}
+
+func (state *PrayFleeState) Enter(me *Entity) {
+	state.me = me
+	state.steering = NewFlee(me, state.target)
+}
+func (state *PrayFleeState) Exit(me *Entity) {
+	state.me = me
+}
+
+func (state *PrayFleeState) Update(elapsed float64) Steering {
+	return state.steering
 }
 
 func NewHunterAI(world *World) *HunterAI {
-	return &HunterAI{
-		world: world,
-	}
+	ai := &HunterAI{world: world}
+	return ai
 }
 
 type HunterAI struct {
-	world  *World
-	target *Entity
-	StatefulAI
 	SteeringAI
-	Energy float64
+	states []Stater
+	world  *World
 }
 
 func (ai *HunterAI) Update(me *Entity, elapsed float64) {
+	if len(ai.states) == 0 {
+		ai.states = append(ai.states, &HunterIdleState{})
+		ai.states[len(ai.states)-1].Enter(me)
+	}
 
-	if ai.timePassed(3 * time.Second) {
+	state := ai.states[len(ai.states)-1].handleInputs(world)
+	if state != nil {
+		ai.states[len(ai.states)-1] = state
+		ai.states[len(ai.states)-1].Enter(me)
+	}
 
-		if ai.Energy > 100 {
-			pray, dist := ai.findPray(me)
-			if pray != nil && dist < 350 {
-				ai.changeState(STATE_HUNT)
-				ai.target = pray
-				ai.steering = NewSeek(me, ai.target)
-				me.Model = 3
+	steer := ai.states[len(ai.states)-1].Update(elapsed)
+
+	ai.steer(me, steer)
+}
+
+type HunterIdleState struct {
+	steering Steering
+	me       *Entity
+	energy   float64
+}
+
+func (state *HunterIdleState) handleInputs(w *World) Stater {
+	if state.energy > 200 {
+		target, distance := world.findClosest(state.me, ENTITY_PRAY)
+		if target != nil && distance < 350 {
+			world.Log(fmt.Sprintf("will hunt for %d", target.ID))
+			return &HuntState{
+				energy: state.energy,
+				target: target,
 			}
 		}
-
-		if ai.Energy < 1 {
-			ai.changeState(STATE_IDLE)
-			me.Model = 5
-			ai.steering = NewWander(me, 200, 100, 0.1)
-		}
-
-		if ai.steering == nil {
-			ai.changeState(STATE_IDLE)
-			me.Model = 5
-			ai.steering = NewWander(me, 200, 100, 0.1)
-		}
-
-		ai.tick()
 	}
-
-	switch ai.state {
-	case STATE_IDLE:
-		ai.Energy += elapsed * 10
-	default:
-		ai.Energy -= elapsed * 20
-	}
-
-	if ai.target != nil {
-		distance := ai.target.Position.NewSub(me.Position).Length()
-		if distance < ai.target.Scale.NewSub(me.Scale).Length()+5 {
-			ai.target.Model = 4
-			ai.target = nil
-			ai.stateTime = time.Time{}
-			ai.Energy += 50
-		}
-	}
-
-	ai.steer(me)
-
+	return nil
 }
 
-func (ai *HunterAI) findPray(me *Entity) (*Entity, float64) {
-	set := ai.world.entities.GetAll()
-	var closest *Entity
-	closestDist := math.Inf(+1)
-	for _, ent := range set {
-		if ent.Model != 2 {
-			continue
-		}
-		distance := ent.Position.NewSub(me.Position).Length()
-		if distance < closestDist {
-			closest = ent
-			closestDist = distance
+func (state *HunterIdleState) Enter(me *Entity) {
+	world.Log(fmt.Sprintf("Enter idle state"))
+	me.Type = ENTITY_CAMO
+	state.me = me
+	state.steering = NewWander(state.me, 200, 100, 0.1)
+}
+
+func (state *HunterIdleState) Exit(me *Entity) {
+	state.me = me
+}
+
+func (state *HunterIdleState) Update(elapsed float64) Steering {
+	state.energy += elapsed * 10
+	return state.steering
+}
+
+type HuntState struct {
+	HunterIdleState
+	energy float64
+	target *Entity
+}
+
+func (state *HuntState) handleInputs(w *World) Stater {
+	if state.energy < 0 {
+		return &HunterIdleState{
+			energy: state.energy,
 		}
 	}
-	if closest != nil {
-		return closest, closestDist
+
+	distance := state.target.Position.NewSub(state.me.Position).Length()
+	width := state.target.Scale.NewSub(state.me.Scale).Length() + 5
+	if distance < width {
+		world.Log(fmt.Sprintf("%d caught %d ", state.me.ID, state.target.ID))
+		state.target.Type = ENTITY_SCARED
+		return &HunterIdleState{
+			energy: state.energy + 50,
+		}
 	}
-	return nil, 0
+	return nil
 }
 
-type StatefulAI struct {
-	state     State
-	stateTime time.Time
+func (state *HuntState) Enter(me *Entity) {
+	world.Log(fmt.Sprintf("Enter hunting state"))
+	me.Type = ENTITY_HUNTER
+	state.me = me
+	state.steering = NewSeek(me, state.target)
 }
 
-func (ai *StatefulAI) clear() {
-	ai.stateTime = time.Time{}
-	ai.state = STATE_IDLE
+func (state *HuntState) Update(elapsed float64) Steering {
+	state.energy -= elapsed * 20
+	return state.steering
 }
 
-func (ai *StatefulAI) timePassed(t time.Duration) bool {
-	if ai.stateTime.IsZero() {
-		ai.stateTime = time.Now()
-		return true
-	}
-	return time.Now().Sub(ai.stateTime) > t
+type Stater interface {
+	handleInputs(w *World) Stater
+	Update(elapsed float64) Steering
+	Enter(me *Entity)
+	Exit(me *Entity)
 }
 
-func (ai *StatefulAI) changeState(s State) {
-	ai.state = s
-	ai.tick()
-}
+type SteeringAI struct{}
 
-func (ai *StatefulAI) tick() {
-	ai.stateTime = time.Now()
-}
-
-type SteeringAI struct {
-	steering Steering
-}
-
-func (ai *SteeringAI) steer(me *Entity) {
-	if ai.steering != nil {
-		steering := ai.steering.GetSteering()
+func (ai *SteeringAI) steer(me *Entity, steer Steering) {
+	if steer != nil {
+		steering := steer.GetSteering()
 		me.physics.(*ParticlePhysics).AddForce(steering.linear)
 
 		if steering.angular != 0 {
