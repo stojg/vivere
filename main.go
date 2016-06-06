@@ -5,7 +5,6 @@ import (
 	"github.com/stojg/vivere/creator"
 	"golang.org/x/net/websocket"
 	"log"
-	"math"
 	"math/rand"
 	"net/http"
 	"os"
@@ -50,20 +49,27 @@ func initWorld() {
 
 	c := &creator.Creator{}
 	c.Seed(time.Now().UnixNano())
-	c.Init(32, int(world.sizeX/32), int(world.sizeY/32))
-	world.SetMap(c.GetMap())
+	//c.Init(32, int(world.sizeX/32), int(world.sizeY/32))
+	//world.SetMap(c.GetMap())
 
-	for a := 0; a < 100; a++ {
-		ent := NewPray(world)
-		for world.Collision(ent) {
-			ent.Position.Set(rand.Float64()*1000-500, ent.Scale[1]/2, rand.Float64()*-1000-500)
-		}
-	}
+	//for a := 0; a < 2; a++ {
 
-	hunter := NewHunter(world)
-	for world.Collision(hunter) {
-		hunter.Position.Set(rand.Float64()*1000-500, hunter.Scale[1]/2, rand.Float64()*-1000-500)
-	}
+	//for world.Collision(ent) {
+	//	ent.Position.Set(rand.Float64()*1000-500, ent.Scale[1]/2, rand.Float64()*-1000-500)
+	//}
+	ent := NewPray(world, 0, 0, 0)
+	ent.physics.(*RigidBody).ClearAccumulators()
+	ent.physics.(*RigidBody).calculateDerivedData(ent)
+
+	//ent = NewPray(world, 0, 0, 0)
+	//ent.physics.(*RigidBody).ClearAccumulators()
+	//ent.physics.(*RigidBody).calculateDerivedData(ent)
+	//}
+
+	//hunter := NewHunter(world)
+	//for world.Collision(hunter) {
+	//	hunter.Position.Set(rand.Float64()*1000-500, hunter.Scale[1]/2, rand.Float64()*-1000-500)
+	//}
 
 	log.Println("World generated!")
 
@@ -72,25 +78,35 @@ func initWorld() {
 
 }
 
-func NewPray(world *World) *Entity {
+func NewPray(world *World, x, y, z float64) *Entity {
 
-	spawnSizeX := float64(world.sizeX) * 0.8
-	spawnSizeY := float64(world.sizeY) * 0.8
+	//spawnSizeX := float64(world.sizeX) * 0.8
+	//spawnSizeY := float64(world.sizeY) * 0.8
+	//halfX := spawnSizeX / 2
+	//halfY := spawnSizeY / 2
 
-	halfX := spawnSizeX / 2
-	halfY := spawnSizeY / 2
+	//rotationAngle := 0.0
+	//RotationAxis := VectorUp()
+
 
 	ent := world.entities.NewEntity()
+	ent.Position.Set(x, y, z)
 	ent.Type = 2
 	ent.MaxAcceleration = 100
 	ent.MaxSpeed = 50
 	ent.Scale.Set(15, 15, 15)
 	ent.geometry = &Rectangle{HalfSize: *ent.Scale.Clone().Scale(0.5)}
-	ent.physics = NewParticlePhysics(rand.Float64()*5 + 0.1)
+	mass := 10.0
+	ent.physics = NewRigidBody(mass)
+
+	it := &Matrix3{}
+	it.SetBlockInertiaTensor(&Vector3{1, 1, 1}, mass)
+	ent.physics.(*RigidBody).SetInertiaTensor(it)
 	ent.input = NewSimpleAI(world)
 	ent.graphics = NewBunnyGraphic()
-	ent.Position.Set(rand.Float64()*spawnSizeX-halfX, ent.Scale[1]/2-1, rand.Float64()*spawnSizeY-halfY)
-	ent.Orientation = (rand.Float64() * math.Pi * 2) - math.Pi
+
+	//ent.Position.Set(rand.Float64()*spawnSizeX-halfX, ent.Scale[1]/2-1, rand.Float64()*spawnSizeY-halfY)
+	// @todo: fix for rigidbody
 	return ent
 }
 
@@ -113,7 +129,8 @@ func NewHunter(world *World) *Entity {
 	ent.MaxSpeed = 100
 	ent.graphics = NewBunnyGraphic()
 	ent.Position.Set(rand.Float64()*spawnSizeX-halfX, ent.Scale[1]/2-1, rand.Float64()*spawnSizeY-halfY)
-	ent.Orientation = (rand.Float64() * math.Pi * 2) - math.Pi
+	// @todo: fix for rigidbody
+	// ent.Orientation = (rand.Float64() * math.Pi * 2) - math.Pi
 	return ent
 }
 

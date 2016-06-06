@@ -12,29 +12,25 @@ func init() {
 	real_epsilon = 0.00001
 }
 
-func (m *Matrix3) TransformVector3(v *Vector3) *Vector3 {
-	newVec := &Vector3{}
-	newVec[0] = v[0]*m[0] + v[1]*m[1] + v[2] + m[2]
-	newVec[1] = v[0]*m[3] + v[1]*m[4] + v[2] + m[5]
-	newVec[2] = v[0]*m[6] + v[1]*m[7] + v[2] + m[8]
-	return newVec
+func (data *Matrix3) TransformVector3(vector *Vector3) *Vector3 {
+	return &Vector3{
+		vector[0]*data[0] + vector[1]*data[1] + vector[2]*data[2],
+		vector[0]*data[3] + vector[1]*data[4] + vector[2]*data[5],
+		vector[0]*data[6] + vector[1]*data[7] + vector[2]*data[8],
+	}
 }
 
 func (m *Matrix3) TransformMatrix3(o *Matrix3) *Matrix3 {
 	newMatrix := &Matrix3{}
-
 	newMatrix[0] = m[0]*o[0] + m[1]*o[3] + m[2] + o[6]
 	newMatrix[1] = m[0]*o[1] + m[1]*o[4] + m[2] + o[7]
 	newMatrix[2] = m[0]*o[2] + m[1]*o[5] + m[2] + o[8]
-
 	newMatrix[3] = m[3]*o[0] + m[4]*o[3] + m[5] + o[6]
 	newMatrix[4] = m[3]*o[1] + m[4]*o[5] + m[5] + o[7]
 	newMatrix[5] = m[3]*o[2] + m[4]*o[6] + m[5] + o[8]
-
 	newMatrix[6] = m[6]*o[0] + m[7]*o[3] + m[8] + o[6]
 	newMatrix[7] = m[6]*o[1] + m[7]*o[4] + m[8] + o[7]
 	newMatrix[8] = m[6]*o[2] + m[7]*o[5] + m[8] + o[8]
-
 	return newMatrix
 }
 
@@ -80,6 +76,39 @@ func (m *Matrix3) Invert() {
 	m.SetInverse(m)
 }
 
+/**
+ * Sets the value of the matrix from inertia tensor values.
+ */
+func (m *Matrix3) setInertiaTensorCoeffs(ix, iy, iz, ixy, ixz, iyz float64) {
+	m[0] = ix
+	m[1] = -ixy
+	m[3] = -ixy
+	m[2] = -ixz
+	m[6] = -ixz
+	m[4] = iy
+	m[5] = -iyz
+	m[7] = -iyz
+	m[8] = iz
+}
+
+/**
+ * Sets the value of the matrix as an inertia tensor of
+ * a rectangular block aligned with the body's coordinate
+ * system with the given axis half-sizes and mass.
+ */
+func (m *Matrix3) SetBlockInertiaTensor(halfSizes *Vector3, mass float64) {
+	squares := halfSizes.ComponentProduct(halfSizes)
+
+	m.setInertiaTensorCoeffs(
+		0.3*mass*(squares[1]+squares[2]),
+		0.3*mass*(squares[0]+squares[2]),
+		0.3*mass*(squares[0]+squares[1]),
+		0,
+		0,
+		0,
+	)
+}
+
 func (orig *Matrix3) SetTranspose(m *Matrix3) {
 	orig[0] = m[0]
 	orig[1] = m[3]
@@ -110,6 +139,10 @@ func (data *Matrix3) SetOrientation(q *Quaternion) {
 	data[8] = 1 - (2*q.i*q.i + 2*q.j*q.j)
 }
 
+func (data *Matrix3) SetOrientationAndPos(q *Quaternion, pos *Vector3) {
+
+}
+
 func (m *Matrix3) LinearInterpolate(a, b *Matrix3, prop float64) *Matrix3 {
 	result := &Matrix3{}
 	for i := uint8(0); i < 9; i++ {
@@ -122,9 +155,9 @@ type Matrix4 [12]float64
 
 func (m *Matrix4) TransformVector3(v *Vector3) *Vector3 {
 	newVec := &Vector3{}
-	newVec[0] = v[0]*m[0] + v[1]*m[1] + v[2] + m[2] + m[3]
-	newVec[1] = v[0]*m[4] + v[1]*m[5] + v[2] + m[6] + m[7]
-	newVec[2] = v[0]*m[8] + v[1]*m[9] + v[2] + m[10] + m[11]
+	newVec[0] = v[0]*m[0] + v[1]*m[1] + v[2] * m[2] + m[3]
+	newVec[1] = v[0]*m[4] + v[1]*m[5] + v[2] * m[6] + m[7]
+	newVec[2] = v[0]*m[8] + v[1]*m[9] + v[2] * m[10] + m[11]
 	return newVec
 }
 
@@ -184,7 +217,6 @@ func (this *Matrix4) Inverse(m *Matrix4) *Matrix4 {
 	result := &Matrix4{}
 	result.SetInverse(this)
 	return result
-
 }
 
 func (data *Matrix4) SetOrientation(q *Quaternion, pos *Vector3) {
@@ -234,7 +266,7 @@ func (data *Matrix4) TransformDirection(vector *Vector3) *Vector3 {
 	result := &Vector3{}
 	result[0] = vector[0]*data[0] + vector[1]*data[1] + vector[2]*data[2]
 	result[1] = vector[0]*data[4] + vector[1]*data[5] + vector[2]*data[6]
-	result[1] = vector[0]*data[8] + vector[1]*data[9] + vector[2]*data[10]
+	result[2] = vector[0]*data[8] + vector[1]*data[9] + vector[2]*data[10]
 	return result
 }
 
@@ -242,7 +274,7 @@ func (data *Matrix4) TransformInverseDirection(vector *Vector3) *Vector3 {
 	result := &Vector3{}
 	result[0] = vector[0]*data[0] + vector[1]*data[4] + vector[2]*data[8]
 	result[1] = vector[0]*data[1] + vector[1]*data[5] + vector[2]*data[9]
-	result[1] = vector[0]*data[2] + vector[1]*data[6] + vector[2]*data[10]
+	result[2] = vector[0]*data[2] + vector[1]*data[6] + vector[2]*data[10]
 	return result
 }
 
@@ -258,16 +290,77 @@ func NewQuaternion(r, i, j, k float64) *Quaternion {
 	return &Quaternion{r, i, j, k}
 }
 
+func QuaternionToTarget(origin, target *Vector3) *Quaternion {
+	dest := target.Clone().Sub(origin).Normalize()
+
+	source := VectorForward()
+	dot := source.Dot(dest)
+	if (math.Abs(dot - (-1.0)) < real_epsilon) {
+		// vector a and b point exactly in the opposite direction,
+		// so it is a 180 degrees turn around the up-axis
+		//return new Quaternion(up, MathHelper.ToRadians(180.0f));
+		return QuaternionFromAngle(VectorUp(), -math.Pi)
+	} else if (math.Abs(dot - (1.0)) < real_epsilon) {
+		// vector a and b point exactly in the same direction
+		// so we return the identity quaternion
+		return &Quaternion{1,0,0,0};
+	}
+	rotAngle := math.Acos(dot);
+	rotAxis := source.VectorProduct(dest).Normalize()
+	return QuaternionFromAngle(rotAxis, rotAngle)
+}
+
+func QuaternionFromAngle(axis *Vector3, angle float64) *Quaternion {
+	sin := math.Sin(angle/2)
+	return &Quaternion{
+		math.Cos(angle / 2),
+		axis[0] * sin,
+		axis[1] * sin,
+		axis[2] * sin,
+	}
+}
+
+func (q *Quaternion) Set(r, i, j, k float64) {
+	q.r = r
+	q.i = i
+	q.j = j
+	q.k = k
+}
+
+func (q *Quaternion) Clone() *Quaternion {
+	return &Quaternion{
+		r: q.r,
+		i: q.i,
+		j: q.j,
+		k: q.k,
+	}
+}
+
+func (q *Quaternion) Equals(z *Quaternion) bool {
+	if math.Abs(q.r-z.r) > real_epsilon {
+		return false
+	}
+	if math.Abs(q.i-z.i) > real_epsilon {
+		return false
+	}
+	if math.Abs(q.j-z.j) > real_epsilon {
+		return false
+	}
+	if math.Abs(q.k-z.k) > real_epsilon {
+		return false
+	}
+	return true
+}
+
+// Normalises the quaternion to unit length, making it a valid orientation quaternion.
 func (q *Quaternion) Normalize() {
 	d := q.r*q.r + q.i*q.i + q.j*q.j + q.k*q.k
-
 	// Check for zero length quaternion, and use the no-rotation
 	// quaternion in that case.
 	if d < real_epsilon {
 		q.r = 1
 		return
 	}
-
 	d = 1.0 / math.Sqrt(d)
 	q.r *= d
 	q.i *= d
@@ -275,13 +368,17 @@ func (q *Quaternion) Normalize() {
 	q.k *= d
 }
 
-func (q *Quaternion) Multiply(multiplier *Quaternion) {
-	q.r = q.r*multiplier.r - q.i*multiplier.i - q.j*multiplier.j - q.k*multiplier.k
-	q.i = q.r*multiplier.i + q.i*multiplier.r + q.j*multiplier.k - q.k*multiplier.j
-	q.j = q.r*multiplier.j + q.j*multiplier.r + q.k*multiplier.i - q.i*multiplier.k
-	q.k = q.r*multiplier.k + q.k*multiplier.r + q.i*multiplier.j - q.j*multiplier.i
+// Multiplies the quaternion by the given quaternion.
+func (q *Quaternion) Multiply(z *Quaternion) *Quaternion {
+	q.r = q.r*z.r - q.i*z.i - q.j*z.j - q.k*z.k
+	q.i = q.r*z.i + q.i*z.r + q.j*z.k - q.k*z.j
+	q.j = q.r*z.j + q.j*z.r + q.k*z.i - q.i*z.k
+	q.k = q.r*z.k + q.k*z.r + q.i*z.j - q.j*z.i
+	return q
 }
 
+// Adds the given vector to this, scaled by the given amount. This is
+// used to update the orientation quaternion by a rotation and time.
 func (q *Quaternion) AddScaledVector(vector *Vector3, scale float64) {
 	newQ := &Quaternion{0, vector[0] * scale, vector[1] * scale, vector[2] * scale}
 	newQ.Multiply(q)
@@ -292,8 +389,7 @@ func (q *Quaternion) AddScaledVector(vector *Vector3, scale float64) {
 }
 
 func (q *Quaternion) RotateByVector(vector *Vector3) {
-	newQ := &Quaternion{0, vector[0], vector[1], vector[2]}
-	q.Multiply(newQ)
+	q.Multiply(&Quaternion{0, vector[0], vector[1], vector[2]})
 }
 
 func LocalToWorld(local *Vector3, transform *Matrix4) *Vector3 {

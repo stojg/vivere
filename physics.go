@@ -4,6 +4,11 @@ import (
 	"math"
 )
 
+type Physical interface {
+	AddForce(*Vector3)
+	ClearRotations()
+}
+
 type ParticlePhysics struct {
 	InvMass   float64
 	forces    *Vector3
@@ -27,7 +32,8 @@ func (c *ParticlePhysics) Update(entity *Entity, elapsed float64) {
 	entity.Velocity.AddScaledVector(c.forces, elapsed)
 	entity.Velocity.Scale(math.Pow(c.Damping, elapsed))
 
-	entity.Orientation += entity.Rotation * elapsed
+	// @todo: fix for rigidbody
+	//entity.Orientation += entity.Rotation * elapsed
 	entity.Rotation += c.rotations * elapsed
 	entity.Rotation *= 0.9
 
@@ -53,30 +59,116 @@ func (p *ParticlePhysics) ClearRotations() {
 	p.rotations = 0
 }
 
+func NewRigidBody(invMass float64) *RigidBody {
+	return &RigidBody{
+		forces:                    &Vector3{},
+		Rotation:                  &Vector3{},
+		transformMatrix:           &Matrix4{},
+		inverseInertiaTensor:      &Matrix3{},
+		inverseInertiaTensorWorld: &Matrix3{},
+		forceAccum:                &Vector3{},
+		torqueAccum:               &Vector3{},
+		Acceleration:              &Vector3{},
+		linearDamping:             0.99,
+		angularDamping:            0.99,
+		InvMass:                   invMass,
+	}
+}
+
 type RigidBody struct {
-	ParticlePhysics
-	inverseMass               float64
-	linearDamping             float64
-	Position                  *Vector3
-	Orientation               *Quaternion
-	velocity                  *Vector3
-	rotation                  *Vector3
-	transformMatrix           *Matrix4
-	inverseInertiaTensor      *Matrix3
+
+	// Holds the inverse of the mass of the rigid body. It
+	// is more useful to hold the inverse mass because
+	// integration is simpler, and because in real time
+	// simulation it is more useful to have bodies with
+	// infinite mass (immovable) than zero mass
+	// (completely unstable in numerical simulation).
+	InvMass float64
+	// Holds the inverse of the body's inertia tensor. The
+	// inertia tensor provided must not be degenerate
+	// (that would mean the body had zero inertia for
+	// spinning along one axis). As long as the tensor is
+	// finite, it will be invertible. The inverse tensor
+	// is used for similar reasons to the use of inverse
+	// mass.
+	//
+	// The inertia tensor, unlike the other variables that
+	// define a rigid body, is given in body space.
+	inverseInertiaTensor *Matrix3
+	// Holds the amount of damping applied to linear
+	// motion.  Damping is required to remove energy added
+	// through numerical instability in the integrator.
+	linearDamping float64
+	// Holds the amount of damping applied to angular
+	// motion.  Damping is required to remove energy added
+	// through numerical instability in the integrator.
+	angularDamping float64
+	// Holds the angular velocity, or rotation, or the
+	// rigid body in world space.
+	Rotation *Vector3
+
+	/**
+	 * Derived Data
+	 *
+	 * These data members hold information that is derived from
+	 * the other data in the class.
+	 */
+
+	// Holds the inverse inertia tensor of the body in world
+	// space. The inverse inertia tensor member is specified in
+	// the body's local space.
+	//  @see inverseInertiaTensor
 	inverseInertiaTensorWorld *Matrix3
-	forceAccum                Vector3
-	torqueAccum               Vector3
-	isAwake                   bool
+	// Holds the amount of motion of the body. This is a recency
+	// weighted mean that can be used to put a body to sleap.
+	motion float64
+	// A body can be put to sleep to avoid it being updated
+	// by the integration functions or affected by collisions
+	// with the world.
+	isAwake bool
+	// Some bodies may never be allowed to fall asleep.
+	// User controlled bodies, for example, should be
+	// always awake.
+	canSleep bool
+	// Holds a transform matrix for converting body space into
+	// world space and vice versa. This can be achieved by calling
+	// the getPointIn*Space functions.
+	transformMatrix *Matrix4
+
+	/**
+	 * Force and Torque Accumulators
+	 *
+	 * These data members store the current force, torque and
+	 * acceleration of the rigid body. Forces can be added to the
+	 * rigid body in any order, and the class decomposes them into
+	 * their constituents, accumulating them for the next
+	 * simulation step. At the simulation step, the accelerations
+	 * are calculated and stored to be applied to the rigid body.
+	 */
+
+	// Holds the accumulated force to be applied at the next
+	// integration step.
+	forceAccum *Vector3
+
+	// Holds the accumulated torque to be applied at the next
+	// integration step.
+	torqueAccum *Vector3
+
+	// Holds the acceleration of the rigid body.  This value
+	// can be used to set acceleration due to gravity (its primary
+	// use), or any other constant acceleration.
+	Acceleration *Vector3
+
+	// Holds the linear acceleration of the rigid body, for the
+	// previous frame.
+	lastFrameAcceleration *Vector3
+
+	sleepEpsilon float64
+	forces       *Vector3
 }
 
 func (rb *RigidBody) SetInertiaTensor(inertiaTensor *Matrix3) {
 	rb.inverseInertiaTensor.SetInverse(inertiaTensor)
-}
-
-func (rb *RigidBody) calculateDerivedData() {
-	rb.Orientation.Normalize()
-	rb.calculateTransformMatrix(rb.transformMatrix, rb.Position, rb.Orientation)
-	rb.transformInertiaTensor(rb.inverseInertiaTensorWorld, rb.Orientation, rb.inverseInertiaTensor, rb.transformMatrix)
 }
 
 /**
@@ -97,7 +189,7 @@ func (rb *RigidBody) calculateTransformMatrix(transformMatrix *Matrix4, position
 	transformMatrix[8] = 2*orientation.i*orientation.k - 2*orientation.r*orientation.j
 	transformMatrix[9] = 2*orientation.j*orientation.k + 2*orientation.r*orientation.i
 	transformMatrix[10] = 1 - 2*orientation.i*orientation.i - 2*orientation.j*orientation.j
-	transformMatrix[11] = position[1]
+	transformMatrix[11] = position[2]
 }
 
 func (rb *RigidBody) AddForce(force *Vector3) {
@@ -105,32 +197,87 @@ func (rb *RigidBody) AddForce(force *Vector3) {
 	rb.isAwake = true
 }
 
-func (rb *RigidBody) Update(entity *Entity, elapsed float64) {
-	rb.ClearAccumulators()
+func (rb *RigidBody) AddTorque(torque *Vector3) {
+	rb.torqueAccum.Add(torque)
+	rb.isAwake = true
+}
+
+func (rb *RigidBody) AddForceAtBodyPoint(ent *Entity, force, point *Vector3) {
+	// convert to coordinates relative to center of mass
+	pt := rb.getPointInWorldSpace(point)
+	rb.AddForceAtPoint(ent, force, pt)
+	rb.isAwake = true
+}
+
+func (rb *RigidBody) AddForceAtPoint(entity *Entity, force, point *Vector3) {
+	// convert to coordinates relative to center of mass
+	pt := point.Clone()
+	pt.Sub(entity.Position)
+	rb.forceAccum.Add(force)
+	rb.torqueAccum.Add(pt.VectorProduct(force))
+	rb.isAwake = true
 }
 
 func (rb *RigidBody) ClearAccumulators() {
 	rb.forces.Clear()
+	rb.forceAccum.Clear()
 	rb.torqueAccum.Clear()
 }
 
-func (rb *RigidBody) AddForceAtBodyPoint(force, point *Vector3) {
-	pt := rb.getPointInWorldSpace(point)
-	rb.AddForceAtPoint(force, pt)
-	rb.isAwake = true
-}
+func (rb *RigidBody) Update(entity *Entity, elapsed float64) {
 
-func (rb *RigidBody) AddForceAtPoint(force, point *Vector3) {
+	if !rb.isAwake {
+		return
+	}
+	// Calculate linear acceleration from force inputs.
+	rb.lastFrameAcceleration = rb.Acceleration.Clone()
+	rb.lastFrameAcceleration.AddScaledVector(rb.forceAccum, rb.InvMass)
 
-	pt := point.Clone()
-	pt.Sub(rb.Position)
+	// Calculate angular acceleration from torque inputs.
+	angularAcceleration := rb.inverseInertiaTensorWorld.TransformVector3(rb.torqueAccum)
 
-	rb.forceAccum.Add(force)
-	rb.torqueAccum.Add(pt.VectorProduct(force))
+	// Adjust velocities
+	// Update linear velocity from both acceleration and impulse.
+	entity.Velocity.AddScaledVector(rb.lastFrameAcceleration, elapsed)
+
+	// Update angular velocity from both acceleration and impulse.
+	rb.Rotation.AddScaledVector(angularAcceleration, elapsed)
+
+	// Impose drag
+	entity.Velocity.Scale(math.Pow(rb.linearDamping, elapsed))
+	rb.Rotation.Scale(math.Pow(rb.angularDamping, elapsed))
+
+	// Adjust positions
+	// Update linear position
+	entity.Position.AddScaledVector(entity.Velocity, elapsed)
+	// Update angular position
+	entity.Orientation.AddScaledVector(rb.Rotation, elapsed)
+
+	// Normalise the orientation, and update the matrices with the new position and orientation
+	rb.calculateDerivedData(entity)
+
+	// Clear accumulators.
+	rb.ClearAccumulators()
+
+	// Update the kinetic energy store, and possibly put the body to sleep.
+	if rb.canSleep {
+		currentMotion := entity.Velocity.ScalarProduct(entity.Velocity) + rb.Rotation.ScalarProduct(rb.Rotation)
+		bias := math.Pow(0.5, elapsed)
+		motion := bias*rb.motion + (1-bias)*currentMotion
+		if motion < rb.sleepEpsilon {
+			rb.isAwake = false
+		}
+	} else if rb.motion > 10*rb.sleepEpsilon {
+		rb.motion = 10 * rb.sleepEpsilon
+	}
 }
 
 func (rb *RigidBody) getPointInWorldSpace(point *Vector3) *Vector3 {
 	return rb.transformMatrix.TransformVector3(point)
+}
+
+func (rb *RigidBody) getTransform() *Matrix4 {
+	return rb.transformMatrix
 }
 
 /**
@@ -158,4 +305,10 @@ func (rb *RigidBody) transformInertiaTensor(iitWorld *Matrix3, q *Quaternion, ii
 	iitWorld[6] = t52*rotmat[0] + t57*rotmat[1] + t62*rotmat[2]
 	iitWorld[7] = t52*rotmat[4] + t57*rotmat[5] + t62*rotmat[6]
 	iitWorld[8] = t52*rotmat[8] + t57*rotmat[9] + t62*rotmat[10]
+}
+
+func (rb *RigidBody) calculateDerivedData(entity *Entity) {
+	entity.Orientation.Normalize()
+	rb.calculateTransformMatrix(rb.transformMatrix, entity.Position, entity.Orientation)
+	rb.transformInertiaTensor(rb.inverseInertiaTensorWorld, entity.Orientation, rb.inverseInertiaTensor, rb.transformMatrix)
 }

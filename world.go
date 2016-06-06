@@ -68,10 +68,6 @@ func (world *World) GameLoop() {
 			pair.Resolve(elapsedTime)
 		}
 
-		for _, entity := range world.entities.GetAll() {
-			entity.physics.(*ParticlePhysics).ClearForces()
-			entity.physics.(*ParticlePhysics).ClearRotations()
-		}
 		updateLag -= SEC_PER_UPDATE
 
 		// //Ping the clients every second to get the RTT

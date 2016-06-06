@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type State struct {
 }
@@ -203,15 +205,10 @@ type SteeringAI struct{}
 func (ai *SteeringAI) steer(me *Entity, steer Steering) {
 	if steer != nil {
 		steering := steer.GetSteering()
-		me.physics.(*ParticlePhysics).AddForce(steering.linear)
 
-		if steering.angular != 0 {
-			me.physics.(*ParticlePhysics).AddRotation(steering.angular)
-			return
-		}
+		//transform := me.physics.(*RigidBody).getTransform()
+		//propulsion := LocalToWorldDirn(VectorForward(), transform)
+		//me.physics.(*RigidBody).AddForce(propulsion)
+		me.physics.(*RigidBody).AddTorque(steering.angular)
 	}
-	a := LookWhereYoureGoing{}
-	a.character = me
-	look := a.GetSteering()
-	me.physics.(*ParticlePhysics).AddRotation(look.angular)
 }

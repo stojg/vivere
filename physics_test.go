@@ -1,40 +1,60 @@
 package main
 
-import (
-	. "gopkg.in/check.v1"
-)
+import "testing"
 
-type PhysicsTestSuite struct{}
+func TestRigidBody_AddForce(t *testing.T) {
 
-var _ = Suite(&PhysicsTestSuite{})
+	body := NewRigidBody(0)
+	force := &Vector3{0, 1, 0}
+	body.AddForce(force)
 
-func (s *PhysicsTestSuite) TestNoForcesDontMove(c *C) {
-	el := NewEntityList()
-	ent := el.NewEntity()
-	ent.physics = NewParticlePhysics(1)
-	ent.Update(1)
-	ent.Update(1)
-	c.Assert(ent.Position, DeepEquals, &Vector3{0, 0, 0})
+	if !body.forceAccum.Equals(force) {
+		t.Errorf("Expected %v, got %v", force, body.forceAccum)
+	}
 }
 
-func (s *PhysicsTestSuite) TestNoForcesMove(c *C) {
-	el := NewEntityList()
-	ent := el.NewEntity()
-	ent.physics = NewParticlePhysics(1)
-	ent.physics.(*ParticlePhysics).Damping = 1
-	ent.physics.(*ParticlePhysics).AddForce(&Vector3{1, 0})
-	ent.Update(1)
-	ent.Update(1)
-	c.Assert(ent.Position, DeepEquals, &Vector3{1, 0, 0})
+func TestRigidBody_Update(t *testing.T) {
+	body := NewRigidBody(0.1)
+	ent := NewEntity()
+	body.AddForce(&Vector3{1, 1, 1})
+	body.Update(ent, 1)
+	expected := &Vector3{0.99, 0.99, 0.99}
+	if ent.Position.Equals(expected) {
+		t.Errorf("Expected %v, got %v", expected, ent.Position)
+	}
 }
 
-func (s *PhysicsTestSuite) TestToHeavyToMove(c *C) {
-	el := NewEntityList()
-	ent := el.NewEntity()
-	ent.physics = NewParticlePhysics(0)
-	ent.physics.(*ParticlePhysics).Damping = 1
-	ent.physics.(*ParticlePhysics).AddForce(&Vector3{1, 0, 0})
-	ent.Update(1)
-	ent.Update(1)
-	c.Assert(ent.Position, DeepEquals, &Vector3{0, 0, 0})
+func TestRigidBody_AddForceAtPoint(t *testing.T) {
+	body := NewRigidBody(0.1)
+	ent := NewEntity()
+	body.AddForceAtPoint(ent, &Vector3{1, 0, 1}, &Vector3{1, 1, 1})
+	t.Log(body.torqueAccum)
+
+	body.Update(ent, 1)
+	expected := &Vector3{0.99, 0.99, 0.99}
+	expectedQuaternion := &Quaternion{1, 0, 0, 1}
+	if !ent.Orientation.Equals(expectedQuaternion) {
+		t.Errorf("Expected orientation %v, got %v", expectedQuaternion, ent.Orientation)
+	}
+
+	if !ent.Position.Equals(expected) {
+		t.Errorf("Expected position %v, got %v", expected, ent.Position)
+	}
+
 }
+
+//func TestRigidBody_AddForceAtBodyPoint(t *testing.T) {
+//	body := NewRigidBody(0.1)
+//	ent := NewEntity()
+//	body.AddForceAtBodyPoint(ent, &Vector3{1, 0, 0}, &Vector3{1, 0, 0})
+//	body.Update(ent, 1)
+//	expectedQuaternion := &Quaternion{1,0,0,1}
+//	if !ent.Orientation.Equals(expectedQuaternion) {
+//		t.Errorf("Expected orientation %v, got %v", expectedQuaternion, ent.Orientation)
+//	}
+//
+//	expected := &Vector3{0.99, 0.99, 0.99}
+//	if !ent.Position.Equals(expected) {
+//		t.Errorf("Expected position %v, got %v", expected, ent.Position)
+//	}
+//}

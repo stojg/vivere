@@ -52,6 +52,7 @@ func TestEntitySerialize(t *testing.T) {
 	gol := NewEntityList()
 	g := gol.NewEntity()
 	g.Position.Set(10, 20, 10)
+	g.Orientation.Set(1, 2, 3, 4)
 
 	var command byte
 	var value float32
@@ -91,7 +92,19 @@ func TestEntitySerialize(t *testing.T) {
 		t.Errorf("INST_SET_ORIENTATION wasn't serialised")
 	}
 	binary.Read(buf, binary.LittleEndian, &value)
-	if float32(g.Orientation) != value {
+	if float32(g.Orientation.r) != value {
+		t.Errorf("Orientation wasn't serialised properly, got %v", value)
+	}
+	binary.Read(buf, binary.LittleEndian, &value)
+	if float32(g.Orientation.i) != value {
+		t.Errorf("Orientation wasn't serialised properly, got %v", value)
+	}
+	binary.Read(buf, binary.LittleEndian, &value)
+	if float32(g.Orientation.j) != value {
+		t.Errorf("Orientation wasn't serialised properly, got %v", value)
+	}
+	binary.Read(buf, binary.LittleEndian, &value)
+	if float32(g.Orientation.k) != value {
 		t.Errorf("Orientation wasn't serialised properly, got %v", value)
 	}
 

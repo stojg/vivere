@@ -49,16 +49,17 @@ func (gol *EntityList) NewEntity() *Entity {
 func NewEntity() *Entity {
 	ent := &Entity{}
 	ent.Position = &Vector3{0, 0, 0}
-	ent.Orientation = 0
+	ent.Orientation = &Quaternion{}
 	ent.Velocity = &Vector3{}
 	ent.Rotation = 0
 	ent.MaxAcceleration = 10
 	ent.MaxSpeed = 40
-	ent.MaxRotation = 10
+	ent.MaxRotation = &Vector3{0.1, 0.1, 0.1}
 	ent.Scale = &Vector3{15, 15, 15}
 	ent.physics = &NullComponent{}
 	ent.graphics = &NullComponent{}
 	ent.input = &NullComponent{}
+	ent.physics = NewRigidBody(5)
 	ent.prevPosition = &Vector3{0, 0, 0}
 	return ent
 }
@@ -89,14 +90,17 @@ func (gol *EntityList) Length() int {
 }
 
 type Entity struct {
-	ID              uint16
-	Position        *Vector3
-	Orientation     float64
+	ID uint16
+	// Holds the linear position of the rigid body in world space.
+	Position *Vector3
+	// Holds the angular orientation of the rigid body in world space.
+	Orientation *Quaternion
+	// Holds the linear velocity of the rigid body in world space.
 	Velocity        *Vector3
 	Rotation        float64
 	MaxAcceleration float64
 	MaxSpeed        float64
-	MaxRotation     float64
+	MaxRotation     *Vector3
 	Type            EntityType
 	Scale           *Vector3
 	Dead            bool
@@ -106,7 +110,7 @@ type Entity struct {
 	graphics        Component
 	changed         bool
 	prevPosition    *Vector3
-	prevOrientation float64
+	prevOrientation *Quaternion
 	bBox            BoundingBox
 }
 
@@ -121,7 +125,7 @@ func (g *Entity) BoundingBox() BoundingBox {
 }
 
 func (ent *Entity) Update(elapsed float64) {
-	ent.Position[1] = ent.Scale[1]/2 - 1
+	//ent.Position[1] = ent.Scale[1]/2 - 1
 	ent.prevPosition.Set(ent.Position[0], ent.Position[1], ent.Position[2])
 	ent.prevOrientation = ent.Orientation
 	ent.changed = false
@@ -130,9 +134,9 @@ func (ent *Entity) Update(elapsed float64) {
 	ent.physics.Update(ent, elapsed)
 	ent.graphics.Update(ent, elapsed)
 
-	if ent.prevPosition.Equals(ent.Position) == false || ent.prevOrientation != ent.Orientation {
-		ent.changed = true
-	}
+	//if ent.prevPosition.Equals(ent.Position) == false || !ent.prevOrientation.Equals(ent.Orientation) {
+	ent.changed = true
+	//}
 }
 
 func (ent *Entity) Changed() bool {
@@ -176,6 +180,11 @@ func (ent *Entity) binaryStream(buf *bytes.Buffer, lit Literal, val interface{})
 		binary.Write(buf, binary.LittleEndian, float32(val.(*Vector3)[0]))
 		binary.Write(buf, binary.LittleEndian, float32(val.(*Vector3)[1]))
 		binary.Write(buf, binary.LittleEndian, float32(val.(*Vector3)[2]))
+	case *Quaternion:
+		binary.Write(buf, binary.LittleEndian, float32(val.(*Quaternion).r))
+		binary.Write(buf, binary.LittleEndian, float32(val.(*Quaternion).i))
+		binary.Write(buf, binary.LittleEndian, float32(val.(*Quaternion).j))
+		binary.Write(buf, binary.LittleEndian, float32(val.(*Quaternion).k))
 	default:
 		panic(fmt.Errorf("%c", val))
 	}

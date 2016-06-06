@@ -92,7 +92,11 @@ define(['src/entity', 'lib/babylon.2.3.max'], function (entity) {
                         break;
                     // INST_SET_ROTATION
                     case 3:
-                        commands[id].orientation = buf.readFloat32();
+                        commands[id].orientation = [];
+                        commands[id].orientation[0] = buf.readFloat32();
+                        commands[id].orientation[1] = buf.readFloat32();
+                        commands[id].orientation[2] = buf.readFloat32();
+                        commands[id].orientation[3] = buf.readFloat32();
                         break;
                     // INST_SET_MODEL
                     case 4:

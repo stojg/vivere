@@ -20,6 +20,18 @@ func NewVector3(x, y, z float64) *Vector3 {
 	return e
 }
 
+func VectorUp() *Vector3 {
+	return &Vector3{0, 0, 1}
+}
+
+func VectorLeft() *Vector3 {
+	return &Vector3{0, 1, 0}
+}
+
+func VectorForward() *Vector3 {
+	return &Vector3{1, 0, 0}
+}
+
 func (v *Vector3) Clone() *Vector3 {
 	result := &Vector3{}
 	result[0] = v[0]
@@ -114,11 +126,26 @@ func (v *Vector3) Clear() *Vector3 {
 	return v
 }
 
+// VectorProduct aka cross product
 func (v *Vector3) VectorProduct(vector *Vector3) *Vector3 {
+	return &Vector3{
+		v[1]*vector[2] - v[2]*vector[1],
+		v[2]*vector[0] - v[0]*vector[2],
+		v[0]*vector[1] - v[1]*vector[0],
+	}
+}
+
+// ScalarProduct calculates and returns the scalar product of this vector
+// with the given vector.
+func (v *Vector3) ScalarProduct(vector *Vector3) float64 {
+	return v[0]*vector[0] + v[1]*vector[1] + v[2]*vector[2]
+}
+
+func (v *Vector3) ComponentProduct(vector *Vector3) *Vector3 {
 	result := &Vector3{}
-	result[0] = v[1]*vector[2] - v[2]*vector[1]
-	result[1] = v[2]*vector[0] - v[0]*vector[2]
-	result[2] = v[0]*vector[1] - v[1]*vector[0]
+	result[0] = v[0] * vector[0]
+	result[1] = v[1] * vector[1]
+	result[2] = v[2] * vector[2]
 	return result
 }
 
@@ -140,6 +167,7 @@ func (v *Vector3) AsOrientation() float64 {
 }
 
 func OrientationAsVector(orientation float64) *Vector3 {
+
 	vec := &Vector3{}
 	vec[0] = math.Sin(orientation)
 	vec[1] = 0
