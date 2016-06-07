@@ -47,24 +47,6 @@ func (gol *EntityList) NewEntity() *Entity {
 	return g
 }
 
-func NewEntity() *Entity {
-	ent := &Entity{}
-	ent.Position = &Vector3{0, 0, 0}
-	ent.Orientation = &Quaternion{1,0,0,0}
-	ent.Velocity = &Vector3{}
-	ent.Rotation = 0
-	ent.MaxAcceleration = 10
-	ent.MaxSpeed = 40
-	ent.MaxRotation = math.Pi / 4
-	ent.Scale = &Vector3{15, 15, 15}
-	ent.physics = &NullComponent{}
-	ent.graphics = &NullComponent{}
-	ent.input = &NullComponent{}
-	ent.physics = NewRigidBody(5)
-	ent.prevPosition = &Vector3{0, 0, 0}
-	return ent
-}
-
 func (gol *EntityList) Add(i *Entity) bool {
 	_, found := gol.set[i.ID]
 	if gol.set == nil {
@@ -90,6 +72,24 @@ func (gol *EntityList) Length() int {
 	return len(gol.set)
 }
 
+func NewEntity() *Entity {
+	ent := &Entity{}
+	ent.Position = &Vector3{0, 0, 0}
+	ent.Orientation = &Quaternion{1, 0, 0, 0}
+	ent.Velocity = &Vector3{}
+	ent.Rotation = &Vector3{}
+	ent.MaxAcceleration = 10
+	ent.MaxSpeed = 40
+	ent.MaxRotation = math.Pi / 2
+	ent.Scale = &Vector3{15, 15, 15}
+	ent.physics = &NullComponent{}
+	ent.graphics = &NullComponent{}
+	ent.input = &NullComponent{}
+	ent.physics = NewRigidBody(5)
+	ent.prevPosition = &Vector3{0, 0, 0}
+	return ent
+}
+
 type Entity struct {
 	ID uint16
 	// Holds the linear position of the rigid body in world space.
@@ -97,8 +97,10 @@ type Entity struct {
 	// Holds the angular orientation of the rigid body in world space.
 	Orientation *Quaternion
 	// Holds the linear velocity of the rigid body in world space.
-	Velocity        *Vector3
-	Rotation        float64
+	Velocity *Vector3
+	// Holds the angular velocity, or rotation, or the
+	// rigid body in world space.
+	Rotation        *Vector3
 	MaxAcceleration float64
 	MaxSpeed        float64
 	MaxRotation     float64

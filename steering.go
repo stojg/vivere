@@ -1,10 +1,9 @@
 package main
 
 import (
-
+	"fmt"
 	"math"
 	"math/rand"
-	"fmt"
 )
 
 // SteeringOutput describes wished changes in velocity (linear) and rotation (angular)
@@ -111,7 +110,7 @@ func (s *Arrive) GetSteering() *SteeringOutput {
 	return steering
 }
 
-func NewAlign(c, t *Entity, targetRadius, slowRadius, timeToTarget float64) *Align {
+func NewAlign(c, t *Entity, slowRadius, targetRadius, timeToTarget float64) *Align {
 	return &Align{
 		character:    c,
 		target:       t,
@@ -157,9 +156,8 @@ func (align *Align) GetSteering() *SteeringOutput {
 
 	theta := 2 * math.Acos(q.r)
 
-
 	// Map the result to (-pi, pi)
-	rotation := theta
+	angle := theta
 
 	sin := 1 / (math.Sin(theta / 2))
 
@@ -170,32 +168,38 @@ func (align *Align) GetSteering() *SteeringOutput {
 	}
 
 	// Check if we are there, return no steering
-	if (rotation) < align.targetRadius {
+	if (angle) < align.targetRadius {
 		return steering
 	}
 
 	var targetRotation float64
-	if rotation > align.slowRadius {
+	if angle > align.slowRadius {
 		targetRotation = align.character.MaxRotation
 	} else {
-		targetRotation = align.character.MaxRotation * (rotation / align.slowRadius)
+		targetRotation = align.character.MaxRotation * (angle / align.slowRadius)
 	}
 
-	// convert back the sign of the rotation
-	// apply acc to target rotation
-	steering.angular = axis.Scale(targetRotation)
-	steering.angular = steering.angular.Scale(1/align.timeToTarget)
+	finalRotation := axis.Scale(targetRotation).Sub(align.character.Rotation)
 
-	fmt.Println(steering.angular)
+	// apply acc to target rotation
+	steering.angular = finalRotation.Scale(1 / align.timeToTarget)
+
+	// @todo check for max acceleration?
 	return steering
+}
+
+func NewFace(character, target *Entity) *Face {
+	return &Face{
+		character: character,
+		target:    target,
+	}
 }
 
 // Face turns the character so it 'looks' at the target
 type Face struct {
-	Align
 	character *Entity
 	target    *Entity
-
+	// @todo fix
 	baseOrientation *Vector3
 }
 
@@ -212,10 +216,17 @@ func (s *Face) GetSteering() *SteeringOutput {
 		return NewSteeringOutput()
 	}
 
-	s.Align.character = s.character
-	s.Align.target = NewEntity()
-	s.Align.target.Orientation = QuaternionToTarget(s.character.Position, s.target.Position)
-	return s.Align.GetSteering()
+	target := NewEntity()
+	target.Orientation = QuaternionToTarget(s.character.Position, s.target.Position)
+	align := NewAlign(s.character, target, 0.5, 0.01, 0.1)
+
+	return align.GetSteering()
+}
+
+func NewLookWhereYoureGoing(character *Entity) *LookWhereYoureGoing {
+	return &LookWhereYoureGoing{
+		character: character,
+	}
 }
 
 // LookWhereYoureGoing turns the character so it faces the direction the character is moving
@@ -229,16 +240,10 @@ func (s *LookWhereYoureGoing) GetSteering() *SteeringOutput {
 		return NewSteeringOutput()
 	}
 	target := NewEntity()
-	// @todo fix for rigidbody
-	panic("dasd")
-	//target.Orientation = math.Atan2(s.character.Velocity[0], s.character.Velocity[2])
-	align := Align{}
-	align.targetRadius = 0.01
-	align.slowRadius = 0.04
-	align.timeToTarget = 0.1
-	align.character = s.character
-	align.target = target
-	return align.GetSteering()
+	target.Position = s.character.Velocity.Clone().Add(s.character.Position)
+
+	face := NewFace(s.character, target)
+	return face.GetSteering()
 }
 
 // Wander lets the character wander around
@@ -277,16 +282,18 @@ func (s *Wander) GetSteering() *SteeringOutput {
 	offset := OrientationAsVector(s.WanderOrientation).Scale(s.WanderRadius)
 	target.Position.Add(offset)
 
-	// Delegate to face
-	s.Face.target = target
-	s.Face.timeToTarget = 0.1
-	s.Face.targetRadius = 0.05
-	s.Face.slowRadius = 0.2
-	s.Face.character = s.character
+	fmt.Println(s.WanderOrientation)
 
+	// Go full speed ahead
+	target.Position.Normalize()
+	//target.Position.Scale(s.character.MaxAcceleration)
+
+	look := NewLookWhereYoureGoing(s.character)
 	// Get the new orientation
-	steering := s.Face.GetSteering()
-	steering.linear = s.character.physics.(*RigidBody).getPointInWorldSpace(VectorForward())
+	steering := look.GetSteering()
+
+	//steering.linear = s.character.physics.(*RigidBody).getPointInWorldSpace(target.Position)
+	//fmt.Println(steering.linear.Normalize())
 
 	// Set the linear output to the current facing direction of the character
 	// @todo fix for rigidbody

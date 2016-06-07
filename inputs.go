@@ -60,9 +60,9 @@ func (state *PrayIdleState) Enter(me *Entity) {
 	target.Orientation = QuaternionFromAngle(VectorLeft(), math.Pi/2)
 	target.physics.(*RigidBody).calculateDerivedData(target)
 
-	align := NewAlign(me, target, 0.1, 0.5, 1)
-	state.steering = align
-	//state.steering = NewWander(state.me, 200, 100, 0.1)
+	//align := NewAlign(me, target, 0.5, 0.01, 0.1)
+	//state.steering = align
+	state.steering = NewWander(state.me, 200, 100, 0.1)
 }
 
 func (state *PrayIdleState) Exit(me *Entity) {
@@ -215,7 +215,7 @@ func (ai *SteeringAI) steer(me *Entity, steer Steering) {
 
 		//transform := me.physics.(*RigidBody).getTransform()
 		//propulsion := LocalToWorldDirn(VectorForward(), transform)
-		//me.physics.(*RigidBody).AddForce(propulsion)
+		me.physics.(*RigidBody).AddForce(steering.linear)
 		me.physics.(*RigidBody).AddTorque(steering.angular)
 	}
 }

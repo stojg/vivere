@@ -34,8 +34,8 @@ func (c *ParticlePhysics) Update(entity *Entity, elapsed float64) {
 
 	// @todo: fix for rigidbody
 	//entity.Orientation += entity.Rotation * elapsed
-	entity.Rotation += c.rotations * elapsed
-	entity.Rotation *= 0.9
+	//entity.Rotation += c.rotations * elapsed
+	//entity.Rotation *= 0.9
 
 	// clamp velocity
 	if entity.Velocity.Length() > entity.MaxSpeed {
@@ -52,17 +52,16 @@ func (p *ParticlePhysics) ClearForces() {
 }
 
 func (p *ParticlePhysics) AddRotation(rot float64) {
-	p.rotations += rot
+	//p.rotations += rot
 }
 
 func (p *ParticlePhysics) ClearRotations() {
-	p.rotations = 0
+	//p.rotations = 0
 }
 
 func NewRigidBody(invMass float64) *RigidBody {
 	return &RigidBody{
 		forces:                    &Vector3{},
-		Rotation:                  &Vector3{},
 		transformMatrix:           &Matrix4{},
 		inverseInertiaTensor:      &Matrix3{},
 		inverseInertiaTensorWorld: &Matrix3{},
@@ -103,9 +102,6 @@ type RigidBody struct {
 	// motion.  Damping is required to remove energy added
 	// through numerical instability in the integrator.
 	angularDamping float64
-	// Holds the angular velocity, or rotation, or the
-	// rigid body in world space.
-	Rotation *Vector3
 
 	/**
 	 * Derived Data
@@ -241,17 +237,17 @@ func (rb *RigidBody) Update(entity *Entity, elapsed float64) {
 	entity.Velocity.AddScaledVector(rb.lastFrameAcceleration, elapsed)
 
 	// Update angular velocity from both acceleration and impulse.
-	rb.Rotation.AddScaledVector(angularAcceleration, elapsed)
+	entity.Rotation.AddScaledVector(angularAcceleration, elapsed)
 
 	// Impose drag
 	entity.Velocity.Scale(math.Pow(rb.linearDamping, elapsed))
-	rb.Rotation.Scale(math.Pow(rb.angularDamping, elapsed))
+	entity.Rotation.Scale(math.Pow(rb.angularDamping, elapsed))
 
 	// Adjust positions
 	// Update linear position
 	entity.Position.AddScaledVector(entity.Velocity, elapsed)
 	// Update angular position
-	entity.Orientation.AddScaledVector(rb.Rotation, elapsed)
+	entity.Orientation.AddScaledVector(entity.Rotation, elapsed)
 
 	// Normalise the orientation, and update the matrices with the new position and orientation
 	rb.calculateDerivedData(entity)
@@ -261,7 +257,7 @@ func (rb *RigidBody) Update(entity *Entity, elapsed float64) {
 
 	// Update the kinetic energy store, and possibly put the body to sleep.
 	if rb.canSleep {
-		currentMotion := entity.Velocity.ScalarProduct(entity.Velocity) + rb.Rotation.ScalarProduct(rb.Rotation)
+		currentMotion := entity.Velocity.ScalarProduct(entity.Velocity) + entity.Rotation.ScalarProduct(entity.Rotation)
 		bias := math.Pow(0.5, elapsed)
 		motion := bias*rb.motion + (1-bias)*currentMotion
 		if motion < rb.sleepEpsilon {

@@ -154,11 +154,11 @@ func (m *Matrix3) LinearInterpolate(a, b *Matrix3, prop float64) *Matrix3 {
 type Matrix4 [12]float64
 
 func (m *Matrix4) TransformVector3(v *Vector3) *Vector3 {
-	newVec := &Vector3{}
-	newVec[0] = v[0]*m[0] + v[1]*m[1] + v[2]*m[2] + m[3]
-	newVec[1] = v[0]*m[4] + v[1]*m[5] + v[2]*m[6] + m[7]
-	newVec[2] = v[0]*m[8] + v[1]*m[9] + v[2]*m[10] + m[11]
-	return newVec
+	return &Vector3{
+		v[0]*m[0] + v[1]*m[1] + v[2]*m[2] + m[3],
+		v[0]*m[4] + v[1]*m[5] + v[2]*m[6] + m[7],
+		v[0]*m[8] + v[1]*m[9] + v[2]*m[10] + m[11],
+	}
 }
 
 func (m *Matrix4) TransformMatrix4(o *Matrix4) *Matrix4 {
@@ -371,9 +371,9 @@ func (q *Quaternion) Normalize() {
 }
 
 func (q *Quaternion) Diff(b *Quaternion) *Quaternion {
-	inv := q.Clone();
-	inv.Inverse();
-	return inv.Multiply(b);
+	inv := q.Clone()
+	inv.Inverse()
+	return inv.Multiply(b)
 }
 
 func (q *Quaternion) Inverse() {
@@ -382,17 +382,17 @@ func (q *Quaternion) Inverse() {
 }
 
 func (q *Quaternion) Conjugate() {
-	q.r= q.r
-	q.i= -q.i
-	q.j= -q.j
-	q.k= -q.k
+	q.r = q.r
+	q.i = -q.i
+	q.j = -q.j
+	q.k = -q.k
 }
 
 func (q *Quaternion) Dot(q2 *Quaternion) float64 {
-	return q.r*q2.r + q.i*q2.i + q.j*q2.j + q.k*q2.k;
+	return q.r*q2.r + q.i*q2.i + q.j*q2.j + q.k*q2.k
 }
 
-func (q *Quaternion) Div(s float64) *Quaternion{
+func (q *Quaternion) Div(s float64) *Quaternion {
 	return &Quaternion{q.r / s, q.i / s, q.j / s, q.k / s}
 }
 
