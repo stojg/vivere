@@ -153,20 +153,13 @@ func (align *Align) GetSteering() *SteeringOutput {
 	}
 
 	q := s.Multiply(align.target.Orientation)
-
-	if q.r > 1.0 {
-		q.r = 1.0
-	} else if q.r < -1.0 {
-		q.r = -1.0
-	}
+	q.Normalize()
 
 	theta := 2 * math.Acos(q.r)
 
 
-	fmt.Println(theta * 180/math.Pi)
 	// Map the result to (-pi, pi)
 	rotation := theta
-	rotationSize := math.Abs(rotation)
 
 	sin := 1 / (math.Sin(theta / 2))
 
@@ -177,27 +170,23 @@ func (align *Align) GetSteering() *SteeringOutput {
 	}
 
 	// Check if we are there, return no steering
-	if (rotationSize) < align.targetRadius {
+	if (rotation) < align.targetRadius {
 		return steering
 	}
 
-
-
 	var targetRotation float64
-	if rotationSize > align.slowRadius {
+	if rotation > align.slowRadius {
 		targetRotation = align.character.MaxRotation
 	} else {
-		targetRotation = align.character.MaxRotation * (rotationSize / align.slowRadius)
+		targetRotation = align.character.MaxRotation * (rotation / align.slowRadius)
 	}
 
 	// convert back the sign of the rotation
-
-	targetRotation *= rotation / rotationSize
-
 	// apply acc to target rotation
 	steering.angular = axis.Scale(targetRotation)
 	steering.angular = steering.angular.Scale(1/align.timeToTarget)
 
+	fmt.Println(steering.angular)
 	return steering
 }
 

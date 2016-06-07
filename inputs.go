@@ -57,7 +57,7 @@ func (state *PrayIdleState) handleInputs(w *World) Stater {
 func (state *PrayIdleState) Enter(me *Entity) {
 	state.me = me
 	target := NewEntity()
-	target.Orientation = QuaternionFromAngle(VectorUp(), math.Pi/2)
+	target.Orientation = QuaternionFromAngle(VectorLeft(), math.Pi/2)
 	target.physics.(*RigidBody).calculateDerivedData(target)
 
 	align := NewAlign(me, target, 0.1, 0.5, 1)
