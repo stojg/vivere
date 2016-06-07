@@ -155,9 +155,9 @@ type Matrix4 [12]float64
 
 func (m *Matrix4) TransformVector3(v *Vector3) *Vector3 {
 	newVec := &Vector3{}
-	newVec[0] = v[0]*m[0] + v[1]*m[1] + v[2] * m[2] + m[3]
-	newVec[1] = v[0]*m[4] + v[1]*m[5] + v[2] * m[6] + m[7]
-	newVec[2] = v[0]*m[8] + v[1]*m[9] + v[2] * m[10] + m[11]
+	newVec[0] = v[0]*m[0] + v[1]*m[1] + v[2]*m[2] + m[3]
+	newVec[1] = v[0]*m[4] + v[1]*m[5] + v[2]*m[6] + m[7]
+	newVec[2] = v[0]*m[8] + v[1]*m[9] + v[2]*m[10] + m[11]
 	return newVec
 }
 
@@ -295,29 +295,31 @@ func QuaternionToTarget(origin, target *Vector3) *Quaternion {
 
 	source := VectorForward()
 	dot := source.Dot(dest)
-	if (math.Abs(dot - (-1.0)) < real_epsilon) {
+	if math.Abs(dot-(-1.0)) < real_epsilon {
 		// vector a and b point exactly in the opposite direction,
 		// so it is a 180 degrees turn around the up-axis
 		//return new Quaternion(up, MathHelper.ToRadians(180.0f));
 		return QuaternionFromAngle(VectorUp(), -math.Pi)
-	} else if (math.Abs(dot - (1.0)) < real_epsilon) {
+	} else if math.Abs(dot-(1.0)) < real_epsilon {
 		// vector a and b point exactly in the same direction
 		// so we return the identity quaternion
-		return &Quaternion{1,0,0,0};
+		return &Quaternion{1, 0, 0, 0}
 	}
-	rotAngle := math.Acos(dot);
+	rotAngle := math.Acos(dot)
 	rotAxis := source.VectorProduct(dest).Normalize()
 	return QuaternionFromAngle(rotAxis, rotAngle)
 }
 
 func QuaternionFromAngle(axis *Vector3, angle float64) *Quaternion {
-	sin := math.Sin(angle/2)
-	return &Quaternion{
+	sin := math.Sin(angle / 2)
+	q := &Quaternion{
 		math.Cos(angle / 2),
 		axis[0] * sin,
 		axis[1] * sin,
 		axis[2] * sin,
 	}
+	q.Normalize()
+	return q
 }
 
 func (q *Quaternion) Set(r, i, j, k float64) {
@@ -368,12 +370,47 @@ func (q *Quaternion) Normalize() {
 	q.k *= d
 }
 
+func (q *Quaternion) Diff(b *Quaternion) *Quaternion {
+	inv := q.Clone();
+	inv.Inverse();
+	return inv.Multiply(b);
+}
+
+func (q *Quaternion) Inverse() {
+	q.Conjugate()
+	q.Div(q.Dot(q))
+}
+
+func (q *Quaternion) Conjugate() {
+	q.r= q.r
+	q.i= -q.i
+	q.j= -q.j
+	q.k= -q.k
+}
+
+func (q *Quaternion) Dot(q2 *Quaternion) float64 {
+	return q.r*q2.r + q.i*q2.i + q.j*q2.j + q.k*q2.k;
+}
+
+func (q *Quaternion) Div(s float64) *Quaternion{
+	return &Quaternion{q.r / s, q.i / s, q.j / s, q.k / s}
+}
+
+func (q *Quaternion) Length() float64 {
+	d := q.r*q.r + q.i*q.i + q.j*q.j + q.k*q.k
+	return math.Sqrt(d)
+}
+
+func (q *Quaternion) SquareLength() float64 {
+	return q.r*q.r + q.i*q.i + q.j*q.j + q.k*q.k
+}
+
 // Multiplies the quaternion by the given quaternion.
-func (q *Quaternion) Multiply(z *Quaternion) *Quaternion {
-	q.r = q.r*z.r - q.i*z.i - q.j*z.j - q.k*z.k
-	q.i = q.r*z.i + q.i*z.r + q.j*z.k - q.k*z.j
-	q.j = q.r*z.j + q.j*z.r + q.k*z.i - q.i*z.k
-	q.k = q.r*z.k + q.k*z.r + q.i*z.j - q.j*z.i
+func (q *Quaternion) Multiply(o *Quaternion) *Quaternion {
+	q.r = q.r*o.r - q.i*o.i - q.j*o.j - q.k*o.k
+	q.i = q.r*o.i + q.i*o.r + q.j*o.k - q.k*o.j
+	q.j = q.r*o.j - q.i*o.k + q.j*o.r + q.k*o.i
+	q.k = q.r*o.k + q.i*o.j - q.j*o.i + q.k*o.r
 	return q
 }
 

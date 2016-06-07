@@ -88,7 +88,6 @@ func NewPray(world *World, x, y, z float64) *Entity {
 	//rotationAngle := 0.0
 	//RotationAxis := VectorUp()
 
-
 	ent := world.entities.NewEntity()
 	ent.Position.Set(x, y, z)
 	ent.Type = 2

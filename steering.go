@@ -1,8 +1,10 @@
 package main
 
 import (
-	"math/rand"
+
 	"math"
+	"math/rand"
+	"fmt"
 )
 
 // SteeringOutput describes wished changes in velocity (linear) and rotation (angular)
@@ -109,6 +111,16 @@ func (s *Arrive) GetSteering() *SteeringOutput {
 	return steering
 }
 
+func NewAlign(c, t *Entity, targetRadius, slowRadius, timeToTarget float64) *Align {
+	return &Align{
+		character:    c,
+		target:       t,
+		targetRadius: targetRadius,
+		slowRadius:   slowRadius,
+		timeToTarget: timeToTarget,
+	}
+}
+
 // Align ensures that the character have the same orientation as the target
 type Align struct {
 	character    *Entity
@@ -118,53 +130,74 @@ type Align struct {
 	timeToTarget float64 // 0.1
 }
 
+func (s *Align) mapToRange(rotation float64) float64 {
+	for rotation < -math.Pi {
+		rotation += math.Pi * 2
+	}
+	for rotation > math.Pi {
+		rotation -= math.Pi * 2
+	}
+	return rotation
+}
+
 // GetSteering returns the angular steering to mimic the targets orientation
-func (s *Align) GetSteering() *SteeringOutput {
+func (align *Align) GetSteering() *SteeringOutput {
 	// Get a new steering output
 	steering := NewSteeringOutput()
 
-	t := &Quaternion{
-		r: s.target.Orientation.r,
-		i: -s.target.Orientation.i,
-		j: -s.target.Orientation.j,
-		k: -s.target.Orientation.k,
+	s := &Quaternion{
+		r: align.character.Orientation.r,
+		i: -align.character.Orientation.i,
+		j: -align.character.Orientation.j,
+		k: -align.character.Orientation.k,
 	}
-	q := s.character.Orientation.Clone().Multiply(t)
+
+	q := s.Multiply(align.target.Orientation)
+
+	if q.r > 1.0 {
+		q.r = 1.0
+	} else if q.r < -1.0 {
+		q.r = -1.0
+	}
+
 	theta := 2 * math.Acos(q.r)
-	sin := 1 / math.Sin(theta/2)
-	rotationSize := &Vector3{
+
+
+	fmt.Println(theta * 180/math.Pi)
+	// Map the result to (-pi, pi)
+	rotation := theta
+	rotationSize := math.Abs(rotation)
+
+	sin := 1 / (math.Sin(theta / 2))
+
+	axis := &Vector3{
 		sin * q.i,
 		sin * q.j,
 		sin * q.k,
 	}
 
 	// Check if we are there, return no steering
-	// @todo, check this
-	if rotationSize.SquareLength() < (s.targetRadius * s.targetRadius) {
+	if (rotationSize) < align.targetRadius {
 		return steering
 	}
 
-	// We are outside the slow radius, so full rotation
-	var targetRotation *Vector3
-	if rotationSize.SquareLength() > (s.slowRadius * s.slowRadius) {
-		targetRotation = s.character.MaxRotation.Clone()
-	} else {
-		t1 := s.character.MaxRotation
-		t2 := rotationSize.Clone()
-		// targetRotation = s.character.MaxRotation * (rotationSize / s.slowRadius)
-		targetRotation = t1.ComponentProduct(t2.Scale(1/s.slowRadius))
-	}
-	// The final rotation combines speed (already in the variable and direction
-	finished := targetRotation.ComponentProduct(rotationSize)
 
-	// Acceleration tries to get to the target rotation
-	//steering.angular = targetRotation - s.character.Rotation
-	if s.timeToTarget == 0 {
-		panic("timeToTarget cannot be zero")
+
+	var targetRotation float64
+	if rotationSize > align.slowRadius {
+		targetRotation = align.character.MaxRotation
+	} else {
+		targetRotation = align.character.MaxRotation * (rotationSize / align.slowRadius)
 	}
-	//steering.angular /= s.timeToTarget
-	steering.angular = finished.Scale(1/s.timeToTarget)
-	//fmt.Println(steering.angular)
+
+	// convert back the sign of the rotation
+
+	targetRotation *= rotation / rotationSize
+
+	// apply acc to target rotation
+	steering.angular = axis.Scale(targetRotation)
+	steering.angular = steering.angular.Scale(1/align.timeToTarget)
+
 	return steering
 }
 
@@ -172,7 +205,7 @@ func (s *Align) GetSteering() *SteeringOutput {
 type Face struct {
 	Align
 	character *Entity
-	target *Entity
+	target    *Entity
 
 	baseOrientation *Vector3
 }
@@ -222,7 +255,7 @@ func (s *LookWhereYoureGoing) GetSteering() *SteeringOutput {
 // Wander lets the character wander around
 type Wander struct {
 	Face
-	character *Entity
+	character         *Entity
 	WanderOffset      float64 // forward offset of the wander circle
 	WanderRadius      float64 // radius of the wander circle
 	WanderRate        float64 // holds the max rate at which  the wander orientation can change

@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	. "github.com/volkerp/goquadtree/quadtree"
+	"math"
 )
 
 type EntityType uint16
@@ -49,12 +50,12 @@ func (gol *EntityList) NewEntity() *Entity {
 func NewEntity() *Entity {
 	ent := &Entity{}
 	ent.Position = &Vector3{0, 0, 0}
-	ent.Orientation = &Quaternion{}
+	ent.Orientation = &Quaternion{1,0,0,0}
 	ent.Velocity = &Vector3{}
 	ent.Rotation = 0
 	ent.MaxAcceleration = 10
 	ent.MaxSpeed = 40
-	ent.MaxRotation = &Vector3{0.1, 0.1, 0.1}
+	ent.MaxRotation = math.Pi / 8
 	ent.Scale = &Vector3{15, 15, 15}
 	ent.physics = &NullComponent{}
 	ent.graphics = &NullComponent{}
@@ -100,7 +101,7 @@ type Entity struct {
 	Rotation        float64
 	MaxAcceleration float64
 	MaxSpeed        float64
-	MaxRotation     *Vector3
+	MaxRotation     float64
 	Type            EntityType
 	Scale           *Vector3
 	Dead            bool
