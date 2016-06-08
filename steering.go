@@ -161,14 +161,37 @@ func (align *Align) GetSteering() *SteeringOutput {
 	}
 
 	theta := 2 * math.Acos(q.r)
+	thetaNoSign := math.Abs(theta)
+	// Check if we are there, return no steering
+	if (thetaNoSign) < align.targetRadius {
+		return steering
+	}
+
+
+	sin := 1 / (math.Sin(theta / 2))
+	axis := &Vector3{
+		sin * q.i,
+		sin * q.j,
+		sin * q.k,
+	}
+
+	theta = align.mapToRange(theta)
+	preAxis := axis.Clone()
+	axis.Normalize()
+	axis.Scale(theta)
+	axis.Sub(align.character.Rotation)
+
+
+	fmt.Println(theta*180/math.Pi, preAxis, axis)
+
+	steering.angular = axis
+	return steering
+
 
 	angle := align.MapToRange(theta)
 	angleNoSign := math.Abs(angle)
 
-	// Check if we are there, return no steering
-	if (angleNoSign) < align.targetRadius {
-		return steering
-	}
+
 
 	var targetRotation float64
 	if angleNoSign > align.slowRadius {
@@ -179,13 +202,6 @@ func (align *Align) GetSteering() *SteeringOutput {
 
 	// put the sign back to the targetRotation
 	targetRotation *= angle / angleNoSign
-
-	sin := 1 / (math.Sin(theta / 2))
-	axis := &Vector3{
-		sin * q.i,
-		sin * q.j,
-		sin * q.k,
-	}
 
 	finalRotation := axis.Scale(targetRotation).Sub(align.character.Rotation)
 
@@ -293,7 +309,7 @@ func (s *Wander) GetSteering() *SteeringOutput {
 	target.Position = s.character.Position.Clone()
 
 	// Offset the character with the offset in the direction of the character orientation
-	currentHeading := s.character.physics.(*RigidBody).getPointInWorldSpace(VectorForward())
+	currentHeading := s.character.physics.(*RigidBody).getPointInWorldSpace(VectorX())
 
 	targetCenter := currentHeading.Scale(s.WanderOffset)
 	target.Position.Add(targetCenter)

@@ -293,13 +293,13 @@ func NewQuaternion(r, i, j, k float64) *Quaternion {
 func QuaternionToTarget(origin, target *Vector3) *Quaternion {
 	dest := target.Clone().Sub(origin).Normalize()
 
-	source := VectorForward()
+	source := VectorZ()
 	dot := source.Dot(dest)
 	if math.Abs(dot-(-1.0)) < real_epsilon {
 		// vector a and b point exactly in the opposite direction,
 		// so it is a 180 degrees turn around the up-axis
 		//return new Quaternion(up, MathHelper.ToRadians(180.0f));
-		return QuaternionFromAngle(VectorUp(), -math.Pi)
+		return QuaternionFromAngle(VectorY(), -math.Pi)
 	} else if math.Abs(dot-(1.0)) < real_epsilon {
 		// vector a and b point exactly in the same direction
 		// so we return the identity quaternion
@@ -311,15 +311,38 @@ func QuaternionToTarget(origin, target *Vector3) *Quaternion {
 }
 
 func QuaternionFromAngle(axis *Vector3, angle float64) *Quaternion {
-	sin := math.Sin(angle / 2)
+	halfSin := math.Sin(angle / 2)
+	halfCos := math.Cos(angle / 2)
 	q := &Quaternion{
-		math.Cos(angle / 2),
-		axis[0] * sin,
-		axis[1] * sin,
-		axis[2] * sin,
+		halfCos,
+		axis[0] * halfSin,
+		axis[1] * halfSin,
+		axis[2] * halfSin,
 	}
-	q.Normalize()
+	//q.Normalize()
 	return q
+}
+
+func QuaternionFromVectors(a, b *Vector3) *Quaternion {
+
+	m := math.Sqrt(2.0 + 2.0*a.Dot(b))
+
+	w := a.Clone().VectorProduct(b).Scale(1.0 / m)
+
+	return &Quaternion{
+		0.5 * m,
+		w[0],
+		w[1],
+		w[2],
+	}
+
+	//
+	//u := a.Clone()
+	//v := b.Clone()
+	//cos_theta := u.Normalize().Dot(v.Normalize())
+	//angle := math.Acos(cos_theta);
+	//w := a.Clone().VectorProduct(b).Normalize()
+	//return QuaternionFromAngle(w, angle);
 }
 
 func (q *Quaternion) Set(r, i, j, k float64) {
@@ -392,6 +415,7 @@ func (q *Quaternion) Dot(q2 *Quaternion) float64 {
 	return q.r*q2.r + q.i*q2.i + q.j*q2.j + q.k*q2.k
 }
 
+
 func (q *Quaternion) Div(s float64) *Quaternion {
 	return &Quaternion{q.r / s, q.i / s, q.j / s, q.k / s}
 }
@@ -407,12 +431,19 @@ func (q *Quaternion) SquareLength() float64 {
 
 // Multiplies the quaternion by the given quaternion.
 func (q *Quaternion) Multiply(o *Quaternion) *Quaternion {
-	q.r = q.r*o.r - q.i*o.i - q.j*o.j - q.k*o.k
-	q.i = q.r*o.i + q.i*o.r + q.j*o.k - q.k*o.j
-	q.j = q.r*o.j - q.i*o.k + q.j*o.r + q.k*o.i
-	q.k = q.r*o.k + q.i*o.j - q.j*o.i + q.k*o.r
+	//q.r = q.r*o.r - q.i*o.i - q.j*o.j - q.k*o.k
+	//q.i = q.r*o.i + q.i*o.r + q.j*o.k - q.k*o.j
+	//q.j = q.r*o.j - q.i*o.k + q.j*o.r + q.k*o.i
+	//q.k = q.r*o.k + q.i*o.j - q.j*o.i + q.k*o.r
+
+	q.i =  q.i * o.r + q.j * o.k - q.k * o.j + q.r * o.i
+	q.j = -q.i * o.k + q.j * o.r + q.k * o.i + q.r * o.j
+	q.k =  q.i * o.j - q.j * o.i + q.k * o.r + q.r * o.k
+	q.r = -q.i * o.i - q.j * o.j - q.k * o.k + q.r * o.r
+
 	return q
 }
+
 
 // Adds the given vector to this, scaled by the given amount. This is
 // used to update the orientation quaternion by a rotation and time.

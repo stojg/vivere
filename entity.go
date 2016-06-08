@@ -75,7 +75,7 @@ func (gol *EntityList) Length() int {
 func NewEntity() *Entity {
 	ent := &Entity{}
 	ent.Position = &Vector3{0, 0, 0}
-	ent.Orientation = &Quaternion{1, 0, 0, 0}
+	ent.Orientation = QuaternionFromAngle(VectorY(), 0)
 	ent.Velocity = &Vector3{}
 	ent.Rotation = &Vector3{}
 	ent.MaxAcceleration = 10

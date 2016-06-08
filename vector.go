@@ -20,15 +20,15 @@ func NewVector3(x, y, z float64) *Vector3 {
 	return e
 }
 
-func VectorUp() *Vector3 {
+func VectorZ() *Vector3 {
 	return &Vector3{0, 0, 1}
 }
 
-func VectorLeft() *Vector3 {
+func VectorY() *Vector3 {
 	return &Vector3{0, 1, 0}
 }
 
-func VectorForward() *Vector3 {
+func VectorX() *Vector3 {
 	return &Vector3{1, 0, 0}
 }
 
@@ -133,6 +133,10 @@ func (v *Vector3) VectorProduct(vector *Vector3) *Vector3 {
 		v[2]*vector[0] - v[0]*vector[2],
 		v[0]*vector[1] - v[1]*vector[0],
 	}
+}
+
+func (v *Vector3) Cross(vector *Vector3) *Vector3 {
+	return v.VectorProduct(vector)
 }
 
 // ScalarProduct calculates and returns the scalar product of this vector

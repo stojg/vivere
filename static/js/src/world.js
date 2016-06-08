@@ -10,17 +10,17 @@ define(['src/entity', 'lib/babylon.2.3.max'], function (entity) {
         blue.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.7);
         blue.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0);
 
+        var front = new BABYLON.StandardMaterial("texture1", scene);
+        front.diffuseColor = new BABYLON.Color3(1.0, 0.0, 0.0);
+
         var pink = new BABYLON.StandardMaterial("texture1", scene);
         pink.diffuseColor = new BABYLON.Color3(1.0, 0.2, 0.7);
-        pink.specularColor = new BABYLON.Color3(1.0, 0.2, 0.7);
 
         var red = new BABYLON.StandardMaterial("texture1", scene);
-        red.diffuseColor = new BABYLON.Color3(1.0, 0.2, 0.2);
-        red.specularColor = new BABYLON.Color3(1.0, 0.2, 0.2);
+        red.diffuseColor = new BABYLON.Color3(1.0, 0.4, 0.4);
 
         var moccasin = new BABYLON.StandardMaterial("texture1", scene);
         moccasin.diffuseColor = new BABYLON.Color3(1.0,0.9, 0.8);
-        moccasin.specularColor = new BABYLON.Color3(1.0,0.9, 0.8);
 
         var pinkLight = new BABYLON.StandardMaterial("texture1", scene);
         pinkLight.diffuseColor = new BABYLON.Color3(.7, 0.3, .7);
@@ -38,8 +38,33 @@ define(['src/entity', 'lib/babylon.2.3.max'], function (entity) {
         //var sphere = BABYLON.Mesh.CreateSphere("sphere", 20, 1.0, scene);
         pray.scaling = new BABYLON.Vector3(30, 30, 30);
         pray.isVisible = false;
-        pray.material = pink;
+        //pray.material = pink;
         this.templates[2] = pray;
+
+        var yellow = new BABYLON.StandardMaterial("texture1", scene);
+        yellow.diffuseColor = new BABYLON.Color3(1.0,0.9, 0.8);
+        var blue = new BABYLON.StandardMaterial("texture1", scene);
+        blue.diffuseColor = new BABYLON.Color3(.4, .5, 1);
+        var green = new BABYLON.StandardMaterial("texture1", scene);
+        green.diffuseColor = new BABYLON.Color3(.5, 1.0, .4);
+
+        var multi=new BABYLON.MultiMaterial("nuggetman",scene);
+        multi.subMaterials.push(green);
+        multi.subMaterials.push(yellow);
+        multi.subMaterials.push(front);
+        multi.subMaterials.push(yellow);
+        multi.subMaterials.push(blue);
+        multi.subMaterials.push(yellow);
+        pray.subMeshes=[];
+        var verticesCount=pray.getTotalVertices();
+        pray.subMeshes.push(new BABYLON.SubMesh(0, 0, verticesCount, 0, 6, pray));
+        pray.subMeshes.push(new BABYLON.SubMesh(1, 1, verticesCount, 6, 6, pray));
+        pray.subMeshes.push(new BABYLON.SubMesh(2, 2, verticesCount, 12, 6, pray));
+        pray.subMeshes.push(new BABYLON.SubMesh(3, 3, verticesCount, 18, 6, pray));
+        pray.subMeshes.push(new BABYLON.SubMesh(4, 4, verticesCount, 24, 6, pray));
+        pray.subMeshes.push(new BABYLON.SubMesh(5, 5, verticesCount, 30, 6, pray));
+        pray.material=multi;
+
 
         var hunter = BABYLON.Mesh.CreateBox("box", 1.0, scene, false, BABYLON.Mesh.DEFAULTSIDE);
         //var sphere = BABYLON.Mesh.CreateSphere("sphere", 20, 1.0, scene);

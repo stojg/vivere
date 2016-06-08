@@ -53,16 +53,20 @@ require(["src/server", 'src/entity', "src/world", "src/player", 'lib/datastream'
         scene.activeCamera.keysRight.push(68);
         scene.activeCamera.speed = 40;
         scene.activeCamera.checkCollisions = true;
-        scene.activeCamera.setTarget(new BABYLON.Vector3(1000, -1000, -500));
-        scene.activeCamera.position = new BABYLON.Vector3(-1000, 1000, 500);
+        scene.activeCamera.position = new BABYLON.Vector3(500, 200, -500);
+        scene.activeCamera.setTarget(new BABYLON.Vector3(-500, -200,  500));
         scene.activeCamera.attachControl(canvas, false);
 
         var originBox = BABYLON.Mesh.CreateBox("box", 1.0, scene);
-        originBox.scaling = new BABYLON.Vector3(30, 10, 30);
+        originBox.scaling = new BABYLON.Vector3(30, 5, 30);
+        originBox.position = new BABYLON.Vector3(0, -2, 0);
+
+        var front = new BABYLON.StandardMaterial("texture1", scene);
+        front.diffuseColor = new BABYLON.Color3(1.0, 0.0, 0.0);
 
         var boxXpos = BABYLON.Mesh.CreateBox("box", 1.0, scene);
         boxXpos.scaling = new BABYLON.Vector3(10, 10, 10);
-        boxXpos.position.x = 600;
+        boxXpos.position.x = 300;
         boxXpos.position.y = 0;
         boxXpos.position.z = 0;
         var red = new BABYLON.StandardMaterial("texture1", scene);
@@ -70,13 +74,13 @@ require(["src/server", 'src/entity', "src/world", "src/player", 'lib/datastream'
         boxXpos.material = red;
 
         var boxYpos = boxXpos.clone();
-        boxYpos.position = {x: 0, y: 600, z: 0};
+        boxYpos.position = {x: 0, y: 100, z: 0};
         var blue = new BABYLON.StandardMaterial("texture1", scene);
         blue.diffuseColor = new BABYLON.Color3(.4, .5, 1);
         boxYpos.material = blue ;
 
-        var boxZpos = boxXpos.clone()
-        boxZpos.position = {x: 0, y: 0, z: 600};
+        var boxZpos = boxXpos.clone();
+        boxZpos.position = {x: 0, y: 0, z: 300};
         var green = new BABYLON.StandardMaterial("texture1", scene);
         green.diffuseColor = new BABYLON.Color3(.5, 1.0, .4);
         boxZpos.material = green;
@@ -99,7 +103,7 @@ require(["src/server", 'src/entity', "src/world", "src/player", 'lib/datastream'
         //light0.specular = new BABYLON.Color3(0.0, 0.0, 0.0);
         //light0.intensity = 1;
 
-        var light1 = new BABYLON.HemisphericLight("Hemi0", new BABYLON.Vector3(0, 1, 1), scene);
+        var light1 = new BABYLON.HemisphericLight("Hemi0", new BABYLON.Vector3(0.3, 1, -1), scene);
         light1.diffuse = new BABYLON.Color3(1,1,1);
         light1.specular = new BABYLON.Color3(1, 1, 1);
         light1.groundColor = new BABYLON.Color3(0, 0, 0);
@@ -109,15 +113,13 @@ require(["src/server", 'src/entity', "src/world", "src/player", 'lib/datastream'
         //var shadowGenerator = new BABYLON.ShadowGenerator(1024, light0);
         //shadowGenerator.getShadowMap().renderList.push(box);
 
-        var ground = BABYLON.Mesh.CreateGround("ground1", 3232, 3232, 4, scene);
+        var ground = BABYLON.Mesh.CreateGround("ground1", 3232, 3232, 1, scene);
         var groundMat = new BABYLON.StandardMaterial("texture1", scene);
         groundMat.diffuseColor = new BABYLON.Color3(0.2, 0.21, 0.21);
         groundMat.alpha = 0.5;
         groundMat.specularPower = 512;
-        //groundMat.ambientColor = new BABYLON.Color3(0.3, 0.4, 0.3);
         ground.material = groundMat;
         ground.receiveShadows = true;
-        //ground.checkCollisions = true;
 
 
         // Leave this function

@@ -22,13 +22,13 @@ func TestAlignNoRotation(t *testing.T) {
 		target    *Quaternion
 		expected  *Vector3
 	}{
-		{QuaternionFromAngle(VectorLeft(), deg2rad(0)), QuaternionFromAngle(VectorLeft(), deg2rad(0)), &Vector3{0, 0, 0}},
-		{QuaternionFromAngle(VectorLeft(), deg2rad(34)), QuaternionFromAngle(VectorLeft(), deg2rad(34)), &Vector3{0, 0, 0}},
-		{QuaternionFromAngle(VectorLeft(), deg2rad(90)), QuaternionFromAngle(VectorLeft(), deg2rad(90)), &Vector3{0, 0, 0}},
-		{QuaternionFromAngle(VectorLeft(), deg2rad(180)), QuaternionFromAngle(VectorLeft(), deg2rad(180)), &Vector3{0, 0, 0}},
-		{QuaternionFromAngle(VectorLeft(), deg2rad(234)), QuaternionFromAngle(VectorLeft(), deg2rad(234)), &Vector3{0, 0, 0}},
-		{QuaternionFromAngle(VectorLeft(), deg2rad(270)), QuaternionFromAngle(VectorLeft(), deg2rad(270)), &Vector3{0, 0, 0}},
-		{QuaternionFromAngle(VectorLeft(), deg2rad(270)), QuaternionFromAngle(VectorLeft(), deg2rad(270)), &Vector3{0, 0, 0}},
+		{QuaternionFromAngle(VectorY(), deg2rad(0)), QuaternionFromAngle(VectorY(), deg2rad(0)), &Vector3{0, 0, 0}},
+		{QuaternionFromAngle(VectorY(), deg2rad(34)), QuaternionFromAngle(VectorY(), deg2rad(34)), &Vector3{0, 0, 0}},
+		{QuaternionFromAngle(VectorY(), deg2rad(90)), QuaternionFromAngle(VectorY(), deg2rad(90)), &Vector3{0, 0, 0}},
+		{QuaternionFromAngle(VectorY(), deg2rad(180)), QuaternionFromAngle(VectorY(), deg2rad(180)), &Vector3{0, 0, 0}},
+		{QuaternionFromAngle(VectorY(), deg2rad(234)), QuaternionFromAngle(VectorY(), deg2rad(234)), &Vector3{0, 0, 0}},
+		{QuaternionFromAngle(VectorY(), deg2rad(270)), QuaternionFromAngle(VectorY(), deg2rad(270)), &Vector3{0, 0, 0}},
+		{QuaternionFromAngle(VectorY(), deg2rad(270)), QuaternionFromAngle(VectorY(), deg2rad(270)), &Vector3{0, 0, 0}},
 	}
 
 	for i := range alignNoRotationTests {
@@ -56,12 +56,12 @@ func TestAlignRotation(t *testing.T) {
 		target    *Quaternion
 		expected  *Vector3
 	}{
-		{QuaternionFromAngle(VectorUp(), deg2rad(0)), QuaternionFromAngle(VectorUp(), deg2rad(45)), &Vector3{0, 0, 15.707963267948966}},
-		{QuaternionFromAngle(VectorUp(), deg2rad(0)), QuaternionFromAngle(VectorUp(), deg2rad(90)), &Vector3{0, 0, 15.707963267948966}},
-		{QuaternionFromAngle(VectorUp(), deg2rad(0)), QuaternionFromAngle(VectorUp(), deg2rad(179)), &Vector3{0, 0, 15.707963267948966}},
-		{QuaternionFromAngle(VectorUp(), deg2rad(0)), QuaternionFromAngle(VectorUp(), deg2rad(180)), &Vector3{0, 0, 15.707963267948966}},
-		{QuaternionFromAngle(VectorUp(), deg2rad(0)), QuaternionFromAngle(VectorUp(), deg2rad(181)), &Vector3{0, 0, -15.70796326794897}},
-		{QuaternionFromAngle(VectorUp(), deg2rad(0)), QuaternionFromAngle(VectorUp(), deg2rad(270)), &Vector3{0, 0, -15.707963267948966}},
+		{QuaternionFromAngle(VectorY(), deg2rad(0)), QuaternionFromAngle(VectorY(), deg2rad(45)), &Vector3{0, 15.707963267948966, 0}},
+		{QuaternionFromAngle(VectorY(), deg2rad(0)), QuaternionFromAngle(VectorY(), deg2rad(90)), &Vector3{0, 15.707963267948966, 0}},
+		{QuaternionFromAngle(VectorY(), deg2rad(0)), QuaternionFromAngle(VectorY(), deg2rad(179)), &Vector3{0, 15.707963267948966, 0}},
+		{QuaternionFromAngle(VectorY(), deg2rad(0)), QuaternionFromAngle(VectorY(), deg2rad(180)), &Vector3{0, 15.707963267948966, 0}},
+		{QuaternionFromAngle(VectorY(), deg2rad(0)), QuaternionFromAngle(VectorY(), deg2rad(181)), &Vector3{0, -15.70796326794897, 0}},
+		{QuaternionFromAngle(VectorY(), deg2rad(0)), QuaternionFromAngle(VectorY(), deg2rad(270)), &Vector3{0, -15.707963267948966, 0}},
 	}
 
 	for i := range alignTests {
