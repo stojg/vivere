@@ -208,6 +208,7 @@ func NewFace(character, target *Entity) *Face {
 	return &Face{
 		character: character,
 		target:    target,
+		baseOrientation: &Quaternion{1,0,0,0},
 	}
 }
 
@@ -216,26 +217,28 @@ type Face struct {
 	character *Entity
 	target    *Entity
 	// @todo fix
-	baseOrientation *Vector3
+	baseOrientation *Quaternion
 }
 
 // GetSteering returns a angular steering
-func (s *Face) GetSteering() *SteeringOutput {
+func (face *Face) GetSteering() *SteeringOutput {
 
 	// 1. Calculate the target to delegate to align
 
 	// Work out the direction to target
-	direction := s.target.Position.NewSub(s.character.Position)
+	direction := face.target.Position.NewSub(face.character.Position)
 
 	// Check for zero direction
 	if direction.SquareLength() == 0 {
 		return NewSteeringOutput()
 	}
 
-	target := NewEntity()
-	target.Orientation = QuaternionToTarget(s.character.Position, s.target.Position)
-	align := NewAlign(s.character, target, 0.5, 0.01, 0.1)
+	direction.Rotate(face.baseOrientation)
 
+
+	target := NewEntity()
+	target.Orientation = QuaternionToTarget(face.target.Position, face.character.Position)
+	align := NewAlign(face.character, target, 0.5, 0.01, 0.1)
 	return align.GetSteering()
 }
 
@@ -308,11 +311,9 @@ func (s *Wander) GetSteering() *SteeringOutput {
 	// Get the new orientation
 	steering := face.GetSteering()
 
-	//transform := s.character.physics.(*RigidBody).getTransform()
-	//propulsion := LocalToWorldDirn(steering.angular, transform)
-	//steering.linear = propulsion
-
-	steering.angular = &Vector3{}
+	transform := s.character.physics.(*RigidBody).getTransform()
+	propulsion := LocalToWorldDirn(steering.angular, transform)
+	steering.linear = propulsion
 
 	return steering
 }

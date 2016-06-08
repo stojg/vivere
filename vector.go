@@ -166,6 +166,19 @@ func (v *Vector3) Equals(z *Vector3) bool {
 	return true
 }
 
+func (v *Vector3) Rotate(q *Quaternion) *Vector3 {
+	// Extract the vector part of the quaternion
+	u := &Vector3{q.i, q.j, q.k};
+
+	// Extract the scalar part of the quaternion
+	s := q.r;
+
+	// Do the math
+	v = 2.0 * u.Scale(u.Dot(v))
+	v.Add(v.Scale(s*s - u.Dot(u)))
+	v.Add( u.Cross(v).Scale(2.0 * s))
+}
+
 func (v *Vector3) AsOrientation() float64 {
 	return math.Atan2(v[0], v[1])
 }

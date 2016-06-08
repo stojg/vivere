@@ -57,11 +57,13 @@ func (state *PrayIdleState) handleInputs(w *World) Stater {
 func (state *PrayIdleState) Enter(me *Entity) {
 	state.me = me
 	target := NewEntity()
+	target.Position = &Vector3{0,20,0}
 	target.Orientation = QuaternionFromAngle(VectorY(), 90*math.Pi/180)
 	target.physics.(*RigidBody).calculateDerivedData(target)
 
-	state.steering = NewAlign(me, target, 0.2, 0.1, 0.1)
-	//state.steering = NewWander(state.me, 200, 50, 0.1)
+	state.steering = NewWander(state.me, 200, 50, 0.1)
+	state.steering = NewFace(state.me, target)
+	//state.steering = NewAlign(me, target, 0.2, 0.1, 0.1)
 }
 
 func (state *PrayIdleState) Exit(me *Entity) {
@@ -212,24 +214,9 @@ func (ai *SteeringAI) steer(me *Entity, steer Steering) {
 	if steer != nil {
 		//transform := me.physics.(*RigidBody).getTransform()
 		//propulsion := LocalToWorldDirn(VectorZ(), transform)
-		//me.physics.(*RigidBody).AddForce(propulsion)
 		steering := steer.GetSteering()
+		me.physics.(*RigidBody).AddForce(steering.linear)
 		me.physics.(*RigidBody).AddTorque(steering.angular)
-		//target := QuaternionFromAngle(VectorY(), math.Pi/2)
-		//
-		//invInitial := &Quaternion{
-		//	r: me.Orientation.r,
-		//	i: -me.Orientation.i,
-		//	j: -me.Orientation.j,
-		//	k: -me.Orientation.k,
-		//}
-		//q := invInitial.Multiply(target)
-		////
-		////theta := 2 * math.Acos(q.r)
-		////
-		//fmt.Println(target, q)
-		//fmt.Println(me.Orientation)
-		//me.Orientation = invInitial
 
 	}
 }
