@@ -60,7 +60,7 @@ func TestAlignRotation(t *testing.T) {
 		{QuaternionFromAngle(VectorY(), deg2rad(0)), QuaternionFromAngle(VectorY(), deg2rad(90)), &Vector3{0, 15.707963267948966, 0}},
 		{QuaternionFromAngle(VectorY(), deg2rad(0)), QuaternionFromAngle(VectorY(), deg2rad(179)), &Vector3{0, 15.707963267948966, 0}},
 		{QuaternionFromAngle(VectorY(), deg2rad(0)), QuaternionFromAngle(VectorY(), deg2rad(180)), &Vector3{0, 15.707963267948966, 0}},
-		{QuaternionFromAngle(VectorY(), deg2rad(0)), QuaternionFromAngle(VectorY(), deg2rad(181)), &Vector3{0, -15.70796326794897, 0}},
+		{QuaternionFromAngle(VectorY(), deg2rad(0)), QuaternionFromAngle(VectorY(), deg2rad(181)), &Vector3{0, -15.707963267948966, 0}},
 		{QuaternionFromAngle(VectorY(), deg2rad(0)), QuaternionFromAngle(VectorY(), deg2rad(270)), &Vector3{0, -15.707963267948966, 0}},
 	}
 

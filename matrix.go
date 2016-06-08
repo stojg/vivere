@@ -415,7 +415,6 @@ func (q *Quaternion) Dot(q2 *Quaternion) float64 {
 	return q.r*q2.r + q.i*q2.i + q.j*q2.j + q.k*q2.k
 }
 
-
 func (q *Quaternion) Div(s float64) *Quaternion {
 	return &Quaternion{q.r / s, q.i / s, q.j / s, q.k / s}
 }
@@ -436,14 +435,13 @@ func (q *Quaternion) Multiply(o *Quaternion) *Quaternion {
 	//q.j = q.r*o.j - q.i*o.k + q.j*o.r + q.k*o.i
 	//q.k = q.r*o.k + q.i*o.j - q.j*o.i + q.k*o.r
 
-	q.i =  q.i * o.r + q.j * o.k - q.k * o.j + q.r * o.i
-	q.j = -q.i * o.k + q.j * o.r + q.k * o.i + q.r * o.j
-	q.k =  q.i * o.j - q.j * o.i + q.k * o.r + q.r * o.k
-	q.r = -q.i * o.i - q.j * o.j - q.k * o.k + q.r * o.r
+	q.i = q.i*o.r + q.j*o.k - q.k*o.j + q.r*o.i
+	q.j = -q.i*o.k + q.j*o.r + q.k*o.i + q.r*o.j
+	q.k = q.i*o.j - q.j*o.i + q.k*o.r + q.r*o.k
+	q.r = -q.i*o.i - q.j*o.j - q.k*o.k + q.r*o.r
 
 	return q
 }
-
 
 // Adds the given vector to this, scaled by the given amount. This is
 // used to update the orientation quaternion by a rotation and time.

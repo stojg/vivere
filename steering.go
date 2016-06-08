@@ -3,7 +3,6 @@ package main
 import (
 	"math"
 	"math/rand"
-	"fmt"
 )
 
 // SteeringOutput describes wished changes in velocity (linear) and rotation (angular)
@@ -156,13 +155,11 @@ func (align *Align) GetSteering() *SteeringOutput {
 	// protect the ArcCos from numerical instabilities
 	if q.r > 1.0 {
 		q.r = 1.0
-	} else if q.r  < -1.0 {
+	} else if q.r < -1.0 {
 		q.r = -1.0
 	}
 
 	theta := 2 * math.Acos(q.r)
-
-
 
 	sin := 1 / (math.Sin(theta / 2))
 	axis := &Vector3{
@@ -185,15 +182,12 @@ func (align *Align) GetSteering() *SteeringOutput {
 		targetRotation = align.character.MaxRotation * (thetaNoSign / align.slowRadius)
 	}
 
-	targetRotation *= theta/thetaNoSign
+	targetRotation *= theta / thetaNoSign
 
-	preAxis := axis.Clone()
 	axis.Normalize()
 	axis.Scale(targetRotation)
 	axis.Sub(align.character.Rotation)
-	axis.Scale(1/align.timeToTarget)
-
-	fmt.Println(theta, preAxis, axis)
+	axis.Scale(1 / align.timeToTarget)
 
 	steering.angular = axis
 	return steering
@@ -313,8 +307,6 @@ func (s *Wander) GetSteering() *SteeringOutput {
 	face := NewFace(s.character, target)
 	// Get the new orientation
 	steering := face.GetSteering()
-
-	fmt.Println(steering.angular)
 
 	//transform := s.character.physics.(*RigidBody).getTransform()
 	//propulsion := LocalToWorldDirn(steering.angular, transform)
