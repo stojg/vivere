@@ -161,11 +161,7 @@ func (align *Align) GetSteering() *SteeringOutput {
 	}
 
 	theta := 2 * math.Acos(q.r)
-	thetaNoSign := math.Abs(theta)
-	// Check if we are there, return no steering
-	if (thetaNoSign) < align.targetRadius {
-		return steering
-	}
+
 
 
 	sin := 1 / (math.Sin(theta / 2))
@@ -176,40 +172,32 @@ func (align *Align) GetSteering() *SteeringOutput {
 	}
 
 	theta = align.mapToRange(theta)
+	thetaNoSign := math.Abs(theta)
+	// Check if we are there, return no steering
+	if (thetaNoSign) < align.targetRadius {
+		return steering
+	}
+
+	var targetRotation float64
+	if thetaNoSign > align.slowRadius {
+		targetRotation = align.character.MaxRotation
+	} else {
+		targetRotation = align.character.MaxRotation * (thetaNoSign / align.slowRadius)
+	}
+
+	targetRotation *= theta/thetaNoSign
+
 	preAxis := axis.Clone()
 	axis.Normalize()
-	axis.Scale(theta)
+	axis.Scale(targetRotation)
 	axis.Sub(align.character.Rotation)
+	axis.Scale(1/align.timeToTarget)
 
-
-	fmt.Println(theta*180/math.Pi, preAxis, axis)
+	fmt.Println(theta, preAxis, axis)
 
 	steering.angular = axis
 	return steering
 
-
-	angle := align.MapToRange(theta)
-	angleNoSign := math.Abs(angle)
-
-
-
-	var targetRotation float64
-	if angleNoSign > align.slowRadius {
-		targetRotation = align.character.MaxRotation
-	} else {
-		targetRotation = align.character.MaxRotation * (angleNoSign / align.slowRadius)
-	}
-
-	// put the sign back to the targetRotation
-	targetRotation *= angle / angleNoSign
-
-	finalRotation := axis.Scale(targetRotation).Sub(align.character.Rotation)
-
-	// apply acc to target rotation
-	steering.angular = finalRotation.Scale(1 / align.timeToTarget)
-
-	// @todo check for max acceleration?
-	return steering
 }
 
 func (align *Align) MapToRange(rotation float64) float64 {
