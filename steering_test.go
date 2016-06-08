@@ -38,7 +38,7 @@ func TestAlignNoRotation(t *testing.T) {
 		character.physics.(*RigidBody).calculateDerivedData(character)
 		target.physics.(*RigidBody).calculateDerivedData(target)
 
-		align := NewAlign(character, target, 0.001, 0.002, 0.1)
+		align := NewAlign(character, target, 0.5, 0.01, 0.1)
 		steering := align.GetSteering()
 
 		if !steering.angular.Equals(alignNoRotationTests[i].expected) {
@@ -56,8 +56,12 @@ func TestAlignRotation(t *testing.T) {
 		target    *Quaternion
 		expected  *Vector3
 	}{
-		{QuaternionFromAngle(VectorUp(), deg2rad(0)), QuaternionFromAngle(VectorUp(), deg2rad(45)), &Vector3{0, 0, 1.9634954084936211}},
-		{QuaternionFromAngle(VectorUp(), deg2rad(0)), QuaternionFromAngle(VectorUp(), deg2rad(90)), &Vector3{0, 0, 1.9634954084936207}},
+		{QuaternionFromAngle(VectorUp(), deg2rad(0)), QuaternionFromAngle(VectorUp(), deg2rad(45)), &Vector3{0, 0, 15.707963267948966}},
+		{QuaternionFromAngle(VectorUp(), deg2rad(0)), QuaternionFromAngle(VectorUp(), deg2rad(90)), &Vector3{0, 0, 15.707963267948966}},
+		{QuaternionFromAngle(VectorUp(), deg2rad(0)), QuaternionFromAngle(VectorUp(), deg2rad(179)), &Vector3{0, 0, 15.707963267948966}},
+		{QuaternionFromAngle(VectorUp(), deg2rad(0)), QuaternionFromAngle(VectorUp(), deg2rad(180)), &Vector3{0, 0, 15.707963267948966}},
+		{QuaternionFromAngle(VectorUp(), deg2rad(0)), QuaternionFromAngle(VectorUp(), deg2rad(181)), &Vector3{0, 0, -15.70796326794897}},
+		{QuaternionFromAngle(VectorUp(), deg2rad(0)), QuaternionFromAngle(VectorUp(), deg2rad(270)), &Vector3{0, 0, -15.707963267948966}},
 	}
 
 	for i := range alignTests {

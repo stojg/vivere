@@ -62,7 +62,7 @@ func (state *PrayIdleState) Enter(me *Entity) {
 
 	//align := NewAlign(me, target, 0.5, 0.01, 0.1)
 	//state.steering = align
-	state.steering = NewWander(state.me, 200, 100, 0.1)
+	state.steering = NewWander(state.me, 200, 50, 0.1)
 }
 
 func (state *PrayIdleState) Exit(me *Entity) {
@@ -212,10 +212,9 @@ type SteeringAI struct{}
 func (ai *SteeringAI) steer(me *Entity, steer Steering) {
 	if steer != nil {
 		steering := steer.GetSteering()
-
 		//transform := me.physics.(*RigidBody).getTransform()
 		//propulsion := LocalToWorldDirn(VectorForward(), transform)
-		me.physics.(*RigidBody).AddForce(steering.linear)
+		//me.physics.(*RigidBody).AddForce(propulsion)
 		me.physics.(*RigidBody).AddTorque(steering.angular)
 	}
 }

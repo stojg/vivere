@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
+	"fmt"
 )
 
 // SteeringOutput describes wished changes in velocity (linear) and rotation (angular)
@@ -141,42 +141,50 @@ func (s *Align) mapToRange(rotation float64) float64 {
 
 // GetSteering returns the angular steering to mimic the targets orientation
 func (align *Align) GetSteering() *SteeringOutput {
-	// Get a new steering output
+
 	steering := NewSteeringOutput()
 
-	s := &Quaternion{
+	final := align.target.Orientation.Clone()
+	invInitial := &Quaternion{
 		r: align.character.Orientation.r,
 		i: -align.character.Orientation.i,
 		j: -align.character.Orientation.j,
 		k: -align.character.Orientation.k,
 	}
 
-	q := s.Multiply(align.target.Orientation)
-	q.Normalize()
+	q := final.Multiply(invInitial)
+	// protect the ArcCos from numerical instabilities
+	if q.r > 1.0 {
+		q.r = 1.0
+	} else if q.r  < -1.0 {
+		q.r = -1.0
+	}
 
 	theta := 2 * math.Acos(q.r)
 
-	// Map the result to (-pi, pi)
-	angle := theta
-
-	sin := 1 / (math.Sin(theta / 2))
-
-	axis := &Vector3{
-		sin * q.i,
-		sin * q.j,
-		sin * q.k,
-	}
+	angle := align.MapToRange(theta)
+	angleNoSign := math.Abs(angle)
 
 	// Check if we are there, return no steering
-	if (angle) < align.targetRadius {
+	if (angleNoSign) < align.targetRadius {
 		return steering
 	}
 
 	var targetRotation float64
-	if angle > align.slowRadius {
+	if angleNoSign > align.slowRadius {
 		targetRotation = align.character.MaxRotation
 	} else {
-		targetRotation = align.character.MaxRotation * (angle / align.slowRadius)
+		targetRotation = align.character.MaxRotation * (angleNoSign / align.slowRadius)
+	}
+
+	// put the sign back to the targetRotation
+	targetRotation *= angle / angleNoSign
+
+	sin := 1 / (math.Sin(theta / 2))
+	axis := &Vector3{
+		sin * q.i,
+		sin * q.j,
+		sin * q.k,
 	}
 
 	finalRotation := axis.Scale(targetRotation).Sub(align.character.Rotation)
@@ -186,6 +194,16 @@ func (align *Align) GetSteering() *SteeringOutput {
 
 	// @todo check for max acceleration?
 	return steering
+}
+
+func (align *Align) MapToRange(rotation float64) float64 {
+	for rotation < -math.Pi {
+		rotation += math.Pi * 2
+	}
+	for rotation > math.Pi {
+		rotation -= math.Pi * 2
+	}
+	return rotation
 }
 
 func NewFace(character, target *Entity) *Face {
@@ -269,35 +287,37 @@ func NewWander(character *Entity, offset, radius, rate float64) *Wander {
 
 // GetSteering returns a new linear and angular steering for wander
 func (s *Wander) GetSteering() *SteeringOutput {
+
 	// 1. Calculate the center of the wander circle
 	target := NewEntity()
 	target.Position = s.character.Position.Clone()
 
-	targetCenter := s.character.physics.(*RigidBody).getPointInWorldSpace(VectorForward())
-	targetCenter.Scale(s.WanderOffset)
+	// Offset the character with the offset in the direction of the character orientation
+	currentHeading := s.character.physics.(*RigidBody).getPointInWorldSpace(VectorForward())
 
+	targetCenter := currentHeading.Scale(s.WanderOffset)
 	target.Position.Add(targetCenter)
 
+	// Update the wander orientation with a small random value
 	s.WanderOrientation += s.randomBinomial() * s.WanderRate
+
+	// From the center of the circle draw a vector in the direction of the current wanderOrientation
 	offset := OrientationAsVector(s.WanderOrientation).Scale(s.WanderRadius)
 	target.Position.Add(offset)
 
-	fmt.Println(s.WanderOrientation)
-
-	// Go full speed ahead
-	target.Position.Normalize()
-	//target.Position.Scale(s.character.MaxAcceleration)
-
-	look := NewLookWhereYoureGoing(s.character)
+	// Delegate to face
+	face := NewFace(s.character, target)
 	// Get the new orientation
-	steering := look.GetSteering()
+	steering := face.GetSteering()
 
-	//steering.linear = s.character.physics.(*RigidBody).getPointInWorldSpace(target.Position)
-	//fmt.Println(steering.linear.Normalize())
+	fmt.Println(steering.angular)
 
-	// Set the linear output to the current facing direction of the character
-	// @todo fix for rigidbody
-	//steering.linear = OrientationAsVector(s.character.Orientation).Scale(s.character.MaxAcceleration)
+	//transform := s.character.physics.(*RigidBody).getTransform()
+	//propulsion := LocalToWorldDirn(steering.angular, transform)
+	//steering.linear = propulsion
+
+	steering.angular = &Vector3{}
+
 	return steering
 }
 
