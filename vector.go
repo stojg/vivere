@@ -92,6 +92,21 @@ func (a *Vector3) NewSub(b *Vector3) *Vector3 {
 	return vec
 }
 
+func (a *Vector3) Inverse() *Vector3 {
+	a[0] = -a[0]
+	a[1] = -a[1]
+	a[2] = -a[2]
+	return a
+}
+
+func (a *Vector3) NewInverse() *Vector3 {
+	return &Vector3{
+		-a[0],
+		-a[1],
+		-a[2],
+	}
+}
+
 func (a *Vector3) Length() float64 {
 	return math.Sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2])
 }
@@ -154,29 +169,65 @@ func (v *Vector3) ComponentProduct(vector *Vector3) *Vector3 {
 }
 
 func (v *Vector3) Equals(z *Vector3) bool {
-	if v[0] != z[0] {
+	diff := math.Abs(v[0] - z[0])
+	if diff > real_epsilon {
 		return false
 	}
-	if v[1] != z[1] {
+	diff = math.Abs(v[1] - z[1])
+	if diff > real_epsilon {
 		return false
 	}
-	if v[2] != z[2] {
+	diff = math.Abs(v[2] - z[2])
+	if diff > real_epsilon {
 		return false
 	}
 	return true
 }
 
-func (v *Vector3) Rotate(q *Quaternion) *Vector3 {
-	// Extract the vector part of the quaternion
-	u := &Vector3{q.i, q.j, q.k};
+// http://pastebin.com/fAFp6NnN
+func (value *Vector3) Rotate(rotation *Quaternion) *Vector3 {
 
-	// Extract the scalar part of the quaternion
-	s := q.r;
+	num12 := rotation.i + rotation.i
+	num2 := rotation.j + rotation.j
+	num := rotation.k + rotation.k
+	num11 := rotation.r * num12
+	num10 := rotation.r * num2
+	num9 := rotation.r * num
+	num8 := rotation.i * num12
+	num7 := rotation.i * num2
+	num6 := rotation.i * num
+	num5 := rotation.j * num2
+	num4 := rotation.j * num
+	num3 := rotation.k * num
+	num15 := ((value[0] * ((1.0 - num5) - num3)) + (value[1] * (num7 - num9))) + (value[2] * (num6 + num10))
+	num14 := ((value[0] * (num7 + num9)) + (value[1] * ((1.0 - num8) - num3))) + (value[2] * (num4 - num11))
+	num13 := ((value[0] * (num6 - num10)) + (value[1] * (num4 + num11))) + (value[2] * ((1.0 - num8) - num5))
+	value[0] = num15
+	value[1] = num14
+	value[2] = num13
+	return value
+	//
+	//vecQ := &Quaternion{
+	//	0,
+	//	v[0],
+	//	v[1],
+	//	v[2],
+	//}
+	//
+	//// v´ = q v q-1 (where v = [0, v])
+	//
+	//temp := vecQ.NewMultiply(q.NewInverse())
+	//res := q.Multiply(temp)
+	//
+	//v[0] = res.i
+	//v[1] = res.j
+	//v[2] = res.k
+	//
+	//return v
+}
 
-	// Do the math
-	v = 2.0 * u.Scale(u.Dot(v))
-	v.Add(v.Scale(s*s - u.Dot(u)))
-	v.Add( u.Cross(v).Scale(2.0 * s))
+func (v *Vector3) NewRotate(q *Quaternion) *Vector3 {
+	return v.Clone().Rotate(q)
 }
 
 func (v *Vector3) AsOrientation() float64 {

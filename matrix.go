@@ -400,15 +400,19 @@ func (q *Quaternion) Diff(b *Quaternion) *Quaternion {
 }
 
 func (q *Quaternion) Inverse() {
-	q.Conjugate()
-	q.Div(q.Dot(q))
-}
-
-func (q *Quaternion) Conjugate() {
 	q.r = q.r
 	q.i = -q.i
 	q.j = -q.j
 	q.k = -q.k
+}
+
+func (q *Quaternion) NewInverse() *Quaternion {
+	return &Quaternion{
+		q.r,
+		-q.i,
+		-q.j,
+		-q.k,
+	}
 }
 
 func (q *Quaternion) Dot(q2 *Quaternion) float64 {
@@ -443,6 +447,11 @@ func (q *Quaternion) Multiply(o *Quaternion) *Quaternion {
 	return q
 }
 
+// Multiplies the quaternion by the given quaternion.
+func (q *Quaternion) NewMultiply(o *Quaternion) *Quaternion {
+	return q.Clone().Multiply(o)
+}
+
 // Adds the given vector to this, scaled by the given amount. This is
 // used to update the orientation quaternion by a rotation and time.
 func (q *Quaternion) AddScaledVector(vector *Vector3, scale float64) {
@@ -454,8 +463,9 @@ func (q *Quaternion) AddScaledVector(vector *Vector3, scale float64) {
 	q.k += newQ.k * 0.5
 }
 
-func (q *Quaternion) RotateByVector(vector *Vector3) {
+func (q *Quaternion) RotateByVector(vector *Vector3) *Quaternion {
 	q.Multiply(&Quaternion{0, vector[0], vector[1], vector[2]})
+	return q
 }
 
 func LocalToWorld(local *Vector3, transform *Matrix4) *Vector3 {

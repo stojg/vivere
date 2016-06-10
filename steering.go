@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 )
@@ -206,9 +207,9 @@ func (align *Align) MapToRange(rotation float64) float64 {
 
 func NewFace(character, target *Entity) *Face {
 	return &Face{
-		character: character,
-		target:    target,
-		baseOrientation: &Quaternion{1,0,0,0},
+		character:       character,
+		target:          target,
+		baseOrientation: &Quaternion{1, 0, 0, 0},
 	}
 }
 
@@ -218,6 +219,25 @@ type Face struct {
 	target    *Entity
 	// @todo fix
 	baseOrientation *Quaternion
+}
+
+func (face *Face) calculateOrientation(vector *Vector3) *Quaternion {
+
+	baseZVector := VectorX().Rotate(face.baseOrientation)
+
+	if baseZVector.Equals(vector) {
+		return face.baseOrientation.Clone()
+	}
+
+	if baseZVector.Equals(vector.NewInverse()) {
+		return face.baseOrientation.NewInverse()
+	}
+	change := baseZVector.NewRotate(face.baseOrientation)
+
+	angle := math.Asin(change.Length())
+	axis := change
+	axis.Normalize()
+	return QuaternionFromAngle(axis, angle)
 }
 
 // GetSteering returns a angular steering
@@ -233,11 +253,8 @@ func (face *Face) GetSteering() *SteeringOutput {
 		return NewSteeringOutput()
 	}
 
-	direction.Rotate(face.baseOrientation)
-
-
 	target := NewEntity()
-	target.Orientation = QuaternionToTarget(face.target.Position, face.character.Position)
+	target.Orientation = face.calculateOrientation(direction)
 	align := NewAlign(face.character, target, 0.5, 0.01, 0.1)
 	return align.GetSteering()
 }
@@ -296,6 +313,8 @@ func (s *Wander) GetSteering() *SteeringOutput {
 	// Offset the character with the offset in the direction of the character orientation
 	currentHeading := s.character.physics.(*RigidBody).getPointInWorldSpace(VectorX())
 
+	fmt.Println(s.character.Position, currentHeading)
+
 	targetCenter := currentHeading.Scale(s.WanderOffset)
 	target.Position.Add(targetCenter)
 
@@ -310,6 +329,9 @@ func (s *Wander) GetSteering() *SteeringOutput {
 	face := NewFace(s.character, target)
 	// Get the new orientation
 	steering := face.GetSteering()
+
+	//fmt.Println(target.Position)
+	//fmt.Println(steering.angular)
 
 	transform := s.character.physics.(*RigidBody).getTransform()
 	propulsion := LocalToWorldDirn(steering.angular, transform)
