@@ -68,50 +68,54 @@ func (gol *EntityList) Remove(i uint16) {
 	delete(gol.set, i)
 }
 
-func (gol *EntityList) Length() int {
-	return len(gol.set)
-}
-
 func NewEntity() *Entity {
-	ent := &Entity{}
-	ent.Position = &Vector3{0, 0, 0}
-	ent.Orientation = QuaternionFromAxisAngle(VectorY(), 0)
-	ent.Velocity = &Vector3{}
-	ent.Rotation = &Vector3{}
-	ent.MaxAcceleration = &Vector3{1, 1, 1}
-	ent.MaxSpeed = 40
-	ent.MaxRotation = math.Pi / 2
-	ent.Scale = &Vector3{15, 15, 15}
-	ent.input = &NullComponent{}
-	ent.physics = NewRigidBody(5)
-	ent.prevPosition = &Vector3{0, 0, 0}
-	return ent
+	return &Entity{
+		Position:    &Vector3{},
+		Orientation: &Quaternion{1, 0, 0, 0},
+		Velocity:    &Vector3{},
+		Rotation:    &Vector3{},
+
+		MaxAcceleration:        &Vector3{1, 1, 1},
+		MaxSpeed:               10,
+		MaxAngularAcceleration: &Vector3{1, 1, 1},
+		MaxRotation:            math.Pi / 2,
+
+		Scale: &Vector3{15, 15, 15},
+
+		Input: &NullComponent{},
+		Body:  NewRigidBody(1),
+
+		prevPosition:    &Vector3{0, 0, 0},
+		prevOrientation: &Quaternion{1, 0, 0, 0},
+	}
 }
 
 type Entity struct {
-	ID uint16
-	// Holds the linear position of the rigid body in world space.
-	Position *Vector3
-	// Holds the angular orientation of the rigid body in world space.
-	Orientation *Quaternion
-	// Holds the linear velocity of the rigid body in world space.
-	Velocity *Vector3
-	// Holds the angular velocity, or rotation, or the
-	// rigid body in world space.
-	Rotation        *Vector3
-	MaxAcceleration *Vector3
-	MaxSpeed        float64
-	MaxRotation     float64
-	Type            EntityType
-	Scale           *Vector3
-	Dead            bool
-	geometry        interface{}
-	input           Component
-	physics         *RigidBody
-	changed         bool
+	ID          uint16
+	Position    *Vector3    // Holds the linear position of the rigid body in world space.
+	Orientation *Quaternion // Holds the angular orientation of the rigid body in world space.
+	Velocity    *Vector3    // Holds the linear velocity of the rigid body in world space.
+	Rotation    *Vector3    // Holds the angular velocity, or rotation for the rigid body in world space.
+
+	MaxAcceleration        *Vector3 // limits the linear acceleration
+	MaxSpeed               float64  // limits the linear velocity
+	MaxAngularAcceleration *Vector3 // limits the linear acceleration
+	MaxRotation            float64  // limits the angular velocity
+
+	Scale    *Vector3    // the size of this entity
+	bBox     BoundingBox // for broad phase collision detection
+	geometry interface{} // for narrow phase collision detection
+
+	Type EntityType
+	Dead bool
+
+	Changed         bool // did this entity change position or rotate since last frame
 	prevPosition    *Vector3
 	prevOrientation *Quaternion
-	bBox            BoundingBox
+
+	// Components
+	Input Component
+	Body  *RigidBody
 }
 
 func (g *Entity) BoundingBox() BoundingBox {
@@ -127,20 +131,14 @@ func (g *Entity) BoundingBox() BoundingBox {
 func (ent *Entity) Update(elapsed float64) {
 	ent.prevPosition.Set(ent.Position[0], ent.Position[1], ent.Position[2])
 	ent.prevOrientation = ent.Orientation
-	ent.changed = false
+	ent.Changed = false
 
-	ent.input.Update(ent, elapsed)
-	if ent.physics.isAwake {
-		ent.physics.Update(ent, elapsed)
-	}
+	ent.Input.Update(ent, elapsed)
+	ent.Body.Update(ent, elapsed)
 
 	if !ent.prevPosition.Equals(ent.Position) || !ent.prevOrientation.Equals(ent.Orientation) {
-		ent.changed = true
+		ent.Changed = true
 	}
-}
-
-func (ent *Entity) Changed() bool {
-	return ent.changed
 }
 
 type Literal byte

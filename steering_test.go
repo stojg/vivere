@@ -35,8 +35,8 @@ func TestAlignNoRotation(t *testing.T) {
 		character.Orientation = alignNoRotationTests[i].character
 		target.Orientation = alignNoRotationTests[i].target
 
-		character.physics.calculateDerivedData(character)
-		target.physics.calculateDerivedData(target)
+		character.Body.calculateDerivedData(character)
+		target.Body.calculateDerivedData(target)
 
 		align := NewAlign(character, target, 0.5, 0.01, 0.1)
 		steering := align.GetSteering()
@@ -68,8 +68,8 @@ func TestAlignRotation(t *testing.T) {
 		character.Orientation = alignTests[i].character
 		target.Orientation = alignTests[i].target
 
-		character.physics.calculateDerivedData(character)
-		target.physics.calculateDerivedData(target)
+		character.Body.calculateDerivedData(character)
+		target.Body.calculateDerivedData(target)
 
 		align := NewAlign(character, target, 0.001, 0.002, 0.1)
 		steering := align.GetSteering()

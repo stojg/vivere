@@ -68,7 +68,7 @@ type SteeringAI struct{}
 func (ai *SteeringAI) steer(me *Entity, steer Steering) {
 	if steer != nil {
 		steering := steer.GetSteering()
-		me.physics.AddTorque(steering.angular)
-		me.physics.AddForce(steering.linear)
+		me.Body.AddTorque(steering.angular)
+		me.Body.AddForce(steering.linear)
 	}
 }

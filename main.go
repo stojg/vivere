@@ -14,7 +14,7 @@ import (
 var world *World
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
+	rand.Seed(time.Now().UnixNano())
 
 	ch := client.NewClientHandler()
 	world = NewWorld(true, 3200, 3200)
@@ -26,29 +26,29 @@ func main() {
 	c.Init(32, int(world.sizeX/32), int(world.sizeY/32))
 	world.SetMap(c.GetMap())
 
+	spawnZone := []float64{
+		0.8 * world.sizeX,
+		0.8 * world.sizeY,
+	}
+	spawnZone[1] -= spawnZone[1] / 2
+
 	for a := 0; a < 100; a++ {
 
-		ent := NewPray(world, 0, 0, 0)
-
-		spawnSizeX := float64(world.sizeX) * 0.8
-		spawnSizeY := float64(world.sizeY) * 0.8
-		halfX := spawnSizeX / 2
-		halfY := spawnSizeY / 2
-		ent.Position.Set(rand.Float64()*spawnSizeX-halfX, ent.Scale[1]/2-1, rand.Float64()*spawnSizeY-halfY)
+		ent := NewPray(world, rand.Float64()*spawnZone[0]-spawnZone[0]/2, 15/2-1, rand.Float64()*spawnZone[1]-spawnZone[1]/2)
 
 		for world.Collision(ent) {
-			ent.Position.Set(rand.Float64()*1000-500, ent.Scale[1]/2, rand.Float64()*-1000-500)
+			ent.Position.Set(rand.Float64()*spawnZone[0]-spawnZone[0]/2, ent.Scale[1]/2, rand.Float64()*spawnZone[1]-spawnZone[1]/2)
 		}
 
-		ent.Orientation = QuaternionFromAxisAngle(VectorY(), rand.Float64()*math.Pi)
-		ent.physics.ClearAccumulators()
-		ent.physics.calculateDerivedData(ent)
+		ent.Orientation = QuaternionFromAxisAngle(VectorY(), rand.Float64()*(2*math.Pi)-math.Pi)
+		ent.Body.ClearAccumulators()
+		ent.Body.calculateDerivedData(ent)
 	}
 
 	log.Println("world has been generated")
 
 	http.Handle("/ws/", websocket.Handler(ch.Websocket))
-	http.HandleFunc("/", webserver)
+	http.HandleFunc("/", staticAssets)
 
 	go func() {
 		log.Fatal(http.ListenAndServe(":8080", nil))
@@ -78,18 +78,17 @@ func NewPray(world *World, x, y, z float64) *Entity {
 		HalfSize: *ent.Scale.NewScale(0.5),
 	}
 	mass := 10.0
-	ent.physics = NewRigidBody(mass)
+	ent.Body = NewRigidBody(mass)
 
 	it := &Matrix3{}
 	it.SetBlockInertiaTensor(&Vector3{1, 1, 1}, mass)
-	ent.physics.SetInertiaTensor(it)
-	ent.input = NewSimpleAI(world)
+	ent.Body.SetInertiaTensor(it)
+	ent.Input = NewSimpleAI(world)
 
 	return ent
 }
 
-// webserver is a http.HandleFunc for serving static files over http
-func webserver(w http.ResponseWriter, r *http.Request) {
+func staticAssets(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
 		return

@@ -43,9 +43,9 @@ func (s *TestSuite) TestList(c *C) {
 	gol := NewEntityList()
 	ent := gol.NewEntity()
 	c.Assert(gol.Get(ent.ID), Equals, ent)
-	c.Assert(gol.Length(), Equals, 1)
+	c.Assert(len(gol.set), Equals, 1)
 	gol.Remove(ent.ID)
-	c.Assert(gol.Length(), Equals, 0)
+	c.Assert(len(gol.set), Equals, 0)
 }
 
 func TestEntitySerialize(t *testing.T) {

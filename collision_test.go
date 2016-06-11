@@ -384,13 +384,13 @@ func (s *CollisionTestSuite) TestCollisionResolve(c *C) {
 
 	a := &Entity{}
 	a.Velocity = &Vector3{10, 0, 0}
-	a.physics = &RigidBody{InvMass: 1, forces: &Vector3{}}
+	a.Body = &RigidBody{InvMass: 1, forces: &Vector3{}}
 	a.Position = &Vector3{0, 0, 0}
 	a.geometry = &Circle{Radius: 5}
 
 	b := &Entity{}
 	b.Velocity = &Vector3{0, 0, 0}
-	b.physics = &RigidBody{InvMass: 1, forces: &Vector3{}}
+	b.Body = &RigidBody{InvMass: 1, forces: &Vector3{}}
 	b.Position = &Vector3{9, 0, 0}
 	b.geometry = &Circle{Radius: 5}
 
@@ -411,13 +411,13 @@ func BenchmarkCollisionResolve(testing *testing.B) {
 
 	a := &Entity{}
 	a.Velocity = &Vector3{10, 0, 0}
-	a.physics = &RigidBody{InvMass: 1, forces: &Vector3{}}
+	a.Body = &RigidBody{InvMass: 1, forces: &Vector3{}}
 	a.Position = &Vector3{0, 0, 0}
 	a.geometry = &Circle{Radius: 5}
 
 	b := &Entity{}
 	b.Velocity = &Vector3{0, 0, 0}
-	b.physics = &RigidBody{InvMass: 1, forces: &Vector3{}}
+	b.Body = &RigidBody{InvMass: 1, forces: &Vector3{}}
 	b.Position = &Vector3{9, 0, 0}
 	b.geometry = &Circle{Radius: 5}
 
@@ -434,13 +434,13 @@ func (s *CollisionTestSuite) TestCollisionResolveOpposite(c *C) {
 
 	a := &Entity{}
 	a.Velocity = &Vector3{5, 0, 0}
-	a.physics = &RigidBody{InvMass: 1, forces: &Vector3{}}
+	a.Body = &RigidBody{InvMass: 1, forces: &Vector3{}}
 	a.Position = &Vector3{0, 0, 0}
 	a.geometry = &Circle{Radius: 5}
 
 	b := &Entity{}
 	b.Velocity = &Vector3{-5, 0, 0}
-	b.physics = &RigidBody{InvMass: 1, forces: &Vector3{}}
+	b.Body = &RigidBody{InvMass: 1, forces: &Vector3{}}
 	b.Position = &Vector3{7, 0, 0}
 	b.geometry = &Circle{Radius: 5}
 

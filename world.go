@@ -111,7 +111,7 @@ func (world *World) SetMap(heightMap [][]*creator.Tile) {
 			}
 			height = (height - (minimalHeight - 0.01)) * 20
 			ent := world.entities.NewEntity()
-			ent.physics.InvMass = (0)
+			ent.Body.InvMass = (0)
 			ent.Type = ENTITY_BLOCK
 			size := float64(world.heightMap[x][y].Size)
 			ent.Scale.Set(size, size*height, size)
@@ -119,8 +119,8 @@ func (world *World) SetMap(heightMap [][]*creator.Tile) {
 			posX := world.heightMap[x][y].Position()[0] - float64(world.sizeX/2)
 			posY := world.heightMap[x][y].Position()[1] - float64(world.sizeY/2)
 			ent.Position.Set(posX, ent.Scale[1]/2, posY)
-			ent.physics.ClearAccumulators()
-			ent.physics.calculateDerivedData(ent)
+			ent.Body.ClearAccumulators()
+			ent.Body.calculateDerivedData(ent)
 		}
 	}
 }
@@ -147,7 +147,7 @@ func (w *World) Collisions(tree *quadtree.QuadTree) []*Collision {
 	checked := make(map[string]bool, 0)
 
 	for _, a := range world.entities.GetAll() {
-		if !a.Changed() {
+		if !a.Changed {
 			continue
 		}
 
@@ -204,7 +204,7 @@ func (w *World) Serialize(serializeAll bool) *bytes.Buffer {
 	buf := &bytes.Buffer{}
 	binary.Write(buf, binary.LittleEndian, float32(w.Tick))
 	for _, entity := range w.entities.GetAll() {
-		if entity.Changed() || serializeAll {
+		if entity.Changed || serializeAll {
 			buf.Write(entity.Serialize().Bytes())
 		}
 	}

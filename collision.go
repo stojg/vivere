@@ -127,7 +127,6 @@ func (c *CollisionDetector) RectangleVsRectangle(contact *Collision) {
 	mtvDistance := math.MaxFloat32 // Set current minimum distance (max float value so next value is always less)
 	mtvAxis := &Vector3{}          // Axis along which to travel with the minimum distance
 
-
 	// [Axes of potential separation]
 	// [X Axis]
 	if !c.testAxisSeparation(UnitX, rA.MinPoint[0], rA.MaxPoint[0], rB.MinPoint[0], rB.MaxPoint[0], mtvAxis, &mtvDistance) {
@@ -231,9 +230,9 @@ func (c *Collision) resolveInterpenetration() {
 		return
 	}
 
-	totalInvMass := c.a.physics.InvMass
+	totalInvMass := c.a.Body.InvMass
 	if c.b != nil {
-		totalInvMass += c.b.physics.InvMass
+		totalInvMass += c.b.Body.InvMass
 	}
 	// Both objects have infinite mass, so no velocity
 	if totalInvMass == 0 {
@@ -242,9 +241,9 @@ func (c *Collision) resolveInterpenetration() {
 
 	movePerIMass := c.normal.NewScale(c.penetration / totalInvMass)
 
-	c.a.Position.Add(movePerIMass.NewScale(c.a.physics.InvMass))
+	c.a.Position.Add(movePerIMass.NewScale(c.a.Body.InvMass))
 	if c.b != nil {
-		c.b.Position.Add(movePerIMass.NewScale(-c.b.physics.InvMass))
+		c.b.Position.Add(movePerIMass.NewScale(-c.b.Body.InvMass))
 	}
 }
 
@@ -262,9 +261,9 @@ func (collision *Collision) resolveVelocity(duration float64) {
 	newSepVelocity := -separatingVelocity * collision.restitution
 
 	// Check the velocity build up due to acceleration only
-	accCausedVelocity := collision.a.physics.forces.Clone()
+	accCausedVelocity := collision.a.Body.forces.Clone()
 	if collision.b != nil {
-		accCausedVelocity.Sub(collision.b.physics.forces)
+		accCausedVelocity.Sub(collision.b.Body.forces)
 	}
 
 	// If we have closing velocity due to acceleration buildup,
@@ -280,9 +279,9 @@ func (collision *Collision) resolveVelocity(duration float64) {
 
 	deltaVelocity := newSepVelocity - separatingVelocity
 
-	totalInvMass := collision.a.physics.InvMass
+	totalInvMass := collision.a.Body.InvMass
 	if collision.b != nil {
-		totalInvMass += collision.b.physics.InvMass
+		totalInvMass += collision.b.Body.InvMass
 	}
 
 	// Both objects have infinite mass, so they can't actually move
@@ -292,10 +291,10 @@ func (collision *Collision) resolveVelocity(duration float64) {
 
 	impulsePerIMass := collision.normal.NewScale(deltaVelocity / totalInvMass)
 
-	velocityChangeA := impulsePerIMass.NewScale(collision.a.physics.InvMass)
+	velocityChangeA := impulsePerIMass.NewScale(collision.a.Body.InvMass)
 	collision.a.Velocity.Add(velocityChangeA)
 	if collision.b != nil {
-		velocityChangeB := impulsePerIMass.NewScale(-collision.b.physics.InvMass)
+		velocityChangeB := impulsePerIMass.NewScale(-collision.b.Body.InvMass)
 		collision.b.Velocity.Add(velocityChangeB)
 	}
 }
