@@ -111,18 +111,16 @@ func (world *World) SetMap(heightMap [][]*creator.Tile) {
 			}
 			height = (height - (minimalHeight - 0.01)) * 20
 			ent := world.entities.NewEntity()
-			ent.physics.(*RigidBody).InvMass = (0)
+			ent.physics.InvMass = (0)
 			ent.Type = ENTITY_BLOCK
 			size := float64(world.heightMap[x][y].Size)
 			ent.Scale.Set(size, size*height, size)
-			ent.geometry = &Rectangle{HalfSize: *ent.Scale.Clone().Scale(0.5)}
-			//ent.physics = NewParticlePhysics(0)
+			ent.geometry = &Rectangle{HalfSize: *ent.Scale.NewScale(0.5)}
 			posX := world.heightMap[x][y].Position()[0] - float64(world.sizeX/2)
 			posY := world.heightMap[x][y].Position()[1] - float64(world.sizeY/2)
 			ent.Position.Set(posX, ent.Scale[1]/2, posY)
-			ent.physics.(*RigidBody).ClearAccumulators()
-			ent.physics.(*RigidBody).calculateDerivedData(ent)
-
+			ent.physics.ClearAccumulators()
+			ent.physics.calculateDerivedData(ent)
 		}
 	}
 }

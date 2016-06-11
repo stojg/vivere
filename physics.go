@@ -117,11 +117,6 @@ func (rb *RigidBody) AddForce(force *Vector3) {
 	rb.isAwake = true
 }
 
-func (rb *RigidBody) AddTorque(torque *Vector3) {
-	rb.torqueAccum.Add(torque)
-	rb.isAwake = true
-}
-
 func (rb *RigidBody) AddForceAtBodyPoint(ent *Entity, force, point *Vector3) {
 	// convert to coordinates relative to center of mass
 	pt := rb.getPointInWorldSpace(point)
@@ -131,10 +126,14 @@ func (rb *RigidBody) AddForceAtBodyPoint(ent *Entity, force, point *Vector3) {
 
 func (rb *RigidBody) AddForceAtPoint(entity *Entity, force, point *Vector3) {
 	// convert to coordinates relative to center of mass
-	pt := point.Clone()
-	pt.Sub(entity.Position)
+	pt := point.NewSub(entity.Position)
 	rb.forceAccum.Add(force)
-	rb.torqueAccum.Add(pt.VectorProduct(force))
+	rb.torqueAccum.Add(pt.NewCross(force))
+	rb.isAwake = true
+}
+
+func (rb *RigidBody) AddTorque(torque *Vector3) {
+	rb.torqueAccum.Add(torque)
 	rb.isAwake = true
 }
 

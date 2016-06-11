@@ -82,7 +82,6 @@ func NewEntity() *Entity {
 	ent.MaxSpeed = 40
 	ent.MaxRotation = math.Pi / 2
 	ent.Scale = &Vector3{15, 15, 15}
-	ent.physics = &NullComponent{}
 	ent.input = &NullComponent{}
 	ent.physics = NewRigidBody(5)
 	ent.prevPosition = &Vector3{0, 0, 0}
@@ -108,7 +107,7 @@ type Entity struct {
 	Dead            bool
 	geometry        interface{}
 	input           Component
-	physics         Component
+	physics         *RigidBody
 	changed         bool
 	prevPosition    *Vector3
 	prevOrientation *Quaternion
@@ -131,7 +130,7 @@ func (ent *Entity) Update(elapsed float64) {
 	ent.changed = false
 
 	ent.input.Update(ent, elapsed)
-	if ent.physics.(*RigidBody).isAwake {
+	if ent.physics.isAwake {
 		ent.physics.Update(ent, elapsed)
 	}
 

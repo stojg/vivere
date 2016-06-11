@@ -41,8 +41,8 @@ func main() {
 		}
 
 		ent.Orientation = QuaternionFromAxisAngle(VectorY(), rand.Float64()*math.Pi)
-		ent.physics.(*RigidBody).ClearAccumulators()
-		ent.physics.(*RigidBody).calculateDerivedData(ent)
+		ent.physics.ClearAccumulators()
+		ent.physics.calculateDerivedData(ent)
 	}
 
 	log.Println("world has been generated")
@@ -74,13 +74,15 @@ func NewPray(world *World, x, y, z float64) *Entity {
 	ent.Type = 2
 	ent.MaxSpeed = 5
 	ent.Scale.Set(15, 15, 15)
-	ent.geometry = &Rectangle{HalfSize: *ent.Scale.Clone().Scale(0.5)}
+	ent.geometry = &Rectangle{
+		HalfSize: *ent.Scale.NewScale(0.5),
+	}
 	mass := 10.0
 	ent.physics = NewRigidBody(mass)
 
 	it := &Matrix3{}
 	it.SetBlockInertiaTensor(&Vector3{1, 1, 1}, mass)
-	ent.physics.(*RigidBody).SetInertiaTensor(it)
+	ent.physics.SetInertiaTensor(it)
 	ent.input = NewSimpleAI(world)
 
 	return ent

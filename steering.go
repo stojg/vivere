@@ -44,7 +44,7 @@ func (s *Seek) GetSteering() *SteeringOutput {
 	steering.linear = s.target.Position.NewSub(s.character.Position)
 	// Go full speed ahead
 	steering.linear.Normalize()
-	steering.linear.ComponentProduct(s.character.MaxAcceleration)
+	steering.linear.NewHadamardProduct(s.character.MaxAcceleration)
 	steering.angular = &Vector3{}
 	return steering
 }
@@ -67,7 +67,7 @@ func (s *Flee) GetSteering() *SteeringOutput {
 	steering := &SteeringOutput{}
 	steering.linear = s.character.Position.NewSub(s.target.Position)
 	steering.linear.Normalize()
-	steering.linear.ComponentProduct(s.character.MaxAcceleration)
+	steering.linear.NewHadamardProduct(s.character.MaxAcceleration)
 	steering.angular = &Vector3{}
 	return steering
 }
@@ -133,7 +133,6 @@ func (align *Align) GetSteering() *SteeringOutput {
 
 	steering := NewSteeringOutput()
 
-	final := align.target.Orientation.Clone()
 	invInitial := &Quaternion{
 		r: align.character.Orientation.r,
 		i: -align.character.Orientation.i,
@@ -141,7 +140,7 @@ func (align *Align) GetSteering() *SteeringOutput {
 		k: -align.character.Orientation.k,
 	}
 
-	q := final.Multiply(invInitial)
+	q := align.target.Orientation.NewMultiply(invInitial)
 	// protect the ArcCos from numerical instabilities
 	if q.r > 1.0 {
 		q.r = 1.0
@@ -244,7 +243,7 @@ func (face *Face) calculateOrientation(vector *Vector3) *Quaternion {
 
 	// find the minimal rotation from the base to the target
 	angle := math.Acos(baseZVector.Dot(vector))
-	axis := baseZVector.Cross(vector).Normalize()
+	axis := baseZVector.NewCross(vector).Normalize()
 
 	return QuaternionFromAxisAngle(axis, angle)
 }
@@ -266,7 +265,7 @@ func (s *LookWhereYoureGoing) GetSteering() *SteeringOutput {
 		return NewSteeringOutput()
 	}
 	target := NewEntity()
-	target.Position = s.character.Velocity.Clone().Add(s.character.Position)
+	target.Position = s.character.Velocity.NewAdd(s.character.Position)
 
 	face := NewFace(s.character, target)
 	return face.GetSteering()
@@ -328,9 +327,9 @@ func (wander *Wander) GetSteering() *SteeringOutput {
 	target.Position[2] *= wander.WanderRadiusXZ
 
 	// 3. calculate the target to send to face
-	temp := wander.character.Position.Clone()
-	temp.Add(wander.offset.NewRotate(wander.character.Orientation))
-	target.Position.Add(temp)
+	charPosition := wander.character.Position.Clone()
+	charPosition.Add(wander.offset.NewRotate(wander.character.Orientation))
+	target.Position.Add(charPosition)
 
 	// 4. Delegate to face
 	face := NewFace(wander.character, target)
