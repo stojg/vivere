@@ -9,7 +9,12 @@ type CollisionDetector struct{}
 func (c *CollisionDetector) Detect(a *Entity, b *Entity) (collision *Collision, hit bool) {
 
 	// @todo hardcoded restitution
-	collision = &Collision{a: a, b: b, restitution: 0.5, normal: &Vector3{}}
+	collision = &Collision{
+		a:           a,
+		b:           b,
+		restitution: 0.1,
+		normal:      &Vector3{},
+	}
 
 	switch a.geometry.(type) {
 	case *Circle:
@@ -43,7 +48,7 @@ func (colDec *CollisionDetector) CircleVsCircle(contact *Collision) {
 	}
 
 	sqrLength := c[0]*c[0] + c[1]*c[1] + c[2]*c[2]
-	if sqrLength < 1.0e-8 {
+	if sqrLength < real_epsilon {
 		return
 	}
 
@@ -225,9 +230,9 @@ func (c *Collision) resolveInterpenetration() {
 		return
 	}
 
-	totalInvMass := c.a.physics.(*ParticlePhysics).InvMass
+	totalInvMass := c.a.physics.(*RigidBody).InvMass
 	if c.b != nil {
-		totalInvMass += c.b.physics.(*ParticlePhysics).InvMass
+		totalInvMass += c.b.physics.(*RigidBody).InvMass
 	}
 	// Both objects have infinite mass, so no velocity
 	if totalInvMass == 0 {
@@ -236,9 +241,9 @@ func (c *Collision) resolveInterpenetration() {
 
 	movePerIMass := c.normal.Clone().Scale(c.penetration / totalInvMass)
 
-	c.a.Position.Add(movePerIMass.Clone().Scale(c.a.physics.(*ParticlePhysics).InvMass))
+	c.a.Position.Add(movePerIMass.Clone().Scale(c.a.physics.(*RigidBody).InvMass))
 	if c.b != nil {
-		c.b.Position.Add(movePerIMass.Clone().Scale(-c.b.physics.(*ParticlePhysics).InvMass))
+		c.b.Position.Add(movePerIMass.Clone().Scale(-c.b.physics.(*RigidBody).InvMass))
 	}
 }
 
@@ -256,9 +261,9 @@ func (collision *Collision) resolveVelocity(duration float64) {
 	newSepVelocity := -separatingVelocity * collision.restitution
 
 	// Check the velocity build up due to acceleration only
-	accCausedVelocity := collision.a.physics.(*ParticlePhysics).forces.Clone()
+	accCausedVelocity := collision.a.physics.(*RigidBody).forces.Clone()
 	if collision.b != nil {
-		accCausedVelocity.Sub(collision.b.physics.(*ParticlePhysics).forces)
+		accCausedVelocity.Sub(collision.b.physics.(*RigidBody).forces)
 	}
 
 	// If we have closing velocity due to acceleration buildup,
@@ -274,9 +279,9 @@ func (collision *Collision) resolveVelocity(duration float64) {
 
 	deltaVelocity := newSepVelocity - separatingVelocity
 
-	totalInvMass := collision.a.physics.(*ParticlePhysics).InvMass
+	totalInvMass := collision.a.physics.(*RigidBody).InvMass
 	if collision.b != nil {
-		totalInvMass += collision.b.physics.(*ParticlePhysics).InvMass
+		totalInvMass += collision.b.physics.(*RigidBody).InvMass
 	}
 
 	// Both objects have infinite mass, so they can't actually move
@@ -286,10 +291,10 @@ func (collision *Collision) resolveVelocity(duration float64) {
 
 	impulsePerIMass := collision.normal.Clone().Scale(deltaVelocity / totalInvMass)
 
-	velocityChangeA := impulsePerIMass.Clone().Scale(collision.a.physics.(*ParticlePhysics).InvMass)
+	velocityChangeA := impulsePerIMass.Clone().Scale(collision.a.physics.(*RigidBody).InvMass)
 	collision.a.Velocity.Add(velocityChangeA)
 	if collision.b != nil {
-		velocityChangeB := impulsePerIMass.Clone().Scale(-collision.b.physics.(*ParticlePhysics).InvMass)
+		velocityChangeB := impulsePerIMass.Clone().Scale(-collision.b.physics.(*RigidBody).InvMass)
 		collision.b.Velocity.Add(velocityChangeB)
 	}
 }

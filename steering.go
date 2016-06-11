@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 )
@@ -45,7 +44,7 @@ func (s *Seek) GetSteering() *SteeringOutput {
 	steering.linear = s.target.Position.NewSub(s.character.Position)
 	// Go full speed ahead
 	steering.linear.Normalize()
-	steering.linear.Scale(s.character.MaxAcceleration)
+	steering.linear.ComponentProduct(s.character.MaxAcceleration)
 	steering.angular = &Vector3{}
 	return steering
 }
@@ -68,7 +67,7 @@ func (s *Flee) GetSteering() *SteeringOutput {
 	steering := &SteeringOutput{}
 	steering.linear = s.character.Position.NewSub(s.target.Position)
 	steering.linear.Normalize()
-	steering.linear.Scale(s.character.MaxAcceleration)
+	steering.linear.ComponentProduct(s.character.MaxAcceleration)
 	steering.angular = &Vector3{}
 	return steering
 }
@@ -129,16 +128,6 @@ type Align struct {
 	timeToTarget float64 // 0.1
 }
 
-func (s *Align) mapToRange(rotation float64) float64 {
-	for rotation < -math.Pi {
-		rotation += math.Pi * 2
-	}
-	for rotation > math.Pi {
-		rotation -= math.Pi * 2
-	}
-	return rotation
-}
-
 // GetSteering returns the angular steering to mimic the targets orientation
 func (align *Align) GetSteering() *SteeringOutput {
 
@@ -195,7 +184,7 @@ func (align *Align) GetSteering() *SteeringOutput {
 
 }
 
-func (align *Align) MapToRange(rotation float64) float64 {
+func (align *Align) mapToRange(rotation float64) float64 {
 	for rotation < -math.Pi {
 		rotation += math.Pi * 2
 	}
@@ -221,25 +210,6 @@ type Face struct {
 	baseOrientation *Quaternion
 }
 
-func (face *Face) calculateOrientation(vector *Vector3) *Quaternion {
-
-	baseZVector := VectorX().Rotate(face.baseOrientation)
-
-	if baseZVector.Equals(vector) {
-		return face.baseOrientation.Clone()
-	}
-
-	if baseZVector.Equals(vector.NewInverse()) {
-		return face.baseOrientation.NewInverse()
-	}
-	change := baseZVector.NewRotate(face.baseOrientation)
-
-	angle := math.Asin(change.Length())
-	axis := change
-	axis.Normalize()
-	return QuaternionFromAngle(axis, angle)
-}
-
 // GetSteering returns a angular steering
 func (face *Face) GetSteering() *SteeringOutput {
 
@@ -255,8 +225,28 @@ func (face *Face) GetSteering() *SteeringOutput {
 
 	target := NewEntity()
 	target.Orientation = face.calculateOrientation(direction)
-	align := NewAlign(face.character, target, 0.5, 0.01, 0.1)
+	align := NewAlign(face.character, target, 0.2, 0.01, 0.1)
 	return align.GetSteering()
+}
+
+func (face *Face) calculateOrientation(vector *Vector3) *Quaternion {
+	vector.Normalize()
+
+	baseZVector := VectorX().Rotate(face.baseOrientation)
+
+	if baseZVector.Equals(vector) {
+		return face.baseOrientation.Clone()
+	}
+	if baseZVector.Equals(vector.NewInverse()) {
+		// @todo need to fix this is the base orientation isn't 1,0,0,0?
+		return NewQuaternion(0, 0, 1, 0)
+	}
+
+	// find the minimal rotation from the base to the target
+	angle := math.Acos(baseZVector.Dot(vector))
+	axis := baseZVector.Cross(vector).Normalize()
+
+	return QuaternionFromAxisAngle(axis, angle)
 }
 
 func NewLookWhereYoureGoing(character *Entity) *LookWhereYoureGoing {
@@ -284,58 +274,72 @@ func (s *LookWhereYoureGoing) GetSteering() *SteeringOutput {
 
 // Wander lets the character wander around
 type Wander struct {
-	Face
-	character         *Entity
-	WanderOffset      float64 // forward offset of the wander circle
-	WanderRadius      float64 // radius of the wander circle
-	WanderRate        float64 // holds the max rate at which  the wander orientation can change
-	WanderOrientation float64 // Holds the current orientation of the wander target
+	character *Entity
+	// Holds the radius and offset of the wander circle. The
+	// offset is now a full 3D vector
+	offset         *Vector3
+	WanderRadiusXZ float64
+	WanderRadiusY  float64
+
+	// holds the maximum rate at which the wander orientation
+	// can change. Should be strictly less than 1/sqrt(3) = 0.577
+	// to avoid the chance of ending up with a zero length wander vector
+	rate float64
+
+	// Holds the current offset of the wander target
+	Vector *Vector3
+
+	// holds the max acceleration for this character, this
+	// again should be a 3D vector, typically with only a
+	// non zero z value
+	maxAcceleration *Vector3
 }
 
 // NewWander returns a new Wander behaviour
-func NewWander(character *Entity, offset, radius, rate float64) *Wander {
+func NewWander(character *Entity, offset, radiusXZ, radiusY, rate float64) *Wander {
 	w := &Wander{}
 	w.character = character
-	w.WanderOffset = offset
-	w.WanderRadius = radius
-	w.WanderRate = rate
-	w.WanderOrientation = 0
+	w.offset = &Vector3{offset, 0, 0}
+	w.WanderRadiusXZ = radiusXZ
+	w.WanderRadiusY = radiusY
+	w.rate = rate
+
+	w.maxAcceleration = &Vector3{1, 0, 0}
+	// start by wandering straight forward
+	w.Vector = &Vector3{0.92, 0, 0}
 	return w
 }
 
 // GetSteering returns a new linear and angular steering for wander
-func (s *Wander) GetSteering() *SteeringOutput {
+func (wander *Wander) GetSteering() *SteeringOutput {
 
-	// 1. Calculate the center of the wander circle
+	// 1. Calculate the target to delegate to face
+	wander.Vector[0] += wander.randomBinomial() * wander.rate
+	//wander.Vector[1] += wander.randomBinomial() * wander.rate
+	wander.Vector[2] += wander.randomBinomial() * wander.rate
+
+	wander.Vector.Normalize()
+
+	// 2. Calculate the transformed target direction and scale it
 	target := NewEntity()
-	target.Position = s.character.Position.Clone()
+	target.Position = wander.Vector.NewRotate(wander.character.Orientation)
+	target.Position[0] *= wander.WanderRadiusXZ
+	target.Position[1] *= wander.WanderRadiusY
+	target.Position[2] *= wander.WanderRadiusXZ
 
-	// Offset the character with the offset in the direction of the character orientation
-	currentHeading := s.character.physics.(*RigidBody).getPointInWorldSpace(VectorX())
+	// 3. calculate the target to send to face
+	temp := wander.character.Position.Clone()
+	temp.Add(wander.offset.NewRotate(wander.character.Orientation))
+	target.Position.Add(temp)
 
-	fmt.Println(s.character.Position, currentHeading)
+	// 4. Delegate to face
+	face := NewFace(wander.character, target)
 
-	targetCenter := currentHeading.Scale(s.WanderOffset)
-	target.Position.Add(targetCenter)
-
-	// Update the wander orientation with a small random value
-	s.WanderOrientation += s.randomBinomial() * s.WanderRate
-
-	// From the center of the circle draw a vector in the direction of the current wanderOrientation
-	offset := OrientationAsVector(s.WanderOrientation).Scale(s.WanderRadius)
-	target.Position.Add(offset)
-
-	// Delegate to face
-	face := NewFace(s.character, target)
-	// Get the new orientation
+	// 5. Now set the linear acceleration to be at full
+	// acceleration in the direction of the orientation
 	steering := face.GetSteering()
-
-	//fmt.Println(target.Position)
-	//fmt.Println(steering.angular)
-
-	transform := s.character.physics.(*RigidBody).getTransform()
-	propulsion := LocalToWorldDirn(steering.angular, transform)
-	steering.linear = propulsion
+	//wander.maxAcceleration.NewRotate(wander.character.Orientation)
+	steering.linear = wander.maxAcceleration.NewRotate(wander.character.Orientation)
 
 	return steering
 }

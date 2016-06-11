@@ -77,28 +77,28 @@ func TestVector3_Rotate(t *testing.T) {
 		b *Quaternion
 		c *Vector3
 	}{
-		{NewVector3(0, 0, 0), QuaternionFromAngle(VectorY(), 0), NewVector3(0, 0, 0)},
-		{NewVector3(1, 0, 0), QuaternionFromAngle(VectorY(), 0), NewVector3(1, 0, 0)},
-		{NewVector3(0, 1, 0), QuaternionFromAngle(VectorY(), 0), NewVector3(0, 1, 0)},
-		{NewVector3(0, 0, 1), QuaternionFromAngle(VectorY(), 0), NewVector3(0, 0, 1)},
-		{NewVector3(-1, 0, 0), QuaternionFromAngle(VectorY(), 0), NewVector3(-1, 0, 0)},
-		{NewVector3(0, -1, 0), QuaternionFromAngle(VectorY(), 0), NewVector3(0, -1, 0)},
-		{NewVector3(0, 0, -1), QuaternionFromAngle(VectorY(), 0), NewVector3(0, 0, -1)},
-		{NewVector3(1, 0, 0), QuaternionFromAngle(VectorY(), math.Pi), NewVector3(-1, 0, 0)},
-		{NewVector3(0, 0, 1), QuaternionFromAngle(VectorY(), math.Pi), NewVector3(0, 0, -1)},
-		{NewVector3(0, 1, 0), QuaternionFromAngle(VectorY(), math.Pi), NewVector3(0, 1, 0)},
-		{NewVector3(1, 0, 1), QuaternionFromAngle(VectorY(), math.Pi), NewVector3(-1, 0, -1)},
-		{NewVector3(2, 0, 2), QuaternionFromAngle(VectorY(), math.Pi), NewVector3(-2, 0, -2)},
-		{NewVector3(-1, 0, -1), QuaternionFromAngle(VectorY(), math.Pi), NewVector3(1, 0, 1)},
-		{NewVector3(1, 0, 0), QuaternionFromAngle(VectorY(), math.Pi/2), NewVector3(0, 0, -1)},
-		{NewVector3(0, 0, 1), QuaternionFromAngle(VectorY(), math.Pi/2), NewVector3(1, 0, 0)},
-		{NewVector3(-1, 0, 0), QuaternionFromAngle(VectorY(), math.Pi/2), NewVector3(0, 0, 1)},
-		{NewVector3(0, 0, -1), QuaternionFromAngle(VectorY(), math.Pi/2), NewVector3(-1, 0, 0)},
-		{NewVector3(0, 1, 0), QuaternionFromAngle(VectorY(), math.Pi/2), NewVector3(0, 1, 0)},
-		{NewVector3(1, 0, 1), QuaternionFromAngle(VectorY(), math.Pi/2), NewVector3(1, 0, -1)},
-		{NewVector3(-1, 0, -1), QuaternionFromAngle(VectorY(), math.Pi/2), NewVector3(-1, 0, 1)},
-		{NewVector3(1, 0, 0), QuaternionFromAngle(VectorY(), math.Pi/4), NewVector3(0.7071067811865475, 0, -0.7071067811865475)},
-		{NewVector3(-1, 0, 0), QuaternionFromAngle(VectorY(), math.Pi/4), NewVector3(-0.7071067811865475, 0, 0.7071067811865475)},
+		{NewVector3(0, 0, 0), QuaternionFromAxisAngle(VectorY(), 0), NewVector3(0, 0, 0)},
+		{NewVector3(1, 0, 0), QuaternionFromAxisAngle(VectorY(), 0), NewVector3(1, 0, 0)},
+		{NewVector3(0, 1, 0), QuaternionFromAxisAngle(VectorY(), 0), NewVector3(0, 1, 0)},
+		{NewVector3(0, 0, 1), QuaternionFromAxisAngle(VectorY(), 0), NewVector3(0, 0, 1)},
+		{NewVector3(-1, 0, 0), QuaternionFromAxisAngle(VectorY(), 0), NewVector3(-1, 0, 0)},
+		{NewVector3(0, -1, 0), QuaternionFromAxisAngle(VectorY(), 0), NewVector3(0, -1, 0)},
+		{NewVector3(0, 0, -1), QuaternionFromAxisAngle(VectorY(), 0), NewVector3(0, 0, -1)},
+		{NewVector3(1, 0, 0), QuaternionFromAxisAngle(VectorY(), math.Pi), NewVector3(-1, 0, 0)},
+		{NewVector3(0, 0, 1), QuaternionFromAxisAngle(VectorY(), math.Pi), NewVector3(0, 0, -1)},
+		{NewVector3(0, 1, 0), QuaternionFromAxisAngle(VectorY(), math.Pi), NewVector3(0, 1, 0)},
+		{NewVector3(1, 0, 1), QuaternionFromAxisAngle(VectorY(), math.Pi), NewVector3(-1, 0, -1)},
+		{NewVector3(2, 0, 2), QuaternionFromAxisAngle(VectorY(), math.Pi), NewVector3(-2, 0, -2)},
+		{NewVector3(-1, 0, -1), QuaternionFromAxisAngle(VectorY(), math.Pi), NewVector3(1, 0, 1)},
+		{NewVector3(1, 0, 0), QuaternionFromAxisAngle(VectorY(), math.Pi/2), NewVector3(0, 0, -1)},
+		{NewVector3(0, 0, 1), QuaternionFromAxisAngle(VectorY(), math.Pi/2), NewVector3(1, 0, 0)},
+		{NewVector3(-1, 0, 0), QuaternionFromAxisAngle(VectorY(), math.Pi/2), NewVector3(0, 0, 1)},
+		{NewVector3(0, 0, -1), QuaternionFromAxisAngle(VectorY(), math.Pi/2), NewVector3(-1, 0, 0)},
+		{NewVector3(0, 1, 0), QuaternionFromAxisAngle(VectorY(), math.Pi/2), NewVector3(0, 1, 0)},
+		{NewVector3(1, 0, 1), QuaternionFromAxisAngle(VectorY(), math.Pi/2), NewVector3(1, 0, -1)},
+		{NewVector3(-1, 0, -1), QuaternionFromAxisAngle(VectorY(), math.Pi/2), NewVector3(-1, 0, 1)},
+		{NewVector3(1, 0, 0), QuaternionFromAxisAngle(VectorY(), math.Pi/4), NewVector3(0.7071067811865475, 0, -0.7071067811865475)},
+		{NewVector3(-1, 0, 0), QuaternionFromAxisAngle(VectorY(), math.Pi/4), NewVector3(-0.7071067811865475, 0, 0.7071067811865475)},
 	}
 
 	for i, test := range tests {
@@ -112,7 +112,7 @@ func TestVector3_Rotate(t *testing.T) {
 
 func BenchmarkVector3_Rotation(b *testing.B) {
 	vec := NewVector3(2, 0, 2)
-	q := QuaternionFromAngle(VectorY(), math.Pi/2)
+	q := QuaternionFromAxisAngle(VectorY(), math.Pi/2)
 
 	b.ResetTimer()
 	var r *Vector3

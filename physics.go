@@ -4,61 +4,6 @@ import (
 	"math"
 )
 
-type Physical interface {
-	AddForce(*Vector3)
-	ClearRotations()
-}
-
-type ParticlePhysics struct {
-	InvMass   float64
-	forces    *Vector3
-	rotations float64
-	Damping   float64
-}
-
-func NewParticlePhysics(invMass float64) *ParticlePhysics {
-	p := &ParticlePhysics{}
-	p.forces = &Vector3{}
-	p.InvMass = invMass
-	p.Damping = 0.999
-	return p
-}
-
-func (c *ParticlePhysics) Update(entity *Entity, elapsed float64) {
-	if c.InvMass == 0 {
-		return
-	}
-	entity.Position.AddScaledVector(entity.Velocity, elapsed)
-	entity.Velocity.AddScaledVector(c.forces, elapsed)
-	entity.Velocity.Scale(math.Pow(c.Damping, elapsed))
-
-	// @todo: fix for rigidbody
-	//entity.Orientation += entity.Rotation * elapsed
-	//entity.Rotation += c.rotations * elapsed
-	//entity.Rotation *= 0.9
-
-	// clamp velocity
-	if entity.Velocity.Length() > entity.MaxSpeed {
-		entity.Velocity.Normalize().Scale(entity.MaxSpeed)
-	}
-}
-
-func (p *ParticlePhysics) AddForce(force *Vector3) {
-	p.forces.Add(force)
-}
-
-func (p *ParticlePhysics) ClearForces() {
-	p.forces.Clear()
-}
-
-func (p *ParticlePhysics) AddRotation(rot float64) {
-	//p.rotations += rot
-}
-
-func (p *ParticlePhysics) ClearRotations() {
-	//p.rotations = 0
-}
-
 func NewRigidBody(invMass float64) *RigidBody {
 	return &RigidBody{
 		forces:                    &Vector3{},
@@ -165,27 +110,6 @@ type RigidBody struct {
 
 func (rb *RigidBody) SetInertiaTensor(inertiaTensor *Matrix3) {
 	rb.inverseInertiaTensor.SetInverse(inertiaTensor)
-}
-
-/**
- * Inline function that creates a transform matrix from a
- * position and orientation.
- */
-func (rb *RigidBody) calculateTransformMatrix(transformMatrix *Matrix4, position *Vector3, orientation *Quaternion) {
-	transformMatrix[0] = 1 - 2*orientation.j*orientation.j - 2*orientation.k*orientation.k
-	transformMatrix[1] = 2*orientation.i*orientation.j - 2*orientation.r*orientation.k
-	transformMatrix[2] = 2*orientation.i*orientation.k + 2*orientation.r*orientation.j
-	transformMatrix[3] = position[0]
-
-	transformMatrix[4] = 2*orientation.i*orientation.j + 2*orientation.r*orientation.k
-	transformMatrix[5] = 1 - 2*orientation.i*orientation.i - 2*orientation.k*orientation.k
-	transformMatrix[6] = 2*orientation.j*orientation.k - 2*orientation.r*orientation.i
-	transformMatrix[7] = position[1]
-
-	transformMatrix[8] = 2*orientation.i*orientation.k - 2*orientation.r*orientation.j
-	transformMatrix[9] = 2*orientation.j*orientation.k + 2*orientation.r*orientation.i
-	transformMatrix[10] = 1 - 2*orientation.i*orientation.i - 2*orientation.j*orientation.j
-	transformMatrix[11] = position[2]
 }
 
 func (rb *RigidBody) AddForce(force *Vector3) {
@@ -301,6 +225,28 @@ func (rb *RigidBody) transformInertiaTensor(iitWorld *Matrix3, q *Quaternion, ii
 	iitWorld[6] = t52*rotmat[0] + t57*rotmat[1] + t62*rotmat[2]
 	iitWorld[7] = t52*rotmat[4] + t57*rotmat[5] + t62*rotmat[6]
 	iitWorld[8] = t52*rotmat[8] + t57*rotmat[9] + t62*rotmat[10]
+}
+
+/**
+ * Inline function that creates a transform matrix from a
+ * position and orientation.
+ */
+func (rb *RigidBody) calculateTransformMatrix(transformMatrix *Matrix4, position *Vector3, orientation *Quaternion) {
+
+	transformMatrix[0] = 1 - 2*orientation.j*orientation.j - 2*orientation.k*orientation.k
+	transformMatrix[1] = 2*orientation.i*orientation.j - 2*orientation.r*orientation.k
+	transformMatrix[2] = 2*orientation.i*orientation.k + 2*orientation.r*orientation.j
+	transformMatrix[3] = position[0]
+
+	transformMatrix[4] = 2*orientation.i*orientation.j + 2*orientation.r*orientation.k
+	transformMatrix[5] = 1 - 2*orientation.i*orientation.i - 2*orientation.k*orientation.k
+	transformMatrix[6] = 2*orientation.j*orientation.k - 2*orientation.r*orientation.i
+	transformMatrix[7] = position[1]
+
+	transformMatrix[8] = 2*orientation.i*orientation.k - 2*orientation.r*orientation.j
+	transformMatrix[9] = 2*orientation.j*orientation.k + 2*orientation.r*orientation.i
+	transformMatrix[10] = 1 - 2*orientation.i*orientation.i - 2*orientation.j*orientation.j
+	transformMatrix[11] = position[2]
 }
 
 func (rb *RigidBody) calculateDerivedData(entity *Entity) {

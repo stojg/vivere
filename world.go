@@ -40,7 +40,7 @@ func NewWorld(debug bool, sizeX, sizeY float64) *World {
 
 func (world *World) GameLoop() {
 	previousTime := time.Now()
-	var updateLag float64 = 0
+	//var updateLag float64 = 0
 	var msgLag float64 = SEC_PER_UPDATE
 	for {
 		// Get the elapsed time since the last tick
@@ -48,7 +48,7 @@ func (world *World) GameLoop() {
 		elapsedTime := currentTime.Sub(previousTime).Seconds()
 		previousTime = currentTime
 
-		updateLag -= elapsedTime
+		//updateLag -= elapsedTime
 		msgLag += elapsedTime
 
 		world.Tick += 1
@@ -68,7 +68,7 @@ func (world *World) GameLoop() {
 			pair.Resolve(elapsedTime)
 		}
 
-		updateLag -= SEC_PER_UPDATE
+		//updateLag -= SEC_PER_UPDATE
 
 		// //Ping the clients every second to get the RTT
 		// if math.Mod(float64(world.Tick), float64(world.FPS)) == 0 {
@@ -86,25 +86,21 @@ func (world *World) GameLoop() {
 		}
 
 		// Check if the game loop took longer than 16ms
-		cycleTime := time.Now().Sub(previousTime).Seconds()
-		reminder := SEC_PER_UPDATE - cycleTime
-		if reminder > 0 {
-			time.Sleep(time.Duration(reminder*1000) * time.Millisecond)
-			//} else if world.debug {
-			//log.Printf("lag %f", reminder*1000)
-		}
+		//cycleTime := time.Now().Sub(previousTime).Seconds()
+		//reminder := SEC_PER_UPDATE - cycleTime
 	}
 }
 
 func (world *World) SetMap(heightMap [][]*creator.Tile) {
+	minimalHeight := 0.71
 	world.heightMap = heightMap
 	for x := range world.heightMap {
-		world.heightMap[x][0].Value = 0.71
-		world.heightMap[x][len(world.heightMap[x])-1].Value = 0.71
+		world.heightMap[x][0].Value = minimalHeight
+		world.heightMap[x][len(world.heightMap[x])-1].Value = minimalHeight + 0.01
 	}
 	for y := range world.heightMap[0] {
-		world.heightMap[0][y].Value = 0.71
-		world.heightMap[len(world.heightMap[0])-1][y].Value = 0.71
+		world.heightMap[0][y].Value = minimalHeight
+		world.heightMap[len(world.heightMap[0])-1][y].Value = minimalHeight + 0.01
 	}
 
 	for x := range world.heightMap {
@@ -113,16 +109,20 @@ func (world *World) SetMap(heightMap [][]*creator.Tile) {
 			if height < 0.7 {
 				continue
 			}
-			height = (height - 0.70) * 20
+			height = (height - (minimalHeight - 0.01)) * 20
 			ent := world.entities.NewEntity()
+			ent.physics.(*RigidBody).InvMass = (0)
 			ent.Type = ENTITY_BLOCK
 			size := float64(world.heightMap[x][y].Size)
 			ent.Scale.Set(size, size*height, size)
 			ent.geometry = &Rectangle{HalfSize: *ent.Scale.Clone().Scale(0.5)}
-			ent.physics = NewParticlePhysics(0)
+			//ent.physics = NewParticlePhysics(0)
 			posX := world.heightMap[x][y].Position()[0] - float64(world.sizeX/2)
 			posY := world.heightMap[x][y].Position()[1] - float64(world.sizeY/2)
 			ent.Position.Set(posX, ent.Scale[1]/2, posY)
+			ent.physics.(*RigidBody).ClearAccumulators()
+			ent.physics.(*RigidBody).calculateDerivedData(ent)
+
 		}
 	}
 }

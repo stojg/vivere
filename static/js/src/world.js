@@ -49,11 +49,13 @@ define(['src/entity', 'lib/babylon.2.3.max'], function (entity) {
         green.diffuseColor = new BABYLON.Color3(.5, 1.0, .4);
 
         var multi=new BABYLON.MultiMaterial("nuggetman",scene);
-        multi.subMaterials.push(green);
+        //multi.subMaterials.push(green);
+        multi.subMaterials.push(yellow);
         multi.subMaterials.push(yellow);
         multi.subMaterials.push(front);
         multi.subMaterials.push(yellow);
-        multi.subMaterials.push(blue);
+        //multi.subMaterials.push(blue);
+        multi.subMaterials.push(yellow);
         multi.subMaterials.push(yellow);
         pray.subMeshes=[];
         var verticesCount=pray.getTotalVertices();

@@ -5,23 +5,53 @@ import (
 	"github.com/stojg/vivere/creator"
 	"golang.org/x/net/websocket"
 	"log"
+	"math"
 	"math/rand"
 	"net/http"
-	"os"
 	"time"
 )
 
-var port string
-
 var world *World
 
-// Main only contains the necessary wiring for bootstrapping the
-// engine
 func main() {
-	initWorld()
+	rand.Seed(time.Now().UTC().UnixNano())
+
+	ch := client.NewClientHandler()
+	world = NewWorld(true, 3200, 3200)
+
+	world.newPlayerChan = ch.NewClients()
+
+	c := &creator.Creator{}
+	c.Seed(time.Now().UnixNano())
+	c.Init(32, int(world.sizeX/32), int(world.sizeY/32))
+	world.SetMap(c.GetMap())
+
+	for a := 0; a < 100; a++ {
+
+		ent := NewPray(world, 0, 0, 0)
+
+		spawnSizeX := float64(world.sizeX) * 0.8
+		spawnSizeY := float64(world.sizeY) * 0.8
+		halfX := spawnSizeX / 2
+		halfY := spawnSizeY / 2
+		ent.Position.Set(rand.Float64()*spawnSizeX-halfX, ent.Scale[1]/2-1, rand.Float64()*spawnSizeY-halfY)
+
+		for world.Collision(ent) {
+			ent.Position.Set(rand.Float64()*1000-500, ent.Scale[1]/2, rand.Float64()*-1000-500)
+		}
+
+		ent.Orientation = QuaternionFromAxisAngle(VectorY(), rand.Float64()*math.Pi)
+		ent.physics.(*RigidBody).ClearAccumulators()
+		ent.physics.(*RigidBody).calculateDerivedData(ent)
+	}
+
+	log.Println("world has been generated")
+
+	http.Handle("/ws/", websocket.Handler(ch.Websocket))
+	http.HandleFunc("/", webserver)
 
 	go func() {
-		log.Fatal(http.ListenAndServe(":"+port, nil))
+		log.Fatal(http.ListenAndServe(":8080", nil))
 	}()
 
 	go func() {
@@ -37,62 +67,12 @@ func main() {
 	world.GameLoop()
 }
 
-func initWorld() {
-	rand.Seed(time.Now().UTC().UnixNano())
-	port = os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	world = NewWorld(true, 3200, 3200)
-	ch := client.NewClientHandler()
-	world.newPlayerChan = ch.NewClients()
-
-	c := &creator.Creator{}
-	c.Seed(time.Now().UnixNano())
-	//c.Init(32, int(world.sizeX/32), int(world.sizeY/32))
-	//world.SetMap(c.GetMap())
-
-	//for a := 0; a < 2; a++ {
-
-	//for world.Collision(ent) {
-	//	ent.Position.Set(rand.Float64()*1000-500, ent.Scale[1]/2, rand.Float64()*-1000-500)
-	//}
-	ent := NewPray(world, 0, 0, 0)
-	ent.physics.(*RigidBody).ClearAccumulators()
-	ent.physics.(*RigidBody).calculateDerivedData(ent)
-
-	//ent = NewPray(world, 0, 0, 0)
-	//ent.physics.(*RigidBody).ClearAccumulators()
-	//ent.physics.(*RigidBody).calculateDerivedData(ent)
-	//}
-
-	//hunter := NewHunter(world)
-	//for world.Collision(hunter) {
-	//	hunter.Position.Set(rand.Float64()*1000-500, hunter.Scale[1]/2, rand.Float64()*-1000-500)
-	//}
-
-	log.Println("World generated!")
-
-	http.Handle("/ws/", websocket.Handler(ch.Websocket))
-	http.HandleFunc("/", webserver)
-
-}
-
 func NewPray(world *World, x, y, z float64) *Entity {
-
-	//spawnSizeX := float64(world.sizeX) * 0.8
-	//spawnSizeY := float64(world.sizeY) * 0.8
-	//halfX := spawnSizeX / 2
-	//halfY := spawnSizeY / 2
-
-	//rotationAngle := 0.0
-	//RotationAxis := VectorUp()
 
 	ent := world.entities.NewEntity()
 	ent.Position.Set(x, y, z)
 	ent.Type = 2
-	ent.MaxAcceleration = 100
-	ent.MaxSpeed = 50
+	ent.MaxSpeed = 5
 	ent.Scale.Set(15, 15, 15)
 	ent.geometry = &Rectangle{HalfSize: *ent.Scale.Clone().Scale(0.5)}
 	mass := 10.0
@@ -102,34 +82,7 @@ func NewPray(world *World, x, y, z float64) *Entity {
 	it.SetBlockInertiaTensor(&Vector3{1, 1, 1}, mass)
 	ent.physics.(*RigidBody).SetInertiaTensor(it)
 	ent.input = NewSimpleAI(world)
-	ent.graphics = NewBunnyGraphic()
 
-	//ent.Position.Set(rand.Float64()*spawnSizeX-halfX, ent.Scale[1]/2-1, rand.Float64()*spawnSizeY-halfY)
-	// @todo: fix for rigidbody
-	return ent
-}
-
-func NewHunter(world *World) *Entity {
-
-	spawnSizeX := float64(world.sizeX) * 0.8
-	spawnSizeY := float64(world.sizeY) * 0.8
-
-	halfX := spawnSizeX / 2
-	halfY := spawnSizeY / 2
-
-	ent := world.entities.NewEntity()
-	ent.Type = 3
-	ent.Scale.Set(30, 30, 30)
-	//ent.geometry = &Circle{Radius: 15}
-	ent.geometry = &Rectangle{HalfSize: *ent.Scale.Clone().Scale(0.5)}
-	ent.physics = NewParticlePhysics(0.1)
-	ent.input = NewHunterAI(world)
-	ent.MaxAcceleration = 100
-	ent.MaxSpeed = 100
-	ent.graphics = NewBunnyGraphic()
-	ent.Position.Set(rand.Float64()*spawnSizeX-halfX, ent.Scale[1]/2-1, rand.Float64()*spawnSizeY-halfY)
-	// @todo: fix for rigidbody
-	// ent.Orientation = (rand.Float64() * math.Pi * 2) - math.Pi
 	return ent
 }
 

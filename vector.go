@@ -186,7 +186,6 @@ func (v *Vector3) Equals(z *Vector3) bool {
 
 // http://pastebin.com/fAFp6NnN
 func (value *Vector3) Rotate(rotation *Quaternion) *Vector3 {
-
 	num12 := rotation.i + rotation.i
 	num2 := rotation.j + rotation.j
 	num := rotation.k + rotation.k
@@ -206,39 +205,8 @@ func (value *Vector3) Rotate(rotation *Quaternion) *Vector3 {
 	value[1] = num14
 	value[2] = num13
 	return value
-	//
-	//vecQ := &Quaternion{
-	//	0,
-	//	v[0],
-	//	v[1],
-	//	v[2],
-	//}
-	//
-	//// v´ = q v q-1 (where v = [0, v])
-	//
-	//temp := vecQ.NewMultiply(q.NewInverse())
-	//res := q.Multiply(temp)
-	//
-	//v[0] = res.i
-	//v[1] = res.j
-	//v[2] = res.k
-	//
-	//return v
 }
 
 func (v *Vector3) NewRotate(q *Quaternion) *Vector3 {
 	return v.Clone().Rotate(q)
-}
-
-func (v *Vector3) AsOrientation() float64 {
-	return math.Atan2(v[0], v[1])
-}
-
-func OrientationAsVector(orientation float64) *Vector3 {
-
-	vec := &Vector3{}
-	vec[0] = math.Sin(orientation)
-	vec[1] = 0
-	vec[2] = math.Cos(orientation)
-	return vec
 }

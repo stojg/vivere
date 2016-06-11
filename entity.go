@@ -75,15 +75,14 @@ func (gol *EntityList) Length() int {
 func NewEntity() *Entity {
 	ent := &Entity{}
 	ent.Position = &Vector3{0, 0, 0}
-	ent.Orientation = QuaternionFromAngle(VectorY(), 0)
+	ent.Orientation = QuaternionFromAxisAngle(VectorY(), 0)
 	ent.Velocity = &Vector3{}
 	ent.Rotation = &Vector3{}
-	ent.MaxAcceleration = 10
+	ent.MaxAcceleration = &Vector3{1, 1, 1}
 	ent.MaxSpeed = 40
 	ent.MaxRotation = math.Pi / 2
 	ent.Scale = &Vector3{15, 15, 15}
 	ent.physics = &NullComponent{}
-	ent.graphics = &NullComponent{}
 	ent.input = &NullComponent{}
 	ent.physics = NewRigidBody(5)
 	ent.prevPosition = &Vector3{0, 0, 0}
@@ -101,7 +100,7 @@ type Entity struct {
 	// Holds the angular velocity, or rotation, or the
 	// rigid body in world space.
 	Rotation        *Vector3
-	MaxAcceleration float64
+	MaxAcceleration *Vector3
 	MaxSpeed        float64
 	MaxRotation     float64
 	Type            EntityType
@@ -110,7 +109,6 @@ type Entity struct {
 	geometry        interface{}
 	input           Component
 	physics         Component
-	graphics        Component
 	changed         bool
 	prevPosition    *Vector3
 	prevOrientation *Quaternion
@@ -118,28 +116,28 @@ type Entity struct {
 }
 
 func (g *Entity) BoundingBox() BoundingBox {
-	g.bBox.MinX = g.Position[0] - g.Scale[0]/2
-	g.bBox.MaxX = g.Position[0] + g.Scale[0]/2
-	g.bBox.MinY = g.Position[1] - g.Scale[1]/2
-	g.bBox.MaxY = g.Position[1] + g.Scale[1]/2
-	g.bBox.MinZ = g.Position[2] - g.Scale[2]/2
-	g.bBox.MaxZ = g.Position[2] + g.Scale[2]/2
+	g.bBox.MinX = g.Position[0] - g.Scale[0]
+	g.bBox.MaxX = g.Position[0] + g.Scale[0]
+	g.bBox.MinY = g.Position[1] - g.Scale[1]
+	g.bBox.MaxY = g.Position[1] + g.Scale[1]
+	g.bBox.MinZ = g.Position[2] - g.Scale[2]
+	g.bBox.MaxZ = g.Position[2] + g.Scale[2]
 	return g.bBox
 }
 
 func (ent *Entity) Update(elapsed float64) {
-	//ent.Position[1] = ent.Scale[1]/2 - 1
 	ent.prevPosition.Set(ent.Position[0], ent.Position[1], ent.Position[2])
 	ent.prevOrientation = ent.Orientation
 	ent.changed = false
 
 	ent.input.Update(ent, elapsed)
-	ent.physics.Update(ent, elapsed)
-	ent.graphics.Update(ent, elapsed)
+	if ent.physics.(*RigidBody).isAwake {
+		ent.physics.Update(ent, elapsed)
+	}
 
-	//if ent.prevPosition.Equals(ent.Position) == false || !ent.prevOrientation.Equals(ent.Orientation) {
-	ent.changed = true
-	//}
+	if !ent.prevPosition.Equals(ent.Position) || !ent.prevOrientation.Equals(ent.Orientation) {
+		ent.changed = true
+	}
 }
 
 func (ent *Entity) Changed() bool {

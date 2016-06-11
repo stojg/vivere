@@ -299,7 +299,7 @@ func QuaternionToTarget(origin, target *Vector3) *Quaternion {
 		// vector a and b point exactly in the opposite direction,
 		// so it is a 180 degrees turn around the up-axis
 		//return new Quaternion(up, MathHelper.ToRadians(180.0f));
-		return QuaternionFromAngle(VectorY(), -math.Pi)
+		return QuaternionFromAxisAngle(VectorY(), -math.Pi)
 	} else if math.Abs(dot-(1.0)) < real_epsilon {
 		// vector a and b point exactly in the same direction
 		// so we return the identity quaternion
@@ -307,10 +307,10 @@ func QuaternionToTarget(origin, target *Vector3) *Quaternion {
 	}
 	rotAngle := math.Acos(dot)
 	rotAxis := source.VectorProduct(dest).Normalize()
-	return QuaternionFromAngle(rotAxis, rotAngle)
+	return QuaternionFromAxisAngle(rotAxis, rotAngle)
 }
 
-func QuaternionFromAngle(axis *Vector3, angle float64) *Quaternion {
+func QuaternionFromAxisAngle(axis *Vector3, angle float64) *Quaternion {
 	halfSin := math.Sin(angle / 2)
 	halfCos := math.Cos(angle / 2)
 	q := &Quaternion{
@@ -319,7 +319,6 @@ func QuaternionFromAngle(axis *Vector3, angle float64) *Quaternion {
 		axis[1] * halfSin,
 		axis[2] * halfSin,
 	}
-	//q.Normalize()
 	return q
 }
 
@@ -335,14 +334,6 @@ func QuaternionFromVectors(a, b *Vector3) *Quaternion {
 		w[1],
 		w[2],
 	}
-
-	//
-	//u := a.Clone()
-	//v := b.Clone()
-	//cos_theta := u.Normalize().Dot(v.Normalize())
-	//angle := math.Acos(cos_theta);
-	//w := a.Clone().VectorProduct(b).Normalize()
-	//return QuaternionFromAngle(w, angle);
 }
 
 func (q *Quaternion) Set(r, i, j, k float64) {
@@ -393,25 +384,25 @@ func (q *Quaternion) Normalize() {
 	q.k *= d
 }
 
-func (q *Quaternion) Diff(b *Quaternion) *Quaternion {
-	inv := q.Clone()
-	inv.Inverse()
-	return inv.Multiply(b)
-}
-
-func (q *Quaternion) Inverse() {
-	q.r = q.r
+// http://www.ncsa.illinois.edu/People/kindr/emtc/quaternions/quaternion.c++
+func (q *Quaternion) Conjugate() *Quaternion {
 	q.i = -q.i
 	q.j = -q.j
 	q.k = -q.k
+	return q
+}
+
+func (q *Quaternion) NewConjugate() *Quaternion {
+	return q.Clone().Conjugate()
 }
 
 func (q *Quaternion) NewInverse() *Quaternion {
+	t := q.SquareLength()
 	return &Quaternion{
-		q.r,
-		-q.i,
-		-q.j,
-		-q.k,
+		q.r / t,
+		-q.i / t,
+		-q.j / t,
+		-q.k / t,
 	}
 }
 
@@ -432,18 +423,18 @@ func (q *Quaternion) SquareLength() float64 {
 	return q.r*q.r + q.i*q.i + q.j*q.j + q.k*q.k
 }
 
+func (q *Quaternion) Norm() float64 {
+	return q.SquareLength()
+}
+
 // Multiplies the quaternion by the given quaternion.
 func (q *Quaternion) Multiply(o *Quaternion) *Quaternion {
-	//q.r = q.r*o.r - q.i*o.i - q.j*o.j - q.k*o.k
-	//q.i = q.r*o.i + q.i*o.r + q.j*o.k - q.k*o.j
-	//q.j = q.r*o.j - q.i*o.k + q.j*o.r + q.k*o.i
-	//q.k = q.r*o.k + q.i*o.j - q.j*o.i + q.k*o.r
-
-	q.i = q.i*o.r + q.j*o.k - q.k*o.j + q.r*o.i
-	q.j = -q.i*o.k + q.j*o.r + q.k*o.i + q.r*o.j
-	q.k = q.i*o.j - q.j*o.i + q.k*o.r + q.r*o.k
-	q.r = -q.i*o.i - q.j*o.j - q.k*o.k + q.r*o.r
-
+	*q = Quaternion{
+		-q.i*o.i - q.j*o.j - q.k*o.k + q.r*o.r,
+		q.i*o.r + q.j*o.k - q.k*o.j + q.r*o.i,
+		-q.i*o.k + q.j*o.r + q.k*o.i + q.r*o.j,
+		q.i*o.j - q.j*o.i + q.k*o.r + q.r*o.k,
+	}
 	return q
 }
 
@@ -455,17 +446,23 @@ func (q *Quaternion) NewMultiply(o *Quaternion) *Quaternion {
 // Adds the given vector to this, scaled by the given amount. This is
 // used to update the orientation quaternion by a rotation and time.
 func (q *Quaternion) AddScaledVector(vector *Vector3, scale float64) {
-	newQ := &Quaternion{0, vector[0] * scale, vector[1] * scale, vector[2] * scale}
-	newQ.Multiply(q)
-	q.r += newQ.r * 0.5
-	q.i += newQ.i * 0.5
-	q.j += newQ.j * 0.5
-	q.k += newQ.k * 0.5
+
+	vectorQ := &Quaternion{0, vector[0] * scale, vector[1] * scale, vector[2] * scale}
+	result := vectorQ.NewMultiply(q)
+	result.Div(2)
+
+	q.r += result.r
+	q.i += result.i
+	q.j += result.j
+	q.k += result.k
 }
 
 func (q *Quaternion) RotateByVector(vector *Vector3) *Quaternion {
-	q.Multiply(&Quaternion{0, vector[0], vector[1], vector[2]})
-	return q
+	return q.Multiply(&Quaternion{0, vector[0], vector[1], vector[2]})
+}
+
+func (q *Quaternion) NewRotateByVector(vector *Vector3) *Quaternion {
+	return q.Clone().Multiply(&Quaternion{0, vector[0], vector[1], vector[2]})
 }
 
 func LocalToWorld(local *Vector3, transform *Matrix4) *Vector3 {
