@@ -19,7 +19,7 @@ func NewPerlinNoise(seed int64) *PerlinNoise {
 	// The source's seed is reset to seed for each precomputed set so that any
 	// code reordering in this implementation does not alter the noise values
 	// produced for a given seed.
-	source := rand.NewSource(0)
+	source := rand.NewSource(seed)
 	rnd := rand.New(source)
 
 	// Initialize gen.permut.

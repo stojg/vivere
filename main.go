@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"time"
+	"fmt"
 )
 
 var world *World
@@ -21,7 +22,11 @@ func main() {
 
 	world.newPlayerChan = ch.NewClients()
 
-	c := creator.NewCreator(time.Now().UnixNano(), 32, int(world.sizeX/32), int(world.sizeY/32))
+	seed := time.Now().UnixNano()
+	seed = 1465762025024741914
+	fmt.Printf("generating world with seed %d\n", seed)
+
+	c := creator.NewCreator(seed, 32, int(world.sizeX/32), int(world.sizeY/32))
 	c.Create()
 	world.SetMap(c.GetMap())
 

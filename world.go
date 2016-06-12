@@ -97,7 +97,7 @@ func (world *World) GameLoop() {
 }
 
 func (world *World) SetMap(heightMap [][]*creator.Tile) {
-	minimalHeight := 0.1
+	minimalHeight := 0.05
 
 	world.heightMap = heightMap
 	world.graph = NewGraph()
@@ -126,8 +126,9 @@ func (world *World) SetMap(heightMap [][]*creator.Tile) {
 	}
 
 	fmt.Printf("searching path in %d X %d map\n", len(world.heightMap), len(world.heightMap[0]))
-	list := Dijkstra(world.graph, world.heightMap[1][1], world.heightMap[49][49])
+	list := Dijkstra(world.graph, world.heightMap[1][1], world.heightMap[99][99])
 	fmt.Printf("searching done, list size: %d\n", len(list))
+
 
 	for _, l := range list {
 
@@ -136,30 +137,37 @@ func (world *World) SetMap(heightMap [][]*creator.Tile) {
 			ent.Body.InvMass = 0
 			ent.Type = ENTITY_SCARED
 			size := float64(tile.Size)
-			ent.Scale.Set(size, size * 0.5, size)
+			ent.Scale.Set(size/4, size/4, size/4)
 			ent.geometry = &Rectangle{HalfSize: *ent.Scale.NewScale(0.5)}
 			posX := tile.Position()[0] - float64(world.sizeX / 2)
 			posY := tile.Position()[1] - float64(world.sizeY / 2)
 			ent.Position.Set(posX, ent.Scale[1] / 2, posY)
 		}
-		fmt.Printf("%d, cost: %f\n", l.node.ID(), l.costSoFar)
 	}
 
 }
 
 func (w *World) addConnsToGraph(graph *Graph, tile *creator.Tile, maxX, maxY int) {
 
-	axes := []int{-1, 0, 1, }
+	axes := []int{-1, 0, 1,}
+
+	tilePos := tile.Position()
 
 	for _, x := range axes {
-		if tile.X() + x < 0 || tile.X() + x > maxX {
+		if tile.X + x < 0 || tile.X + x > maxX {
 			continue
 		}
 		for _, y := range axes {
-			if tile.Y() + y < 0 || tile.Y() + y > maxY {
+			if tile.Y + y < 0 || tile.Y + y > maxY {
 				continue
 			}
-			graph.Add(tile, world.heightMap[tile.X() + x][tile.Y() + y], 1)
+			connTile := world.heightMap[tile.X + x][tile.Y + y]
+			diffX := tilePos[0] - connTile.Position()[0]
+			diffY := tilePos[1] - connTile.Position()[1]
+
+			cost := math.Sqrt(diffX * diffX + diffY * diffY)
+
+			graph.Add(tile, connTile, cost)
 		}
 	}
 

@@ -18,8 +18,6 @@ func Dijkstra(graph *Graph, start, goal Node) []*NodeRecord {
 
 	open.add(&NodeRecord{
 		node:       start,
-		connection: nil,
-		costSoFar:  0,
 	})
 
 	var current *NodeRecord
@@ -48,27 +46,26 @@ func Dijkstra(graph *Graph, start, goal Node) []*NodeRecord {
 			endNodeCost := current.costSoFar + connection.Cost
 
 			var record *NodeRecord
-			// .. or if it is open and we've found a worse route
 
 			if open.contains(toNode) {
 				// here we find the record in the open list corresponding to the endNode
 				record = open.find(toNode)
-				// but the cost calculated for it is lower than the current one
+				// but the cost calculated for it is lower than the existing one, so we continue
 				if record.costSoFar <= endNodeCost {
 					continue
 				}
 			} else {
-				// otherwise we know we've got an unvisited node node, so make a record for it
+				// otherwise we know we've got an unvisited node now, so make a record for it
 				record = &NodeRecord{
 					node: toNode,
 				}
 			}
 
-			// we are here if we need to update the node.  update the cost and connection
+			// we are here if we need to update the record, update the cost and connection
 			record.costSoFar = endNodeCost
 			record.connection = current
 
-			// and add it to the open list
+			// and add it to the open list if it's a new record
 			if !open.contains(toNode) {
 				open.add(record)
 			}
@@ -82,7 +79,7 @@ func Dijkstra(graph *Graph, start, goal Node) []*NodeRecord {
 	}
 
 	// we're here either found the goal or we have no more nodes to search,
-	// found which
+	// find out which
 	if current == nil || current.node != goal {
 		return nil
 	}
@@ -108,16 +105,16 @@ type Node interface {
 
 func NewGraph() *Graph {
 	return &Graph{
-		connections: make(map[int][]*Connection),
+		Connections: make(map[int][]*Connection),
 	}
 }
 
 type Graph struct {
-	connections map[int][]*Connection
+	Connections map[int][]*Connection
 }
 
 func (g *Graph) Add(from, to Node, cost float64) {
-	g.connections[from.ID()] = append(g.connections[from.ID()], &Connection{
+	g.Connections[from.ID()] = append(g.Connections[from.ID()], &Connection{
 		From: from,
 		To:   to,
 		Cost: cost,
@@ -125,7 +122,7 @@ func (g *Graph) Add(from, to Node, cost float64) {
 }
 
 func (g *Graph) getConnections(node Node) []*Connection {
-	return g.connections[node.ID()]
+	return g.Connections[node.ID()]
 }
 
 type Connection struct {
