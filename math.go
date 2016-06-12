@@ -174,6 +174,13 @@ func (a *Vector3) ScalarProduct(vector *Vector3) float64 {
 	return a[0]*vector[0] + a[1]*vector[1] + a[2]*vector[2]
 }
 
+func (a *Vector3) HadamardProduct(vector *Vector3) *Vector3 {
+	a[0] *= vector[0]
+	a[1] *= vector[1]
+	a[2] *= vector[2]
+	return a
+}
+
 func (a *Vector3) NewHadamardProduct(vector *Vector3) *Vector3 {
 	return &Vector3{
 		a[0] * vector[0],

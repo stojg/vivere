@@ -108,6 +108,10 @@ type RigidBody struct {
 	forces       *Vector3
 }
 
+func (rb *RigidBody) Mass() float64 {
+	return 1 / rb.InvMass
+}
+
 func (rb *RigidBody) SetInertiaTensor(inertiaTensor *Matrix3) {
 	rb.inverseInertiaTensor.SetInverse(inertiaTensor)
 }

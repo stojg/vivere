@@ -41,8 +41,9 @@ define(['src/entity', 'lib/babylon.2.3.max'], function (entity) {
         //pray.material = pink;
         this.templates[2] = pray;
 
-        var yellow = new BABYLON.StandardMaterial("texture1", scene);
+        var yellow = new BABYLON.StandardMaterial("yellow", scene);
         yellow.diffuseColor = new BABYLON.Color3(1.0,0.9, 0.8);
+        yellow.specularColor = new BABYLON.Color3(1.0, 1.0, 0.6);
         var blue = new BABYLON.StandardMaterial("texture1", scene);
         blue.diffuseColor = new BABYLON.Color3(.4, .5, 1);
         var green = new BABYLON.StandardMaterial("texture1", scene);
@@ -54,7 +55,6 @@ define(['src/entity', 'lib/babylon.2.3.max'], function (entity) {
         multi.subMaterials.push(yellow);
         multi.subMaterials.push(front);
         multi.subMaterials.push(yellow);
-        //multi.subMaterials.push(blue);
         multi.subMaterials.push(yellow);
         multi.subMaterials.push(yellow);
         pray.subMeshes=[];

@@ -53,7 +53,11 @@ func (state *PrayIdleState) Update(elapsed float64) Steering {
 
 func (state *PrayIdleState) Enter(me *Entity) {
 	state.me = me
-	state.steering = NewWander(state.me, 200, 10, 0, 0.01)
+	state.steering = NewWander(state.me, 100, 100, 0, 0.01)
+
+	// target := NewEntity()
+	// state.steering = NewFlee(state.me, target)
+	state.steering = NewWander(state.me, 200, 50, 0, 0.05)
 }
 
 type Stater interface {
@@ -68,7 +72,11 @@ type SteeringAI struct{}
 func (ai *SteeringAI) steer(me *Entity, steer Steering) {
 	if steer != nil {
 		steering := steer.GetSteering()
-		me.Body.AddTorque(steering.angular)
 		me.Body.AddForce(steering.linear)
+		me.Body.AddTorque(steering.angular)
+
+		//l := NewLookWhereYoureGoing(me)
+		//st := l.GetSteering()
+
 	}
 }

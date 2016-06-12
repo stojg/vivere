@@ -18,10 +18,10 @@ type Steering interface {
 
 // NewSteeringOutput returns a new zero initialized SteeringOutput
 func NewSteeringOutput() *SteeringOutput {
-	so := &SteeringOutput{}
-	so.linear = &Vector3{}
-	so.angular = &Vector3{}
-	return so
+	return &SteeringOutput{
+		linear:  &Vector3{},
+		angular: &Vector3{},
+	}
 }
 
 // Seek makes the character to go full speed against the target
@@ -44,7 +44,7 @@ func (s *Seek) GetSteering() *SteeringOutput {
 	steering.linear = s.target.Position.NewSub(s.character.Position)
 	// Go full speed ahead
 	steering.linear.Normalize()
-	steering.linear.NewHadamardProduct(s.character.MaxAcceleration)
+	steering.linear.HadamardProduct(s.character.MaxAcceleration)
 	steering.angular = &Vector3{}
 	return steering
 }
@@ -70,6 +70,16 @@ func (s *Flee) GetSteering() *SteeringOutput {
 	steering.linear.NewHadamardProduct(s.character.MaxAcceleration)
 	steering.angular = &Vector3{}
 	return steering
+}
+
+func NewArrive(character, target *Entity) *Arrive {
+	return &Arrive{
+		character:    character,
+		target:       target,
+		targetRadius: 2,
+		slowRadius:   50,
+		timeToTarget: 0.1,
+	}
 }
 
 // Arrive tries to get the character to arrive slowly at a target
@@ -99,6 +109,7 @@ func (s *Arrive) GetSteering() *SteeringOutput {
 	} else {
 		targetSpeed = s.character.MaxSpeed * distance / s.slowRadius
 	}
+
 	// The target velocity combines speed and direction
 	targetVelocity := direction
 	targetVelocity.Normalize()
@@ -305,31 +316,30 @@ func NewWander(character *Entity, offset, radiusXZ, radiusY, rate float64) *Wand
 
 	w.maxAcceleration = &Vector3{1, 0, 0}
 	// start by wandering straight forward
-	w.Vector = &Vector3{0.92, 0, 0}
+	w.Vector = &Vector3{1, 0, 0}
+
 	return w
 }
 
 // GetSteering returns a new linear and angular steering for wander
 func (wander *Wander) GetSteering() *SteeringOutput {
 
-	// 1. Calculate the target to delegate to face
-	wander.Vector[0] += wander.randomBinomial() * wander.rate
-	//wander.Vector[1] += wander.randomBinomial() * wander.rate
-	wander.Vector[2] += wander.randomBinomial() * wander.rate
+	// 1. make a target that looks ahead
+	charOffset := wander.character.Position.NewAdd(wander.offset.NewRotate(wander.character.Orientation))
+	target := NewEntity()
+	target.Position.Add(charOffset)
 
+	// 2. randomise the wander vector a bit, this represents the "small" sphere at the center of the
+	// target
+	wander.Vector[0] += (wander.randomBinomial() * wander.rate)
+	wander.Vector[1] += (wander.randomBinomial() * wander.rate)
+	wander.Vector[2] += (wander.randomBinomial() * wander.rate)
 	wander.Vector.Normalize()
 
-	// 2. Calculate the transformed target direction and scale it
-	target := NewEntity()
-	target.Position = wander.Vector.NewRotate(wander.character.Orientation)
-	target.Position[0] *= wander.WanderRadiusXZ
-	target.Position[1] *= wander.WanderRadiusY
-	target.Position[2] *= wander.WanderRadiusXZ
-
-	// 3. calculate the target to send to face
-	charPosition := wander.character.Position.Clone()
-	charPosition.Add(wander.offset.NewRotate(wander.character.Orientation))
-	target.Position.Add(charPosition)
+	// 3. offset the target with the scaled "small" sphere
+	target.Position[0] += wander.Vector[0] * wander.WanderRadiusXZ
+	target.Position[1] += wander.Vector[1] * wander.WanderRadiusY
+	target.Position[2] += wander.Vector[2] * wander.WanderRadiusXZ
 
 	// 4. Delegate to face
 	face := NewFace(wander.character, target)
@@ -337,7 +347,7 @@ func (wander *Wander) GetSteering() *SteeringOutput {
 	// 5. Now set the linear acceleration to be at full
 	// acceleration in the direction of the orientation
 	steering := face.GetSteering()
-	//wander.maxAcceleration.NewRotate(wander.character.Orientation)
+
 	steering.linear = wander.maxAcceleration.NewRotate(wander.character.Orientation)
 
 	return steering

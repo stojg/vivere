@@ -39,10 +39,6 @@ require(["src/server", 'src/entity', "src/world", "src/player", 'lib/datastream'
         var scene = new BABYLON.Scene(engine);
         scene.clearColor = new BABYLON.Color3(0.1, 0.1, 0.13);
         scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
-        //scene.fogMode = BABYLON.Scene.FOGMODE_LINEAR;
-        //scene.fogStart = 500.0;
-        //scene.fogEnd = 4000.0;
-        //scene.fogColor = new BABYLON.Color3(0.0, 0.0, 0.0);
         scene.collisionsEnabled = true;
 
         scene.activeCamera = new BABYLON.FreeCamera("FreeCamera", new BABYLON.Vector3(1, 1, 1), scene);
@@ -95,33 +91,18 @@ require(["src/server", 'src/entity', "src/world", "src/player", 'lib/datastream'
 
         scene.registerBeforeRender(beforeRenderFunction);
 
-        // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
-        //var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
-        // Default intensity is 1. Let's dim the light a small amount
-        //var light0 = new BABYLON.PointLight("Omni0", new BABYLON.Vector3(200, 100, -100), scene);
-        //light0.diffuse = new BABYLON.Color3(.5, .5, .5);
-        //light0.specular = new BABYLON.Color3(0.0, 0.0, 0.0);
-        //light0.intensity = 1;
-
         var light1 = new BABYLON.HemisphericLight("Hemi0", new BABYLON.Vector3(0.3, 1, -1), scene);
         light1.diffuse = new BABYLON.Color3(1,1,1);
         light1.specular = new BABYLON.Color3(1, 1, 1);
         light1.groundColor = new BABYLON.Color3(0, 0, 0);
         light1.intensity = 0.95;
 
-        //var box = BABYLON.Mesh.CreateBox("box", 100, scene, false, BABYLON.Mesh.DEFAULTSIDE);
-        //var shadowGenerator = new BABYLON.ShadowGenerator(1024, light0);
-        //shadowGenerator.getShadowMap().renderList.push(box);
-
         var ground = BABYLON.Mesh.CreateGround("ground1", 3232, 3232, 1, scene);
         var groundMat = new BABYLON.StandardMaterial("texture1", scene);
-        groundMat.diffuseColor = new BABYLON.Color3(0.2, 0.21, 0.21);
-        groundMat.alpha = 0.5;
+        groundMat.diffuseColor = new BABYLON.Color3(0.2, 0.8, 0.21);
+        groundMat.alpha = 0.1;
         groundMat.specularPower = 512;
         ground.material = groundMat;
-        ground.receiveShadows = true;
-
-
         // Leave this function
         return scene;
 

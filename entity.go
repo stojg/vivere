@@ -75,8 +75,8 @@ func NewEntity() *Entity {
 		Velocity:    &Vector3{},
 		Rotation:    &Vector3{},
 
-		MaxAcceleration:        &Vector3{1, 1, 1},
-		MaxSpeed:               10,
+		MaxAcceleration:        &Vector3{4, 1, 4},
+		MaxSpeed:               100,
 		MaxAngularAcceleration: &Vector3{1, 1, 1},
 		MaxRotation:            math.Pi / 2,
 
@@ -130,7 +130,7 @@ func (g *Entity) BoundingBox() BoundingBox {
 
 func (ent *Entity) Update(elapsed float64) {
 	ent.prevPosition.Set(ent.Position[0], ent.Position[1], ent.Position[2])
-	ent.prevOrientation = ent.Orientation
+	ent.prevOrientation = ent.Orientation.Clone()
 	ent.Changed = false
 
 	ent.Input.Update(ent, elapsed)

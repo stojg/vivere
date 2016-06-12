@@ -9,6 +9,7 @@ import (
 	"log"
 	"math"
 	"time"
+	"fmt"
 )
 
 type World struct {
@@ -18,13 +19,15 @@ type World struct {
 	newPlayerChan chan *client.Client
 	debug         bool
 	collision     *CollisionDetector
+	forceRegistry *ForceRegistry
 	heightMap     [][]*creator.Tile
+	graph         *Graph
 	sizeX         float64
 	sizeY         float64
 }
 
 const (
-	SEC_PER_UPDATE  float64 = 0.016
+	SEC_PER_UPDATE float64 = 0.016
 	SEC_PER_MESSAGE float64 = 0.05
 )
 
@@ -57,6 +60,8 @@ func (world *World) GameLoop() {
 		for _, entity := range world.entities.GetAll() {
 			qT.Add(entity)
 		}
+
+		world.forceRegistry.UpdateForces(elapsedTime)
 
 		for _, entity := range world.entities.GetAll() {
 			entity.Update(elapsedTime)
@@ -92,41 +97,76 @@ func (world *World) GameLoop() {
 }
 
 func (world *World) SetMap(heightMap [][]*creator.Tile) {
-	minimalHeight := 0.71
+	minimalHeight := 0.1
+
 	world.heightMap = heightMap
-	for x := range world.heightMap {
-		world.heightMap[x][0].Value = minimalHeight
-		world.heightMap[x][len(world.heightMap[x])-1].Value = minimalHeight + 0.01
-	}
-	for y := range world.heightMap[0] {
-		world.heightMap[0][y].Value = minimalHeight
-		world.heightMap[len(world.heightMap[0])-1][y].Value = minimalHeight + 0.01
-	}
+	world.graph = NewGraph()
 
 	for x := range world.heightMap {
-		for y := range world.heightMap[x] {
-			height := world.heightMap[x][y].Value
-			if height < 0.7 {
+		for _, tile := range world.heightMap[x] {
+			height := tile.Value
+			if height <= minimalHeight {
+				world.addConnsToGraph(world.graph, tile, len(world.heightMap) - 1, len(world.heightMap[0]) - 1)
+			}
+
+			if height < minimalHeight {
 				continue
 			}
-			height = (height - (minimalHeight - 0.01)) * 20
+			height = (height - (minimalHeight - 0.01)) * 10
 			ent := world.entities.NewEntity()
-			ent.Body.InvMass = (0)
+			ent.Body.InvMass = 0
 			ent.Type = ENTITY_BLOCK
-			size := float64(world.heightMap[x][y].Size)
-			ent.Scale.Set(size, size*height, size)
+			size := float64(tile.Size)
+			ent.Scale.Set(size, size * height, size)
 			ent.geometry = &Rectangle{HalfSize: *ent.Scale.NewScale(0.5)}
-			posX := world.heightMap[x][y].Position()[0] - float64(world.sizeX/2)
-			posY := world.heightMap[x][y].Position()[1] - float64(world.sizeY/2)
-			ent.Position.Set(posX, ent.Scale[1]/2, posY)
-			ent.Body.ClearAccumulators()
-			ent.Body.calculateDerivedData(ent)
+			posX := tile.Position()[0] - float64(world.sizeX / 2)
+			posY := tile.Position()[1] - float64(world.sizeY / 2)
+			ent.Position.Set(posX, ent.Scale[1] / 2, posY)
 		}
 	}
+
+	fmt.Printf("searching path in %d X %d map\n", len(world.heightMap), len(world.heightMap[0]))
+	list := Dijkstra(world.graph, world.heightMap[1][1], world.heightMap[49][49])
+	fmt.Printf("searching done, list size: %d\n", len(list))
+
+	for _, l := range list {
+
+		if tile, found := l.node.(*creator.Tile); found {
+			ent := world.entities.NewEntity()
+			ent.Body.InvMass = 0
+			ent.Type = ENTITY_SCARED
+			size := float64(tile.Size)
+			ent.Scale.Set(size, size * 0.5, size)
+			ent.geometry = &Rectangle{HalfSize: *ent.Scale.NewScale(0.5)}
+			posX := tile.Position()[0] - float64(world.sizeX / 2)
+			posY := tile.Position()[1] - float64(world.sizeY / 2)
+			ent.Position.Set(posX, ent.Scale[1] / 2, posY)
+		}
+		fmt.Printf("%d, cost: %f\n", l.node.ID(), l.costSoFar)
+	}
+
+}
+
+func (w *World) addConnsToGraph(graph *Graph, tile *creator.Tile, maxX, maxY int) {
+
+	axes := []int{-1, 0, 1, }
+
+	for _, x := range axes {
+		if tile.X() + x < 0 || tile.X() + x > maxX {
+			continue
+		}
+		for _, y := range axes {
+			if tile.Y() + y < 0 || tile.Y() + y > maxY {
+				continue
+			}
+			graph.Add(tile, world.heightMap[tile.X() + x][tile.Y() + y], 1)
+		}
+	}
+
 }
 
 func (w *World) Collision(a *Entity) bool {
-	qT := quadtree.NewQuadTree(quadtree.NewBoundingBox(-w.sizeX/2, w.sizeX/2, -w.sizeY/2, w.sizeY/2))
+	qT := quadtree.NewQuadTree(quadtree.NewBoundingBox(-w.sizeX / 2, w.sizeX / 2, -w.sizeY / 2, w.sizeY / 2))
 	for _, b := range world.entities.GetAll() {
 		qT.Add(b)
 	}

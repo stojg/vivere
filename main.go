@@ -21,9 +21,8 @@ func main() {
 
 	world.newPlayerChan = ch.NewClients()
 
-	c := &creator.Creator{}
-	c.Seed(time.Now().UnixNano())
-	c.Init(32, int(world.sizeX/32), int(world.sizeY/32))
+	c := creator.NewCreator(time.Now().UnixNano(), 32, int(world.sizeX/32), int(world.sizeY/32))
+	c.Create()
 	world.SetMap(c.GetMap())
 
 	spawnZone := []float64{
@@ -32,17 +31,23 @@ func main() {
 	}
 	spawnZone[1] -= spawnZone[1] / 2
 
-	for a := 0; a < 100; a++ {
+	world.forceRegistry = &ForceRegistry{}
 
+	drag := &Drag{
+		k1: 0.01,
+		k2: 0.01 * 0.01,
+	}
+
+	for a := 0; a < 0; a++ {
 		ent := NewPray(world, rand.Float64()*spawnZone[0]-spawnZone[0]/2, 15/2-1, rand.Float64()*spawnZone[1]-spawnZone[1]/2)
+		//ent := NewPray(world, 0, 15/2-1, 0)
 
 		for world.Collision(ent) {
 			ent.Position.Set(rand.Float64()*spawnZone[0]-spawnZone[0]/2, ent.Scale[1]/2, rand.Float64()*spawnZone[1]-spawnZone[1]/2)
 		}
 
 		ent.Orientation = QuaternionFromAxisAngle(VectorY(), rand.Float64()*(2*math.Pi)-math.Pi)
-		ent.Body.ClearAccumulators()
-		ent.Body.calculateDerivedData(ent)
+		world.forceRegistry.Add(ent, drag)
 	}
 
 	log.Println("world has been generated")
@@ -64,6 +69,12 @@ func main() {
 			}
 		}
 	}()
+
+	for _, ent := range world.entities.GetAll() {
+		ent.Body.ClearAccumulators()
+		ent.Body.calculateDerivedData(ent)
+	}
+
 	world.GameLoop()
 }
 
@@ -72,7 +83,6 @@ func NewPray(world *World, x, y, z float64) *Entity {
 	ent := world.entities.NewEntity()
 	ent.Position.Set(x, y, z)
 	ent.Type = 2
-	ent.MaxSpeed = 5
 	ent.Scale.Set(15, 15, 15)
 	ent.geometry = &Rectangle{
 		HalfSize: *ent.Scale.NewScale(0.5),

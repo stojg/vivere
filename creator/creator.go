@@ -13,74 +13,55 @@ const (
 	INST_TILE_TYPE        Literal = 3
 )
 
-type Tile struct {
-	Size  int
-	x     int
-	y     int
-	Value float64
-}
-
-func NewTile(size, x, y int) *Tile {
-	t := &Tile{}
-	t.Size = size
-	t.x = x
-	t.y = y
-	return t
-}
-
-func (tile *Tile) Position() (position [2]float64) {
-	position[0] = float64(tile.x * tile.Size)
-	position[1] = float64(tile.y * tile.Size)
-	return position
+func NewCreator(seed int64, tileSize, sizeX, sizeY int) *Creator {
+	return &Creator{
+		seed: seed,
+		tileSize: tileSize,
+		sizeX: sizeX,
+		sizeY: sizeY,
+		tiles: make([][]*Tile, sizeX),
+	}
 }
 
 type Creator struct {
 	sizeX    int
-	sizeZ    int
+	sizeY    int
 	tileSize int
-	world    [][]*Tile
+	tiles    [][]*Tile
 	seed     int64
 }
 
-func (c *Creator) Seed(seed int64 ) {
-	c.seed = seed
-}
+func (c *Creator) Create() {
+	perlin := NewPerlinNoise(c.seed)
 
-func (c *Creator) Init(tileSize, sizeX, sizeZ int) {
-	c.tileSize = tileSize
-	c.sizeX = sizeX
-	c.sizeZ = sizeZ
-	c.world = make([][]*Tile, c.sizeX)
+	for x := range c.tiles {
+		c.tiles[x] = make([]*Tile, c.sizeY)
+		for y := range c.tiles[x] {
+			v := perlin.At2d(float64(x)* 0.1, float64(y)* 0.1)
+			c.tiles[x][y] = NewTile(c.tileSize, x, y, v, c.sizeY)
 
-	n := NewPerlinNoise(c.seed)
-	for x := range c.world {
-		c.world[x] = make([]*Tile, c.sizeZ)
-		for y := range c.world[x] {
-			c.world[x][y] = NewTile(c.tileSize, x, y)
-			v := n.At2d(float64(x)* 0.1, float64(y)* 0.1)
-			c.world[x][y].Value = v * 0.5 + 0.5
 		}
 	}
 }
 
 func (c *Creator) GetMap() [][]*Tile {
-	return c.world
+	return c.tiles
 }
 
 func (c *Creator) Tile(x, y int) (tile *Tile, err error) {
 	if x > c.sizeX-1 || x < 0 {
 		err = errors.New("X is out of bounds, max " + string(c.sizeX-1))
 	}
-	if y > c.sizeZ -1 || x < 0 {
-		err = errors.New("Y is out of bounds, max " + string(c.sizeZ -1))
+	if y > c.sizeY -1 || x < 0 {
+		err = errors.New("Y is out of bounds, max " + string(c.sizeY -1))
 	}
-	tile = c.world[x][y]
+	tile = c.tiles[x][y]
 	return
 }
 
 func (c *Creator) RandomPosition() []int {
 	result := make([]int, 2)
 	result[0] = rand.Intn(c.sizeX - 1)
-	result[1] = rand.Intn(c.sizeZ - 1)
+	result[1] = rand.Intn(c.sizeY - 1)
 	return result
 }
