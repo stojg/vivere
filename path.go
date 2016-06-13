@@ -5,6 +5,10 @@ import (
 	"math"
 )
 
+type Node interface {
+	ID() int
+}
+
 type NodeRecord struct {
 	node       Node
 	connection *NodeRecord
@@ -97,10 +101,6 @@ func Dijkstra(graph *Graph, start, goal Node) []*NodeRecord {
 	}
 
 	return path
-}
-
-type Node interface {
-	ID() int
 }
 
 func NewGraph() *Graph {

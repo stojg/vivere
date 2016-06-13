@@ -106,6 +106,32 @@ func TestDijkstra_map(t *testing.T) {
 
 }
 
+// go test -bench=BenchmarkDijkstra_map -benchtime=20s
+// 50 - 538 685 335 ns/op
+func BenchmarkDijkstra_map(b *testing.B) {
+	var tiles [][]*creator.Tile
+	file, e := ioutil.ReadFile("./testdata/map.json")
+	if e != nil {
+		fmt.Printf("File error: %v\n", e)
+		os.Exit(1)
+	}
+	json.Unmarshal(file, &tiles)
+	graph := NewGraph()
+	for x := range tiles {
+		for _, tile := range tiles[x] {
+			if tile.Value <= 0 {
+				addConnsToGraph(graph, tiles, tile)
+			}
+		}
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		Dijkstra(graph, tiles[99][99], tiles[50][50])
+	}
+
+}
+
 func addConnsToGraph(graph *Graph, tiles [][]*creator.Tile, tile *creator.Tile) {
 
 	maxX := len(tiles) - 1
