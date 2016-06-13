@@ -3,13 +3,15 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
+	"fmt"
 	"github.com/stojg/vivere/client"
 	"github.com/stojg/vivere/creator"
 	"github.com/volkerp/goquadtree/quadtree"
 	"log"
 	"math"
+	"os"
 	"time"
-	"fmt"
 )
 
 type World struct {
@@ -27,7 +29,7 @@ type World struct {
 }
 
 const (
-	SEC_PER_UPDATE float64 = 0.016
+	SEC_PER_UPDATE  float64 = 0.016
 	SEC_PER_MESSAGE float64 = 0.05
 )
 
@@ -97,7 +99,7 @@ func (world *World) GameLoop() {
 }
 
 func (world *World) SetMap(heightMap [][]*creator.Tile) {
-	minimalHeight := 0.05
+	minimalHeight := 0.1
 
 	world.heightMap = heightMap
 	world.graph = NewGraph()
@@ -106,7 +108,7 @@ func (world *World) SetMap(heightMap [][]*creator.Tile) {
 		for _, tile := range world.heightMap[x] {
 			height := tile.Value
 			if height <= minimalHeight {
-				world.addConnsToGraph(world.graph, tile, len(world.heightMap) - 1, len(world.heightMap[0]) - 1)
+				world.addConnsToGraph(world.graph, tile, len(world.heightMap)-1, len(world.heightMap[0])-1)
 			}
 
 			if height < minimalHeight {
@@ -117,18 +119,18 @@ func (world *World) SetMap(heightMap [][]*creator.Tile) {
 			ent.Body.InvMass = 0
 			ent.Type = ENTITY_BLOCK
 			size := float64(tile.Size)
-			ent.Scale.Set(size, size * height, size)
+			ent.Scale.Set(size, size*height, size)
 			ent.geometry = &Rectangle{HalfSize: *ent.Scale.NewScale(0.5)}
-			posX := tile.Position()[0] - float64(world.sizeX / 2)
-			posY := tile.Position()[1] - float64(world.sizeY / 2)
-			ent.Position.Set(posX, ent.Scale[1] / 2, posY)
+			posX := tile.Position()[0] - float64(world.sizeX/2)
+			posY := tile.Position()[1] - float64(world.sizeY/2)
+			ent.Position.Set(posX, ent.Scale[1]/2, posY)
 		}
 	}
 
 	fmt.Printf("searching path in %d X %d map\n", len(world.heightMap), len(world.heightMap[0]))
-	list := Dijkstra(world.graph, world.heightMap[1][1], world.heightMap[99][99])
-	fmt.Printf("searching done, list size: %d\n", len(list))
-
+	start := time.Now()
+	list := AStar(world.graph, world.heightMap[1][1], world.heightMap[99][99])
+	fmt.Printf("searching done, list size: %d, took %s\n", len(list), time.Now().Sub(start))
 
 	for _, l := range list {
 
@@ -139,9 +141,9 @@ func (world *World) SetMap(heightMap [][]*creator.Tile) {
 			size := float64(tile.Size)
 			ent.Scale.Set(size/4, size/4, size/4)
 			ent.geometry = &Rectangle{HalfSize: *ent.Scale.NewScale(0.5)}
-			posX := tile.Position()[0] - float64(world.sizeX / 2)
-			posY := tile.Position()[1] - float64(world.sizeY / 2)
-			ent.Position.Set(posX, ent.Scale[1] / 2, posY)
+			posX := tile.Position()[0] - float64(world.sizeX/2)
+			posY := tile.Position()[1] - float64(world.sizeY/2)
+			ent.Position.Set(posX, ent.Scale[1]/2, posY)
 		}
 	}
 
@@ -149,23 +151,27 @@ func (world *World) SetMap(heightMap [][]*creator.Tile) {
 
 func (w *World) addConnsToGraph(graph *Graph, tile *creator.Tile, maxX, maxY int) {
 
-	axes := []int{-1, 0, 1,}
+	axes := []int{-1, 0, 1}
 
 	tilePos := tile.Position()
 
 	for _, x := range axes {
-		if tile.X + x < 0 || tile.X + x > maxX {
+		if tile.X+x < 0 || tile.X+x > maxX {
 			continue
 		}
 		for _, y := range axes {
-			if tile.Y + y < 0 || tile.Y + y > maxY {
+			if tile.Y+y < 0 || tile.Y+y > maxY {
 				continue
 			}
-			connTile := world.heightMap[tile.X + x][tile.Y + y]
-			diffX := tilePos[0] - connTile.Position()[0]
-			diffY := tilePos[1] - connTile.Position()[1]
+			if x == 0 && y == 0 {
+				continue
+			}
 
-			cost := math.Sqrt(diffX * diffX + diffY * diffY)
+			connTile := world.heightMap[tile.X+x][tile.Y+y]
+			diffX := math.Abs(tilePos[0] - connTile.Position()[0])
+			diffY := math.Abs(tilePos[1] - connTile.Position()[1])
+
+			cost := math.Sqrt(diffX*diffX + diffY*diffY)
 
 			graph.Add(tile, connTile, cost)
 		}
@@ -174,7 +180,7 @@ func (w *World) addConnsToGraph(graph *Graph, tile *creator.Tile, maxX, maxY int
 }
 
 func (w *World) Collision(a *Entity) bool {
-	qT := quadtree.NewQuadTree(quadtree.NewBoundingBox(-w.sizeX / 2, w.sizeX / 2, -w.sizeY / 2, w.sizeY / 2))
+	qT := quadtree.NewQuadTree(quadtree.NewBoundingBox(-w.sizeX/2, w.sizeX/2, -w.sizeY/2, w.sizeY/2))
 	for _, b := range world.entities.GetAll() {
 		qT.Add(b)
 	}
@@ -257,4 +263,21 @@ func (w *World) Serialize(serializeAll bool) *bytes.Buffer {
 		}
 	}
 	return buf
+}
+
+func savemap(world *World) {
+	mapFile, err := os.Create("./map.json")
+	if err != nil {
+		fmt.Errorf("opening map file %s\n", err.Error())
+	}
+
+	j, jerr := json.MarshalIndent(world.heightMap, "", "  ")
+	if jerr != nil {
+		fmt.Println("jerr:", jerr.Error())
+	}
+
+	_, werr := mapFile.Write(j)
+	if werr != nil {
+		fmt.Println("werr:", werr.Error())
+	}
 }

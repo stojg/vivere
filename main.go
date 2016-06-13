@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/stojg/vivere/client"
 	"github.com/stojg/vivere/creator"
 	"golang.org/x/net/websocket"
@@ -9,7 +10,7 @@ import (
 	"math/rand"
 	"net/http"
 	"time"
-	"fmt"
+	_ "expvar"
 )
 
 var world *World

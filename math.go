@@ -434,9 +434,9 @@ func (data *Matrix4) SetInverse(m *Matrix4) {
 	data[11] = (+m[8]*m[6]*m[3] - m[4]*m[9]*m[3] - m[8]*m[1]*m[7] + m[0]*m[9]*m[7] + m[4]*m[1]*m[11] - m[0]*m[5]*m[11]) * det
 }
 
-func (this *Matrix4) Inverse(m *Matrix4) *Matrix4 {
+func (m *Matrix4) Inverse() *Matrix4 {
 	result := &Matrix4{}
-	result.SetInverse(this)
+	result.SetInverse(m)
 	return result
 }
 
