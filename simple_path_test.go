@@ -4,16 +4,16 @@ import "testing"
 
 func TestSimpleGraph(t *testing.T) {
 
-	graph := NewSimpleGraph(4, 2)
-	graph.Add(0, 0, 1.0)
-	graph.Add(1, 0, 1.0)
-	graph.Add(2, 0, 1.0)
-	graph.Add(3, 0, 1.0)
+	graph := NewGridGraph(4, 2)
+	graph.Add(0, 0)
+	graph.Add(1, 0)
+	graph.Add(2, 0)
+	graph.Add(3, 0)
 
-	graph.Add(0, 1, 1.0)
-	graph.Add(1, 1, 1.0)
-	graph.Add(2, 1, 1.0)
-	graph.Add(3, 1, 1.0)
+	graph.Add(0, 1)
+	graph.Add(1, 1)
+	graph.Add(2, 1)
+	graph.Add(3, 1)
 
 	actual := graph.Neighbours(3, 0)
 
