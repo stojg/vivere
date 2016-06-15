@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "expvar"
 	"fmt"
 	"github.com/stojg/vivere/client"
 	"github.com/stojg/vivere/creator"
@@ -10,7 +11,6 @@ import (
 	"math/rand"
 	"net/http"
 	"time"
-	_ "expvar"
 )
 
 var world *World
