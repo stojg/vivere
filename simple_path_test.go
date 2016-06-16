@@ -58,6 +58,28 @@ func TestSimpleGraph(t *testing.T) {
 	}
 }
 
+func BenchmarkGraph_Init(b *testing.B) {
+	var tiles [][]*creator.Tile
+	file, e := ioutil.ReadFile("./testdata/map.json")
+	if e != nil {
+		fmt.Printf("File error: %v\n", e)
+		os.Exit(1)
+	}
+	json.Unmarshal(file, &tiles)
+	graph := NewGridGraph(100,100)
+	for x := range tiles {
+		for _, tile := range tiles[x] {
+			if tile.Value <= 0 {
+				graph.Add(tile.X, tile.Y)
+			}
+		}
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		graph.Init()
+	}
+}
+
 func TestPathFinder(t *testing.T) {
 
 	graph := NewGridGraph(4, 2)
@@ -75,27 +97,26 @@ func TestPathFinder(t *testing.T) {
 		t.Errorf("expected 3 neighbours for 0,0, got %d: %v", len(actual), actual)
 		return
 	}
-
-	list := PathFinder(graph, [2]int{0,0}, [2]int{3,1})
-
-	if len(list) != 3 {
+	list, cost := PathFinder(graph, [2]int{0,0}, [2]int{3,1})
+	if len(list) != 4 {
 		t.Errorf("wrong path: %v\n", list)
 		for i := range list {
-			t.Errorf("wrong path: %v\n", list[i].ID)
+			t.Errorf("wrong path: %v %f\n", list[i], cost[i])
 		}
-
 	}
 }
 
-func TestPathMap(t *testing.T) {
+func TestPathFinder_Bigger(t *testing.T) {
 	var tiles [][]*creator.Tile
 	file, e := ioutil.ReadFile("./testdata/map.json")
 	if e != nil {
 		fmt.Printf("File error: %v\n", e)
 		os.Exit(1)
 	}
+
 	json.Unmarshal(file, &tiles)
-	graph := NewGridGraph(10000,10000)
+
+	graph := NewGridGraph(100,100)
 	for x := range tiles {
 		for _, tile := range tiles[x] {
 			if tile.Value <= 0 {
@@ -104,20 +125,21 @@ func TestPathMap(t *testing.T) {
 		}
 	}
 	graph.Init()
-	t.Logf("Map initialised")
 
-	list := PathFinder(graph, [2]int{0, 0}, [2]int{1, 1})
+	cameFrom, _ := PathFinder(graph, [2]int{30, 20}, [2]int{50, 50})
 
-	pathLength := len(list)
-	expected := 1
+	pathLength := len(cameFrom)
+	expected := 57
 	if pathLength != expected {
 		t.Errorf("PathFinder should have found a path with %d steps, got %d", expected, pathLength)
 	}
 }
 
-var benchList []*PathFindingNode
+var benchList [][2]int
 
-func BenchmarkPathMap(b *testing.B) {
+// BenchmarkPath_Bigger-4                	   10000	    122626 ns/op
+// BenchmarkPath_Bigger-4                	   10000	    175879 ns/op
+func BenchmarkPath_Bigger(b *testing.B) {
 	var tiles [][]*creator.Tile
 	file, e := ioutil.ReadFile("./testdata/map.json")
 	if e != nil {
@@ -125,7 +147,7 @@ func BenchmarkPathMap(b *testing.B) {
 		os.Exit(1)
 	}
 	json.Unmarshal(file, &tiles)
-	graph := NewGridGraph(10000,10000)
+	graph := NewGridGraph(100,100)
 	for x := range tiles {
 		for _, tile := range tiles[x] {
 			if tile.Value <= 0 {
@@ -137,6 +159,6 @@ func BenchmarkPathMap(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		benchList = PathFinder(graph, [2]int{0, 0}, [2]int{1, 1})
+		benchList, _ = PathFinder(graph, [2]int{0, 0}, [2]int{50, 50})
 	}
 }

@@ -23,7 +23,7 @@ type World struct {
 	collision     *CollisionDetector
 	forceRegistry *ForceRegistry
 	heightMap     [][]*creator.Tile
-	graph         *Graph
+	graph         *GridGraph
 	sizeX         float64
 	sizeY         float64
 }
@@ -102,13 +102,13 @@ func (world *World) SetMap(heightMap [][]*creator.Tile) {
 	minimalHeight := 0.1
 
 	world.heightMap = heightMap
-	world.graph = NewGraph()
+	world.graph = NewGridGraph(100, 100)
 
 	for x := range world.heightMap {
 		for _, tile := range world.heightMap[x] {
 			height := tile.Value
 			if height <= minimalHeight {
-				world.addConnsToGraph(world.graph, tile, len(world.heightMap)-1, len(world.heightMap[0])-1)
+				world.graph.Add(tile.X, tile.Y)
 			}
 
 			if height < minimalHeight {
@@ -126,25 +126,26 @@ func (world *World) SetMap(heightMap [][]*creator.Tile) {
 			ent.Position.Set(posX, ent.Scale[1]/2, posY)
 		}
 	}
+	world.graph.Init()
 
 	fmt.Printf("searching path in %d X %d map\n", len(world.heightMap), len(world.heightMap[0]))
 	start := time.Now()
-	list := AStar(world.graph, world.heightMap[1][1], world.heightMap[99][99])
+	list, _ := PathFinder(world.graph, [2]int{1,1}, [2]int{99,99})
 	fmt.Printf("searching done, list size: %d, took %s\n", len(list), time.Now().Sub(start))
 
 	for _, l := range list {
-
-		if tile, found := l.node.(*creator.Tile); found {
+		//fmt.Println(l)
+	//	if tile, found := l.node.(*creator.Tile); found {
 			ent := world.entities.NewEntity()
 			ent.Body.InvMass = 0
 			ent.Type = ENTITY_SCARED
-			size := float64(tile.Size)
+			size := float64(15)
 			ent.Scale.Set(size/4, size/4, size/4)
 			ent.geometry = &Rectangle{HalfSize: *ent.Scale.NewScale(0.5)}
-			posX := tile.Position()[0] - float64(world.sizeX/2)
-			posY := tile.Position()[1] - float64(world.sizeY/2)
+			posX := float64(l[0] * 32) - float64(world.sizeX/2)
+			posY := float64(l[1] * 32) - float64(world.sizeY/2)
 			ent.Position.Set(posX, ent.Scale[1]/2, posY)
-		}
+	//	}
 	}
 
 }

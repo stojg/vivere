@@ -34,6 +34,12 @@ type GridGraph struct {
 
 // Add adds a node to the graph
 func (graph *GridGraph) Add(x, y int) {
+	if x > graph.width {
+		graph.width = x
+	}
+	if y > graph.height {
+		graph.height = y
+	}
 	graph.nodes[x+y*graph.width] = true
 }
 
@@ -94,84 +100,84 @@ func (graph *GridGraph) inGrid(x, y int) bool {
 
 // PathFindingNode gets inserted into a priority queue.
 type PathFindingNode struct {
-	// From is the node where we came from, for the start node, this will be nil
-	From *PathFindingNode
 	// Cost contains the total cost from the start node to this node
-	Cost float64
-	// This contains the estimated cost to the target
-	EstimatedCost float64
+	Priority      float64
 	// Unique ID that references the item in a navigational graph
-	ID [2]int
-	// Closed is set to true if this is node is in the closed list, maybe not needed?
-	Closed bool
+	ID            [2]int
 	// index is an internal reference to which index in the PathFindingQueue
 	// this items sits in
-	index int
+	index         int
 }
 
-func PathFinder(graph *GridGraph, start, goal [2]int) []*PathFindingNode {
+func pathHeuristic(a, b [2]int) float64 {
+	return math.Abs(float64(a[0] - b[0])) + math.Abs(float64(a[1] - b[1]))
+}
+
+func PathFinder(graph *GridGraph, start, goal [2]int) ([][2]int, []float64) {
 
 	closed := make(map[[2]int]bool)
+	cameFrom :=make(map[[2]int][2]int)
+	costSoFar := make(map[[2]int]float64)
 
-	open := make(PathFindingQueue, 0)
+	frontier := make(PathFindingQueue, 0)
+
 	startNode := &PathFindingNode {
 		ID: start,
-		From: nil,
 	}
-	heap.Push(&open, startNode)
-	heap.Init(&open)
+	heap.Push(&frontier, startNode)
+	heap.Init(&frontier)
 
 	var current *PathFindingNode
 
-	for open.Len() > 0 {
-		current = heap.Pop(&open).(*PathFindingNode)
+	for frontier.Len() > 0 {
+		current = heap.Pop(&frontier).(*PathFindingNode)
 
 		if current.ID == goal {
 			break
 		}
+
 		neighbours := graph.Neighbours(current.ID)
 		for i := range neighbours {
-			toNode := neighbours[i]
+			next := neighbours[i]
 			// skip if the node is closed
-			if _, ok := closed[toNode]; ok {
-
+			if _, isClosed := closed[next]; isClosed {
 				continue
 			}
 			// get the cost estimate for the end node
-			costToNeighbour := current.Cost + graph.Cost(current.ID, i)
+			newCost := costSoFar[current.ID] + graph.Cost(current.ID, i)
 
+			prevCost, prevVisited := costSoFar[next];
+			if !prevVisited || newCost < prevCost {
+				costSoFar[next] = newCost
+				record := &PathFindingNode {
+					ID: next,
+					Priority: newCost + pathHeuristic(next, goal),
+				}
+				heap.Push(&frontier, record)
+				cameFrom[next] = current.ID
+			}
 			// we are here if we need to update the record, update the cost and connection
 			// we don't care about duplicate entries
-			record := &PathFindingNode {
-				ID: toNode,
-				Cost: costToNeighbour,
-				From: current,
-			}
-			heap.Push(&open, record)
 		}
 		closed[current.ID] = true
 	}
 
-	// we're here either found the goal or we have no more nodes to search,
-	// find out which
+	pathList := make([][2]int, 0)
+	costList := make([]float64, 0)
+
+	// we did not find the goal
 	if current == nil || current.ID != goal {
-		return nil
+		return pathList, costList
 	}
 
-	var path []*PathFindingNode
-
-	for current != startNode {
-		path = append(path, current)
-		current = current.From
+	next, ok := current.ID, true
+	for ok {
+		pathList = append(pathList, next)
+		costList = append(costList, costSoFar[next])
+		next, ok = cameFrom[next]
 	}
 
-
-	// reverse the list
-	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
-		path[i], path[j] = path[j], path[i]
-	}
-
-	return path
+	return pathList, costList
 }
 
 // PathFindingQueue is priority queue that keeps PathFindingNodes sorted
@@ -181,7 +187,7 @@ type PathFindingQueue []*PathFindingNode
 func (pq PathFindingQueue) Len() int { return len(pq) }
 
 func (pq PathFindingQueue) Less(i, j int) bool {
-	return pq[i].Cost < pq[j].Cost
+	return pq[i].Priority < pq[j].Priority
 }
 
 func (pq PathFindingQueue) Swap(i, j int) {
@@ -210,6 +216,6 @@ func (pq *PathFindingQueue) Pop() interface{} {
 
 // update modifies the priority and value of an Item in the queue.
 func (pq *PathFindingQueue) Update(item *PathFindingNode, priority float64) {
-	item.Cost = priority
+	item.Priority = priority
 	heap.Fix(pq, item.index)
 }

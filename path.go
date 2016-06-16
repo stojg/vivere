@@ -215,7 +215,6 @@ func AStar(graph *Graph, start, goal Node) []*NodeRecord {
 		path[i], path[j] = path[j], path[i]
 	}
 
-	fmt.Println("Opened ", opened)
 	return path
 }
 
