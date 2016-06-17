@@ -3,6 +3,7 @@ package main
 import (
 	"math"
 	"math/rand"
+	//"fmt"
 )
 
 // SteeringOutput describes wished changes in velocity (linear) and rotation (angular)
@@ -356,4 +357,69 @@ func (wander *Wander) GetSteering() *SteeringOutput {
 // randomBinomial get a random number between -1 and + 1
 func (s *Wander) randomBinomial() float64 {
 	return rand.Float64() - rand.Float64()
+}
+
+func NewFollowPath(character *Entity, path *Path) *FollowPath {
+	return &FollowPath {
+		character: character,
+		path: path,
+		pathOffset: 1,
+		currentParam: 0,
+	}
+}
+
+type FollowPath struct {
+	character    *Entity
+	path         *Path
+	pathOffset   int
+	currentParam int
+}
+
+func (follow *FollowPath) GetSteering() *SteeringOutput {
+
+	// find the current position on the path
+	follow.currentParam = follow.path.getParam(follow.character.Position, follow.currentParam)
+
+	// offset it
+	targetParam := follow.currentParam + follow.pathOffset
+
+	target := NewEntity()
+	target.Position = follow.path.getPosition(targetParam)
+
+	seek := NewSeek(follow.character, target)
+	return seek.GetSteering()
+}
+
+type Path struct {
+	points []*Vector3
+
+}
+
+func (p *Path) getParam(position *Vector3, lastparam int) int {
+	closest := 0
+	distance := math.MaxFloat64
+	for i := range p.points {
+		sqrDist := position.NewSub(p.points[i]).SquareLength()
+		if sqrDist < distance {
+			closest = i
+			distance = sqrDist
+		}
+	}
+	return closest
+}
+
+func (p *Path) getPosition(param int) *Vector3 {
+	if param > len(p.points)-1 {
+		param = len(p.points)-1
+	}
+	if param < 0 {
+		param = 0
+	}
+	if len(p.points) == 0 {
+		panic("why on earth?")
+	}
+
+	//fmt.Println(param, len(p.points))
+
+	return p.points[param]
 }

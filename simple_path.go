@@ -3,6 +3,7 @@ package main
 import (
 	"container/heap"
 	"math"
+	"fmt"
 )
 
 func NewGridGraph(width, height int) *GridGraph {
@@ -132,11 +133,16 @@ func PathFinder(graph *GridGraph, start, goal [2]int) ([][2]int, []float64) {
 	for frontier.Len() > 0 {
 		current = heap.Pop(&frontier).(*PathFindingNode)
 
-		if current.ID == goal {
+		if current.ID == goal || current == nil {
 			break
 		}
 
+
 		neighbours := graph.Neighbours(current.ID)
+		if len(neighbours) == 0 {
+			fmt.Println("no neightbours?")
+			continue
+		}
 		for i := range neighbours {
 			next := neighbours[i]
 			// skip if the node is closed
@@ -176,6 +182,11 @@ func PathFinder(graph *GridGraph, start, goal [2]int) ([][2]int, []float64) {
 		costList = append(costList, costSoFar[next])
 		next, ok = cameFrom[next]
 	}
+
+	for i, j := 0, len(pathList)-1; i < j; i, j = i+1, j-1 {
+		pathList[i], pathList[j] = pathList[j], pathList[i]
+	}
+
 
 	return pathList, costList
 }

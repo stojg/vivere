@@ -39,12 +39,9 @@ func main() {
 
 	world.forceRegistry = &ForceRegistry{}
 
-	drag := &Drag{
-		k1: 0.01,
-		k2: 0.01 * 0.01,
-	}
+	drag := &Drag{k1: 0.05, k2: 0.05 * 0.05, }
 
-	for a := 0; a < 0; a++ {
+	for a := 0; a < 50; a++ {
 		ent := NewPray(world, rand.Float64()*spawnZone[0]-spawnZone[0]/2, 15/2-1, rand.Float64()*spawnZone[1]-spawnZone[1]/2)
 		//ent := NewPray(world, 0, 15/2-1, 0)
 

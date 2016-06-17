@@ -99,7 +99,7 @@ require(["src/server", 'src/entity', "src/world", "src/player", 'lib/datastream'
 
         var ground = BABYLON.Mesh.CreateGround("ground1", 3232, 3232, 1, scene);
         var groundMat = new BABYLON.StandardMaterial("texture1", scene);
-        groundMat.diffuseColor = new BABYLON.Color3(0.2, 0.8, 0.21);
+        groundMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.8);
         groundMat.alpha = 0.1;
         groundMat.specularPower = 512;
         ground.material = groundMat;

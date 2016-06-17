@@ -26,11 +26,12 @@ type World struct {
 	graph         *GridGraph
 	sizeX         float64
 	sizeY         float64
+	tileSize      int
 }
 
 const (
 	SEC_PER_UPDATE  float64 = 0.016
-	SEC_PER_MESSAGE float64 = 0.05
+	SEC_PER_MESSAGE float64 = 0.06
 )
 
 func NewWorld(debug bool, sizeX, sizeY float64) *World {
@@ -99,7 +100,7 @@ func (world *World) GameLoop() {
 }
 
 func (world *World) SetMap(heightMap [][]*creator.Tile) {
-	minimalHeight := 0.1
+	minimalHeight := 0.2
 
 	world.heightMap = heightMap
 	world.graph = NewGridGraph(100, 100)
@@ -119,69 +120,49 @@ func (world *World) SetMap(heightMap [][]*creator.Tile) {
 			ent.Body.InvMass = 0
 			ent.Type = ENTITY_BLOCK
 			size := float64(tile.Size)
-			ent.Scale.Set(size, size*height, size)
+			ent.Scale.Set(size, size * height, size)
 			ent.geometry = &Rectangle{HalfSize: *ent.Scale.NewScale(0.5)}
-			posX := tile.Position()[0] - float64(world.sizeX/2)
-			posY := tile.Position()[1] - float64(world.sizeY/2)
-			ent.Position.Set(posX, ent.Scale[1]/2, posY)
+			posX := tile.Position()[0] - float64(world.sizeX / 2)
+			posY := tile.Position()[1] - float64(world.sizeY / 2)
+			ent.Position.Set(posX, ent.Scale[1] / 2, posY)
 		}
 	}
 	world.graph.Init()
 
-	fmt.Printf("searching path in %d X %d map\n", len(world.heightMap), len(world.heightMap[0]))
-	start := time.Now()
-	list, _ := PathFinder(world.graph, [2]int{1,1}, [2]int{99,99})
-	fmt.Printf("searching done, list size: %d, took %s\n", len(list), time.Now().Sub(start))
+	//fmt.Printf("searching path in %d X %d map\n", len(world.heightMap), len(world.heightMap[0]))
+	//start := time.Now()
+	//list, _ := PathFinder(world.graph, [2]int{1,1}, [2]int{99,99})
+	//fmt.Printf("searching done, list size: %d, took %s\n", len(list), time.Now().Sub(start))
 
-	for _, l := range list {
-		//fmt.Println(l)
-	//	if tile, found := l.node.(*creator.Tile); found {
-			ent := world.entities.NewEntity()
-			ent.Body.InvMass = 0
-			ent.Type = ENTITY_SCARED
-			size := float64(15)
-			ent.Scale.Set(size/4, size/4, size/4)
-			ent.geometry = &Rectangle{HalfSize: *ent.Scale.NewScale(0.5)}
-			posX := float64(l[0] * 32) - float64(world.sizeX/2)
-			posY := float64(l[1] * 32) - float64(world.sizeY/2)
-			ent.Position.Set(posX, ent.Scale[1]/2, posY)
-	//	}
-	}
+	//for _, l := range list {
+	//		ent := world.entities.NewEntity()
+	//		ent.Body.InvMass = 0
+	//		ent.Type = ENTITY_SCARED
+	//		size := float64(15)
+	//		ent.Scale.Set(size/4, size/4, size/4)
+	//		ent.geometry = &Rectangle{HalfSize: *ent.Scale.NewScale(0.5)}
+	//		posX := float64(l[0] * 32) - float64(world.sizeX/2)
+	//		posY := float64(l[1] * 32) - float64(world.sizeY/2)
+	//		ent.Position.Set(posX, ent.Scale[1]/2, posY)
+	//}
 
 }
 
-func (w *World) addConnsToGraph(graph *Graph, tile *creator.Tile, maxX, maxY int) {
+func (w *World) toTilePosition(pos *Vector3) [2]int {
+	x := int(pos[0] + float64(world.sizeX / 2)) / 32
+	z := int(pos[2] + float64(world.sizeY / 2)) / 32
+	return [2]int{x, z}
+}
 
-	axes := []int{-1, 0, 1}
+func (w *World) toPosition(tilePos [2]int) *Vector3 {
+	x := (float64(tilePos[0] * 32) - 16) - float64(world.sizeX / 2)
+	z := (float64(tilePos[1] * 32) - 16) - float64(world.sizeY / 2)
 
-	tilePos := tile.Position()
-
-	for _, x := range axes {
-		if tile.X+x < 0 || tile.X+x > maxX {
-			continue
-		}
-		for _, y := range axes {
-			if tile.Y+y < 0 || tile.Y+y > maxY {
-				continue
-			}
-			if x == 0 && y == 0 {
-				continue
-			}
-
-			connTile := world.heightMap[tile.X+x][tile.Y+y]
-			diffX := math.Abs(tilePos[0] - connTile.Position()[0])
-			diffY := math.Abs(tilePos[1] - connTile.Position()[1])
-
-			cost := math.Sqrt(diffX*diffX + diffY*diffY)
-
-			graph.Add(tile, connTile, cost)
-		}
-	}
-
+	return &Vector3{x, 0, z}
 }
 
 func (w *World) Collision(a *Entity) bool {
-	qT := quadtree.NewQuadTree(quadtree.NewBoundingBox(-w.sizeX/2, w.sizeX/2, -w.sizeY/2, w.sizeY/2))
+	qT := quadtree.NewQuadTree(quadtree.NewBoundingBox(-w.sizeX / 2, w.sizeX / 2, -w.sizeY / 2, w.sizeY / 2))
 	for _, b := range world.entities.GetAll() {
 		qT.Add(b)
 	}
