@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	. "github.com/volkerp/goquadtree/quadtree"
+	"github.com/volkerp/goquadtree/quadtree"
 	"math"
 )
 
@@ -45,6 +45,14 @@ func (gol *EntityList) NewEntity() *Entity {
 	g.ID = (gol.nextID)
 	gol.Add(g)
 	return g
+}
+
+func (gol *EntityList) QuadTree() *quadtree.QuadTree {
+	tree := quadtree.NewQuadTree(quadtree.NewBoundingBox(-world.sizeX/2, world.sizeX/2, -world.sizeY/2, world.sizeY/2))
+	for _, b := range gol.GetAll() {
+		tree.Add(b)
+	}
+	return &tree
 }
 
 func (gol *EntityList) Add(i *Entity) bool {
@@ -102,9 +110,9 @@ type Entity struct {
 	MaxAngularAcceleration *Vector3 // limits the linear acceleration
 	MaxRotation            float64  // limits the angular velocity
 
-	Scale    *Vector3    // the size of this entity
-	bBox     BoundingBox // for broad phase collision detection
-	geometry interface{} // for narrow phase collision detection
+	Scale    *Vector3             // the size of this entity
+	bBox     quadtree.BoundingBox // for broad phase collision detection
+	geometry interface{}          // for narrow phase collision detection
 
 	Type EntityType
 	Dead bool
@@ -118,7 +126,7 @@ type Entity struct {
 	Body  *RigidBody
 }
 
-func (g *Entity) BoundingBox() BoundingBox {
+func (g *Entity) BoundingBox() quadtree.BoundingBox {
 	g.bBox.MinX = g.Position[0] - g.Scale[0]
 	g.bBox.MaxX = g.Position[0] + g.Scale[0]
 	g.bBox.MinY = g.Position[1] - g.Scale[1]

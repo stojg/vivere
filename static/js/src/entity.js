@@ -80,7 +80,6 @@ define(["lib/babylon.2.3.max"], function () {
                 return;
             }
 
-
             this.applyServerUpdates();
 
             latestSnapshot = this.getLatestState(tFrame);
@@ -111,7 +110,6 @@ define(["lib/babylon.2.3.max"], function () {
             }
 
             if (latestSnapshot.orientation) {
-
                 var q = new BABYLON.Quaternion(latestSnapshot.orientation[1], latestSnapshot.orientation[2], latestSnapshot.orientation[3], latestSnapshot.orientation[0]);
                 this.sprite.rotationQuaternion  = q
             }

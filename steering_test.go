@@ -115,15 +115,14 @@ func TestFace_calculateOrientation(t *testing.T) {
 	}
 }
 
-
 func TestPath_getParam(t *testing.T) {
 	points := []*Vector3{
-		&Vector3{0,0,0},
-		&Vector3{1,0,0},
-		&Vector3{2,0,0},
-		&Vector3{3,0,0},
-		&Vector3{4,0,0},
-		&Vector3{5,0,0},
+		&Vector3{0, 0, 0},
+		&Vector3{1, 0, 0},
+		&Vector3{2, 0, 0},
+		&Vector3{3, 0, 0},
+		&Vector3{4, 0, 0},
+		&Vector3{5, 0, 0},
 	}
 
 	path := &Path{
@@ -140,7 +139,7 @@ func TestPath_getParam(t *testing.T) {
 		t.Errorf("Expected param to be 0, got %d", param)
 	}
 
-	param = path.getParam(&Vector3{3,0,0}, 2)
+	param = path.getParam(&Vector3{3, 0, 0}, 2)
 	if param != 3 {
 		t.Errorf("Expected param to be 3, got %d", param)
 	}
@@ -148,12 +147,12 @@ func TestPath_getParam(t *testing.T) {
 
 func TestPath_getPosition(t *testing.T) {
 	points := []*Vector3{
-		&Vector3{0,0,0},
-		&Vector3{1,0,0},
-		&Vector3{2,0,0},
-		&Vector3{3,0,0},
-		&Vector3{4,0,0},
-		&Vector3{5,0,0},
+		&Vector3{0, 0, 0},
+		&Vector3{1, 0, 0},
+		&Vector3{2, 0, 0},
+		&Vector3{3, 0, 0},
+		&Vector3{4, 0, 0},
+		&Vector3{5, 0, 0},
 	}
 
 	path := &Path{
@@ -163,14 +162,12 @@ func TestPath_getPosition(t *testing.T) {
 	expected := points[0]
 	pos := path.getPosition(0)
 	if !pos.Equals(expected) {
-		t.Errorf("Expected position to be %v, got %v", expected,  pos)
+		t.Errorf("Expected position to be %v, got %v", expected, pos)
 	}
-
 
 	expected = points[1]
 	pos = path.getPosition(1)
 	if !pos.Equals(expected) {
-		t.Errorf("Expected position to be %v, got %v", expected,  pos)
+		t.Errorf("Expected position to be %v, got %v", expected, pos)
 	}
 }
-

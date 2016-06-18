@@ -1,10 +1,42 @@
 package main
 
 import (
+	"github.com/volkerp/goquadtree/quadtree"
 	"math"
 )
 
 type CollisionDetector struct{}
+
+func (c *CollisionDetector) Collisions(entities map[uint16]*Entity, tree *quadtree.QuadTree) []*Collision {
+
+	collisions := make([]*Collision, 0)
+	checked := make(map[string]bool, 0)
+
+	for _, a := range entities {
+		if !a.Changed {
+			continue
+		}
+
+		t := tree.Query(a.BoundingBox())
+		for _, b := range t {
+			if a == b {
+				continue
+			}
+
+			hashA := string(a.ID) + ":" + string(b.(*Entity).ID)
+			hashB := string(b.(*Entity).ID) + ":" + string(a.ID)
+			if checked[hashA] || checked[hashB] {
+				continue
+			}
+			checked[hashA], checked[hashB] = true, true
+			collision, hit := c.Detect(a, b.(*Entity))
+			if hit {
+				collisions = append(collisions, collision)
+			}
+		}
+	}
+	return collisions
+}
 
 func (c *CollisionDetector) Detect(a *Entity, b *Entity) (collision *Collision, hit bool) {
 

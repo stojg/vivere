@@ -3,7 +3,6 @@ package main
 import (
 	"container/heap"
 	"math"
-	"fmt"
 )
 
 func NewGridGraph(width, height int) *GridGraph {
@@ -31,6 +30,10 @@ type GridGraph struct {
 	nodes  []bool
 	edges  [][][2]int
 	costs  [][]float64
+}
+
+func (graph *GridGraph) Len() int {
+	return len(graph.nodes)
 }
 
 // Add adds a node to the graph
@@ -82,12 +85,12 @@ func (graph *GridGraph) Init() {
 
 // Neighbours
 func (graph *GridGraph) Neighbours(id [2]int) [][2]int {
-	return graph.edges[id[0]+ id[1]*graph.width]
+	return graph.edges[id[0]+id[1]*graph.width]
 }
 
 // Cost
 func (graph *GridGraph) Cost(id [2]int, neighbour int) float64 {
-	return graph.costs[id[0]+ id[1]*graph.width][neighbour]
+	return graph.costs[id[0]+id[1]*graph.width][neighbour]
 }
 
 // inGrid will return true/false if an x and y is inside the graph
@@ -102,45 +105,49 @@ func (graph *GridGraph) inGrid(x, y int) bool {
 // PathFindingNode gets inserted into a priority queue.
 type PathFindingNode struct {
 	// Cost contains the total cost from the start node to this node
-	Priority      float64
+	Priority float64
 	// Unique ID that references the item in a navigational graph
-	ID            [2]int
+	ID [2]int
 	// index is an internal reference to which index in the PathFindingQueue
 	// this items sits in
-	index         int
+	index int
 }
 
 func pathHeuristic(a, b [2]int) float64 {
-	return math.Abs(float64(a[0] - b[0])) + math.Abs(float64(a[1] - b[1]))
+	return math.Abs(float64(a[0]-b[0])) + math.Abs(float64(a[1]-b[1]))
 }
 
 func PathFinder(graph *GridGraph, start, goal [2]int) ([][2]int, []float64) {
 
 	closed := make(map[[2]int]bool)
-	cameFrom :=make(map[[2]int][2]int)
+	cameFrom := make(map[[2]int][2]int)
 	costSoFar := make(map[[2]int]float64)
 
 	frontier := make(PathFindingQueue, 0)
-
-	startNode := &PathFindingNode {
+	heap.Push(&frontier, &PathFindingNode{
 		ID: start,
-	}
-	heap.Push(&frontier, startNode)
+	})
 	heap.Init(&frontier)
 
 	var current *PathFindingNode
 
 	for frontier.Len() > 0 {
 		current = heap.Pop(&frontier).(*PathFindingNode)
-
 		if current.ID == goal || current == nil {
 			break
 		}
 
+		if current.ID[0] > graph.width-1 || current.ID[1] > graph.height {
+			Printf("PathFinder: current.ID outside of bounds? %v", current.ID)
+		}
+
+		if len(graph.edges) < 1 {
+			iPrintf("PathFinder: there are no neighbours for tile %v", current.ID)
+		}
 
 		neighbours := graph.Neighbours(current.ID)
 		if len(neighbours) == 0 {
-			fmt.Println("no neightbours?")
+			iPrintf("PathFinder: Could not find any neighbours for tile %v", current.ID)
 			continue
 		}
 		for i := range neighbours {
@@ -152,18 +159,15 @@ func PathFinder(graph *GridGraph, start, goal [2]int) ([][2]int, []float64) {
 			// get the cost estimate for the end node
 			newCost := costSoFar[current.ID] + graph.Cost(current.ID, i)
 
-			prevCost, prevVisited := costSoFar[next];
+			prevCost, prevVisited := costSoFar[next]
 			if !prevVisited || newCost < prevCost {
-				costSoFar[next] = newCost
-				record := &PathFindingNode {
-					ID: next,
+				heap.Push(&frontier, &PathFindingNode{
+					ID:       next,
 					Priority: newCost + pathHeuristic(next, goal),
-				}
-				heap.Push(&frontier, record)
+				})
+				costSoFar[next] = newCost
 				cameFrom[next] = current.ID
 			}
-			// we are here if we need to update the record, update the cost and connection
-			// we don't care about duplicate entries
 		}
 		closed[current.ID] = true
 	}
@@ -183,10 +187,10 @@ func PathFinder(graph *GridGraph, start, goal [2]int) ([][2]int, []float64) {
 		next, ok = cameFrom[next]
 	}
 
+	// reverse the order
 	for i, j := 0, len(pathList)-1; i < j; i, j = i+1, j-1 {
 		pathList[i], pathList[j] = pathList[j], pathList[i]
 	}
-
 
 	return pathList, costList
 }
@@ -206,7 +210,6 @@ func (pq PathFindingQueue) Swap(i, j int) {
 	pq[i].index = i
 	pq[j].index = j
 }
-
 
 // http://dave.cheney.net/2014/06/07/five-things-that-make-go-fast
 func (pq *PathFindingQueue) Push(x interface{}) {

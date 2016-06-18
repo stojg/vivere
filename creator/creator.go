@@ -31,7 +31,7 @@ type Creator struct {
 	seed     int64
 }
 
-func (c *Creator) Create() {
+func (c *Creator) Create() [][]*Tile{
 	perlin := NewPerlinNoise(c.seed)
 
 	for x := range c.tiles {
@@ -39,12 +39,9 @@ func (c *Creator) Create() {
 		for y := range c.tiles[x] {
 			v := perlin.At2d(float64(x)* 0.1, float64(y)* 0.1)
 			c.tiles[x][y] = NewTile(c.tileSize, x, y, v, c.sizeY)
-
 		}
 	}
-}
 
-func (c *Creator) GetMap() [][]*Tile {
 	return c.tiles
 }
 

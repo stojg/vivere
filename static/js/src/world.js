@@ -7,8 +7,9 @@ define(['src/entity', 'lib/babylon.2.3.max'], function (entity) {
     return function (scene) {
 
         var blue = new BABYLON.StandardMaterial("texture1", scene);
-        blue.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.7);
-        blue.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0);
+        blue.ambientColor = new BABYLON.Color3(0.0, 0.0, 0.4);
+        blue.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.5);
+        blue.specularColor = new BABYLON.Color3(0.3, 0.3, 0.6);
 
         var front = new BABYLON.StandardMaterial("texture1", scene);
         front.diffuseColor = new BABYLON.Color3(1.0, 0.0, 0.0);
@@ -108,7 +109,7 @@ define(['src/entity', 'lib/babylon.2.3.max'], function (entity) {
                         // we are changing entity, set a new ID that will be used by all the following non 1 cmds
                         id = buf.readFloat32();
                         if (typeof this.entities[id] == 'undefined') {
-                            this.entities[id] = entity.create(id, 120, scene, this.templates);
+                            this.entities[id] = entity.create(id, 100, scene, this.templates);
                         }
                         commands[id] = {};
                         commands[id].timestamp = window.performance.now();

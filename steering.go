@@ -3,7 +3,6 @@ package main
 import (
 	"math"
 	"math/rand"
-	//"fmt"
 )
 
 // SteeringOutput describes wished changes in velocity (linear) and rotation (angular)
@@ -360,10 +359,10 @@ func (s *Wander) randomBinomial() float64 {
 }
 
 func NewFollowPath(character *Entity, path *Path) *FollowPath {
-	return &FollowPath {
-		character: character,
-		path: path,
-		pathOffset: 1,
+	return &FollowPath{
+		character:    character,
+		path:         path,
+		pathOffset:   1,
 		currentParam: 0,
 	}
 }
@@ -392,7 +391,6 @@ func (follow *FollowPath) GetSteering() *SteeringOutput {
 
 type Path struct {
 	points []*Vector3
-
 }
 
 func (p *Path) getParam(position *Vector3, lastparam int) int {
@@ -410,13 +408,14 @@ func (p *Path) getParam(position *Vector3, lastparam int) int {
 
 func (p *Path) getPosition(param int) *Vector3 {
 	if param > len(p.points)-1 {
-		param = len(p.points)-1
+		param = len(p.points) - 1
 	}
 	if param < 0 {
 		param = 0
 	}
 	if len(p.points) == 0 {
-		panic("why on earth?")
+		Println("Getting a request for a Path.getPosition when Path.points is empty")
+		return &Vector3{0, 0, 0}
 	}
 
 	//fmt.Println(param, len(p.points))

@@ -1,8 +1,6 @@
 package main
 
 import (
-	_ "expvar"
-	"fmt"
 	"github.com/stojg/vivere/client"
 	"github.com/stojg/vivere/creator"
 	"golang.org/x/net/websocket"
@@ -10,81 +8,88 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 )
 
-var world *World
+const (
+	VERB_NORM  int = 0
+	VERB_INFO  int = 1
+	VERB_DEBUG int = 2
+)
+
+var (
+	world     *World
+	verbosity int = VERB_NORM
+)
 
 func main() {
+
+	envVerbosity := os.Getenv("VERBOSITY")
+	if envVerbosity == "" {
+		verbosity = 0
+	} else {
+		verbosity, _ = strconv.Atoi(envVerbosity)
+	}
+
 	rand.Seed(time.Now().UnixNano())
 
-	ch := client.NewClientHandler()
 	world = NewWorld(true, 3200, 3200)
 
-	world.newPlayerChan = ch.NewClients()
-
-	seed := time.Now().UnixNano()
-	seed = 1465762025024741914
-	fmt.Printf("generating world with seed %d\n", seed)
-
+	var seed int64 = 1465762025024741914
+	Printf("Creating world with seed %d\n", seed)
 	c := creator.NewCreator(seed, 32, int(world.sizeX/32), int(world.sizeY/32))
-	c.Create()
-	world.SetMap(c.GetMap())
+	world.addStaticsFromMap(c.Create())
 
-	spawnZone := []float64{
-		0.8 * world.sizeX,
-		0.8 * world.sizeY,
-	}
-	spawnZone[1] -= spawnZone[1] / 2
+	Println("Creating creatures")
 
-	world.forceRegistry = &ForceRegistry{}
-
-	drag := &Drag{k1: 0.05, k2: 0.05 * 0.05, }
-
-	for a := 0; a < 50; a++ {
-		ent := NewPray(world, rand.Float64()*spawnZone[0]-spawnZone[0]/2, 15/2-1, rand.Float64()*spawnZone[1]-spawnZone[1]/2)
-		//ent := NewPray(world, 0, 15/2-1, 0)
-
-		for world.Collision(ent) {
-			ent.Position.Set(rand.Float64()*spawnZone[0]-spawnZone[0]/2, ent.Scale[1]/2, rand.Float64()*spawnZone[1]-spawnZone[1]/2)
-		}
-
+	dragForce := &Drag{k1: 0.05, k2: 0.05 * 0.05}
+	for a := 0; a < 25; a++ {
+		ent := NewPray(world, rand.Float64()*world.sizeX-world.sizeX/2, 15/2-1, rand.Float64()*world.sizeY-world.sizeY/2)
 		ent.Orientation = QuaternionFromAxisAngle(VectorY(), rand.Float64()*(2*math.Pi)-math.Pi)
-		world.forceRegistry.Add(ent, drag)
+		for world.isColliding(ent) {
+			dPrintln("Rerolling initial position")
+			ent.Position.Set(rand.Float64()*world.sizeX-world.sizeX/2, 15/2-1, rand.Float64()*world.sizeY-world.sizeY/2)
+		}
+		world.forceRegistry.Add(ent, dragForce)
 	}
 
-	log.Println("world has been generated")
-
+	Println("Setting up networking")
+	ch := client.NewClientHandler()
+	newClientChan := ch.NewClients()
 	http.Handle("/ws/", websocket.Handler(ch.Websocket))
 	http.HandleFunc("/", staticAssets)
 
 	go func() {
 		log.Fatal(http.ListenAndServe(":8080", nil))
 	}()
-
 	go func() {
 		for {
 			select {
-			case newPlayer := <-world.newPlayerChan:
-				newPlayer.Update(world.Serialize(true))
-				world.players = append(world.players, newPlayer)
-				world.Log("[+] New client connected")
+			case client := <-newClientChan:
+				client.Update(world.Serialize(true))
+				world.players = append(world.players, client)
+				Println("New client connected")
 			}
 		}
 	}()
 
+	Printf("First frame for %d entities", len(world.entities.GetAll()))
 	for _, ent := range world.entities.GetAll() {
 		ent.Body.ClearAccumulators()
 		ent.Body.calculateDerivedData(ent)
 	}
 
+	Println("Running gameloop")
+	PrintFPS(world)
 	world.GameLoop()
 }
 
 func NewPray(world *World, x, y, z float64) *Entity {
-
 	ent := world.entities.NewEntity()
 	ent.Position.Set(x, y, z)
+	ent.MaxAcceleration = &Vector3{10, 1, 10}
 	ent.Type = 2
 	ent.Scale.Set(15, 15, 15)
 	ent.geometry = &Rectangle{
@@ -96,7 +101,7 @@ func NewPray(world *World, x, y, z float64) *Entity {
 	it := &Matrix3{}
 	it.SetBlockInertiaTensor(&Vector3{1, 1, 1}, mass)
 	ent.Body.SetInertiaTensor(it)
-	ent.Input = NewSimpleAI(world)
+	ent.Input = NewSimpleAI()
 
 	return ent
 }

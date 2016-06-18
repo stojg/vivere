@@ -1,13 +1,13 @@
 package main
 
 import (
-	"math"
-	"testing"
+	"encoding/json"
+	"fmt"
 	"github.com/stojg/vivere/creator"
 	"io/ioutil"
+	"math"
 	"os"
-	"fmt"
-	"encoding/json"
+	"testing"
 )
 
 func TestSimpleGraph(t *testing.T) {
@@ -66,7 +66,7 @@ func BenchmarkGraph_Init(b *testing.B) {
 		os.Exit(1)
 	}
 	json.Unmarshal(file, &tiles)
-	graph := NewGridGraph(100,100)
+	graph := NewGridGraph(100, 100)
 	for x := range tiles {
 		for _, tile := range tiles[x] {
 			if tile.Value <= 0 {
@@ -97,7 +97,7 @@ func TestPathFinder(t *testing.T) {
 		t.Errorf("expected 3 neighbours for 0,0, got %d: %v", len(actual), actual)
 		return
 	}
-	list, cost := PathFinder(graph, [2]int{0,0}, [2]int{3,1})
+	list, cost := PathFinder(graph, [2]int{0, 0}, [2]int{3, 1})
 	if len(list) != 4 {
 		t.Errorf("wrong path: %v\n", list)
 		for i := range list {
@@ -116,7 +116,7 @@ func TestPathFinder_Bigger(t *testing.T) {
 
 	json.Unmarshal(file, &tiles)
 
-	graph := NewGridGraph(100,100)
+	graph := NewGridGraph(100, 100)
 	for x := range tiles {
 		for _, tile := range tiles[x] {
 			if tile.Value <= 0 {
@@ -147,7 +147,7 @@ func BenchmarkPath_Bigger(b *testing.B) {
 		os.Exit(1)
 	}
 	json.Unmarshal(file, &tiles)
-	graph := NewGridGraph(100,100)
+	graph := NewGridGraph(100, 100)
 	for x := range tiles {
 		for _, tile := range tiles[x] {
 			if tile.Value <= 0 {

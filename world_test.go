@@ -11,7 +11,7 @@ var _ = Suite(&TestWorldSuite{})
 
 func (s *TestWorldSuite) TestSerialize(c *C) {
 	w := NewWorld(false, 100, 100)
-	w.Tick = 5
+	w.Frame = 5
 	buf := w.Serialize(true)
 	var expected float32
 	binary.Read(buf, binary.LittleEndian, &expected)
