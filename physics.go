@@ -8,14 +8,15 @@ func NewRigidBody(invMass float64) *RigidBody {
 	return &RigidBody{
 		forces:                    &Vector3{},
 		transformMatrix:           &Matrix4{},
-		inverseInertiaTensor:      &Matrix3{},
+		InverseInertiaTensor:      &Matrix3{},
 		inverseInertiaTensorWorld: &Matrix3{},
 		forceAccum:                &Vector3{},
 		torqueAccum:               &Vector3{},
-		Acceleration:              &Vector3{},
-		linearDamping:             0.99,
-		angularDamping:            0.99,
+		acceleration:              &Vector3{},
+		LinearDamping:             0.99,
+		AngularDamping:            0.99,
 		InvMass:                   invMass,
+		canSleep:                  true,
 	}
 }
 
@@ -38,15 +39,15 @@ type RigidBody struct {
 	//
 	// The inertia tensor, unlike the other variables that
 	// define a rigid body, is given in body space.
-	inverseInertiaTensor *Matrix3
+	InverseInertiaTensor *Matrix3
 	// Holds the amount of damping applied to linear
 	// motion.  Damping is required to remove energy added
 	// through numerical instability in the integrator.
-	linearDamping float64
+	LinearDamping float64
 	// Holds the amount of damping applied to angular
 	// motion.  Damping is required to remove energy added
 	// through numerical instability in the integrator.
-	angularDamping float64
+	AngularDamping float64
 
 	/**
 	 * Derived Data
@@ -98,7 +99,7 @@ type RigidBody struct {
 	// Holds the acceleration of the rigid body.  This value
 	// can be used to set acceleration due to gravity (its primary
 	// use), or any other constant acceleration.
-	Acceleration *Vector3
+	acceleration *Vector3
 
 	// Holds the linear acceleration of the rigid body, for the
 	// previous frame.
@@ -113,7 +114,7 @@ func (rb *RigidBody) Mass() float64 {
 }
 
 func (rb *RigidBody) SetInertiaTensor(inertiaTensor *Matrix3) {
-	rb.inverseInertiaTensor.SetInverse(inertiaTensor)
+	rb.InverseInertiaTensor.SetInverse(inertiaTensor)
 }
 
 func (rb *RigidBody) AddForce(force *Vector3) {
@@ -153,7 +154,7 @@ func (rb *RigidBody) Update(entity *Entity, elapsed float64) {
 		return
 	}
 	// Calculate linear acceleration from force inputs.
-	rb.lastFrameAcceleration = rb.Acceleration.Clone()
+	rb.lastFrameAcceleration = rb.acceleration.Clone()
 	rb.lastFrameAcceleration.AddScaledVector(rb.forceAccum, rb.InvMass)
 
 	// Calculate angular acceleration from torque inputs.
@@ -167,8 +168,8 @@ func (rb *RigidBody) Update(entity *Entity, elapsed float64) {
 	entity.Rotation.AddScaledVector(angularAcceleration, elapsed)
 
 	// Impose drag
-	entity.Velocity.Scale(math.Pow(rb.linearDamping, elapsed))
-	entity.Rotation.Scale(math.Pow(rb.angularDamping, elapsed))
+	entity.Velocity.Scale(math.Pow(rb.LinearDamping, elapsed))
+	entity.Rotation.Scale(math.Pow(rb.AngularDamping, elapsed))
 
 	// Adjust positions
 	// Update linear position
@@ -188,6 +189,7 @@ func (rb *RigidBody) Update(entity *Entity, elapsed float64) {
 		bias := math.Pow(0.5, elapsed)
 		motion := bias*rb.motion + (1-bias)*currentMotion
 		if motion < rb.sleepEpsilon {
+			Println(motion)
 			rb.isAwake = false
 		}
 	} else if rb.motion > 10*rb.sleepEpsilon {
@@ -255,5 +257,5 @@ func (rb *RigidBody) calculateTransformMatrix(transformMatrix *Matrix4, position
 func (rb *RigidBody) calculateDerivedData(entity *Entity) {
 	entity.Orientation.Normalize()
 	rb.calculateTransformMatrix(rb.transformMatrix, entity.Position, entity.Orientation)
-	rb.transformInertiaTensor(rb.inverseInertiaTensorWorld, entity.Orientation, rb.inverseInertiaTensor, rb.transformMatrix)
+	rb.transformInertiaTensor(rb.inverseInertiaTensorWorld, entity.Orientation, rb.InverseInertiaTensor, rb.transformMatrix)
 }

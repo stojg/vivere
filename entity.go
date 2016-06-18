@@ -19,6 +19,8 @@ const (
 	ENTITY_CAMO
 )
 
+// Component is the interface for all things that can be attached to a
+// Entity and being Updated during the gameloop
 type Component interface {
 	Update(ent *Entity, elapsed float64)
 }
@@ -92,18 +94,15 @@ func NewEntity() *Entity {
 
 		Input: &NullComponent{},
 		Body:  NewRigidBody(1),
-
-		prevPosition:    &Vector3{0, 0, 0},
-		prevOrientation: &Quaternion{1, 0, 0, 0},
 	}
 }
 
 type Entity struct {
-	ID          uint16
-	Position    *Vector3    // Holds the linear position of the rigid body in world space.
-	Orientation *Quaternion // Holds the angular orientation of the rigid body in world space.
-	Velocity    *Vector3    // Holds the linear velocity of the rigid body in world space.
-	Rotation    *Vector3    // Holds the angular velocity, or rotation for the rigid body in world space.
+	ID          uint16      `json:"-"`
+	Position    *Vector3    `json:"-"` // Holds the linear position of the rigid body in world space.
+	Orientation *Quaternion `json:"-"` // Holds the angular orientation of the rigid body in world space.
+	Velocity    *Vector3    `json:"-"` // Holds the linear velocity of the rigid body in world space.
+	Rotation    *Vector3    `json:"-"` // Holds the angular velocity, or rotation for the rigid body in world space.
 
 	MaxAcceleration        *Vector3 // limits the linear acceleration
 	MaxSpeed               float64  // limits the linear velocity
@@ -112,17 +111,12 @@ type Entity struct {
 
 	Scale    *Vector3             // the size of this entity
 	bBox     quadtree.BoundingBox // for broad phase collision detection
-	geometry interface{}          // for narrow phase collision detection
+	Geometry interface{}          // for narrow phase collision detection
 
 	Type EntityType
-	Dead bool
-
-	Changed         bool // did this entity change position or rotate since last frame
-	prevPosition    *Vector3
-	prevOrientation *Quaternion
 
 	// Components
-	Input Component
+	Input Component `json:"-"`
 	Body  *RigidBody
 }
 
@@ -137,15 +131,20 @@ func (g *Entity) BoundingBox() quadtree.BoundingBox {
 }
 
 func (ent *Entity) Update(elapsed float64) {
-	ent.prevPosition.Set(ent.Position[0], ent.Position[1], ent.Position[2])
-	ent.prevOrientation = ent.Orientation.Clone()
-	ent.Changed = false
-
 	ent.Input.Update(ent, elapsed)
 	ent.Body.Update(ent, elapsed)
 
-	if !ent.prevPosition.Equals(ent.Position) || !ent.prevOrientation.Equals(ent.Orientation) {
-		ent.Changed = true
+	// clamp entity inside the world
+	if ent.Position[0] < -world.sizeX/2 {
+		ent.Position[0] = -world.sizeX / 2
+	} else if ent.Position[0] > world.sizeX-world.sizeX/2 {
+		ent.Position[0] = world.sizeX - world.sizeX/2
+	}
+
+	if ent.Position[2] < -world.sizeY/2 {
+		ent.Position[2] = -world.sizeY / 2
+	} else if ent.Position[2] > world.sizeY-world.sizeY/2 {
+		ent.Position[2] = world.sizeY - world.sizeY/2
 	}
 }
 

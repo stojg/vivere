@@ -140,6 +140,9 @@ func PathFinder(graph *GridGraph, start, goal [2]int) ([][2]int, []float64) {
 		if current.ID[0] > graph.width-1 || current.ID[1] > graph.height {
 			Printf("PathFinder: current.ID outside of bounds? %v", current.ID)
 		}
+		if current.ID[0] < 0 || current.ID[1] < 0 {
+			Printf("PathFinder: current.ID outside of bounds? %v", current.ID)
+		}
 
 		if len(graph.edges) < 1 {
 			iPrintf("PathFinder: there are no neighbours for tile %v", current.ID)

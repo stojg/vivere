@@ -81,7 +81,7 @@ func (world *World) addStaticsFromMap(heightMap [][]*creator.Tile) {
 	for x := range heightMap {
 		for _, tile := range heightMap[x] {
 			height := tile.Value
-			if height <= 0.1 {
+			if height <= minimalHeight {
 				world.graph.Add(tile.X, tile.Y)
 			}
 
@@ -94,7 +94,7 @@ func (world *World) addStaticsFromMap(heightMap [][]*creator.Tile) {
 			ent.Type = ENTITY_BLOCK
 			size := float64(tile.Size)
 			ent.Scale.Set(size, size*height, size)
-			ent.geometry = &Rectangle{HalfSize: *ent.Scale.NewScale(0.5)}
+			ent.Geometry = &Rectangle{HalfSize: *ent.Scale.NewScale(0.5)}
 			posX := tile.Position()[0] - float64(world.sizeX/2)
 			posY := tile.Position()[1] - float64(world.sizeY/2)
 			ent.Position.Set(posX, ent.Scale[1]/2, posY)
@@ -164,7 +164,7 @@ func (w *World) Serialize(serializeAll bool) *bytes.Buffer {
 	buf := &bytes.Buffer{}
 	binary.Write(buf, binary.LittleEndian, float32(w.Frame))
 	for _, entity := range w.entities.GetAll() {
-		if entity.Changed || serializeAll {
+		if entity.Body.isAwake || serializeAll {
 			buf.Write(entity.Serialize().Bytes())
 		}
 	}

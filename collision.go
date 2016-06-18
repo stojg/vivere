@@ -13,7 +13,7 @@ func (c *CollisionDetector) Collisions(entities map[uint16]*Entity, tree *quadtr
 	checked := make(map[string]bool, 0)
 
 	for _, a := range entities {
-		if !a.Changed {
+		if !a.Body.isAwake {
 			continue
 		}
 
@@ -48,16 +48,16 @@ func (c *CollisionDetector) Detect(a *Entity, b *Entity) (collision *Collision, 
 		normal:      &Vector3{},
 	}
 
-	switch a.geometry.(type) {
+	switch a.Geometry.(type) {
 	case *Circle:
-		switch b.geometry.(type) {
+		switch b.Geometry.(type) {
 		case *Circle:
 			c.CircleVsCircle(collision)
 		case *Rectangle:
 			c.CircleVsRectangle(collision)
 		}
 	case *Rectangle:
-		switch b.geometry.(type) {
+		switch b.Geometry.(type) {
 		case *Rectangle:
 			c.RectangleVsRectangle(collision)
 		case *Circle:
@@ -71,8 +71,8 @@ func (c *CollisionDetector) Detect(a *Entity, b *Entity) (collision *Collision, 
 }
 
 func (colDec *CollisionDetector) CircleVsCircle(contact *Collision) {
-	cA := contact.a.geometry.(*Circle)
-	cB := contact.b.geometry.(*Circle)
+	cA := contact.a.Geometry.(*Circle)
+	cB := contact.b.Geometry.(*Circle)
 
 	var c [3]float64
 	for i := range c {
@@ -106,10 +106,10 @@ func (c *CollisionDetector) CircleVsRectangle(collision *Collision) {
 }
 
 func (colDetector *CollisionDetector) RectangleVsCircle(contact *Collision) {
-	rA := contact.a.geometry.(*Rectangle)
+	rA := contact.a.Geometry.(*Rectangle)
 	rA.ToWorld(contact.a.Position)
 
-	cB := contact.b.geometry.(*Circle)
+	cB := contact.b.Geometry.(*Circle)
 	contact.normal = &Vector3{}
 
 	closestPoint := &Vector3{}
@@ -149,8 +149,8 @@ func (colDetector *CollisionDetector) RectangleVsCircle(contact *Collision) {
 }
 
 func (c *CollisionDetector) RectangleVsRectangle(contact *Collision) {
-	rA := contact.a.geometry.(*Rectangle)
-	rB := contact.b.geometry.(*Rectangle)
+	rA := contact.a.Geometry.(*Rectangle)
+	rB := contact.b.Geometry.(*Rectangle)
 
 	rA.ToWorld(contact.a.Position)
 	rB.ToWorld(contact.b.Position)

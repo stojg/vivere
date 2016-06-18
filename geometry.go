@@ -6,8 +6,8 @@ type Circle struct {
 
 type Rectangle struct {
 	HalfSize Vector3
-	MinPoint Vector3
-	MaxPoint Vector3
+	MinPoint Vector3 `json:"-"`
+	MaxPoint Vector3 `json:"-"`
 }
 
 // ToWorld sets the min and max points of this rectangle in world coordinates

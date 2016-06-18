@@ -11,6 +11,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+	//"encoding/json"
+	//"fmt"
 )
 
 const (
@@ -38,6 +40,7 @@ func main() {
 	world = NewWorld(true, 3200, 3200)
 
 	var seed int64 = 1465762025024741914
+	seed = rand.Int63()
 	Printf("Creating world with seed %d\n", seed)
 	c := creator.NewCreator(seed, 32, int(world.sizeX/32), int(world.sizeY/32))
 	world.addStaticsFromMap(c.Create())
@@ -45,8 +48,8 @@ func main() {
 	Println("Creating creatures")
 
 	dragForce := &Drag{k1: 0.05, k2: 0.05 * 0.05}
-	for a := 0; a < 25; a++ {
-		ent := NewPray(world, rand.Float64()*world.sizeX-world.sizeX/2, 15/2-1, rand.Float64()*world.sizeY-world.sizeY/2)
+	for a := 0; a < 100; a++ {
+		ent := NewAnt(world, rand.Float64()*world.sizeX-world.sizeX/2, 15/2-1, rand.Float64()*world.sizeY-world.sizeY/2)
 		ent.Orientation = QuaternionFromAxisAngle(VectorY(), rand.Float64()*(2*math.Pi)-math.Pi)
 		for world.isColliding(ent) {
 			dPrintln("Rerolling initial position")
@@ -86,13 +89,13 @@ func main() {
 	world.GameLoop()
 }
 
-func NewPray(world *World, x, y, z float64) *Entity {
+func NewAnt(world *World, x, y, z float64) *Entity {
 	ent := world.entities.NewEntity()
 	ent.Position.Set(x, y, z)
 	ent.MaxAcceleration = &Vector3{10, 1, 10}
 	ent.Type = 2
 	ent.Scale.Set(15, 15, 15)
-	ent.geometry = &Rectangle{
+	ent.Geometry = &Rectangle{
 		HalfSize: *ent.Scale.NewScale(0.5),
 	}
 	mass := 10.0
