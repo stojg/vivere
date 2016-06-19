@@ -44,7 +44,7 @@ func NewEntityList() *EntityList {
 func (gol *EntityList) NewEntity() *Entity {
 	gol.nextID++
 	g := NewEntity()
-	g.ID = (gol.nextID)
+	g.ID = gol.nextID
 	gol.Add(g)
 	return g
 }

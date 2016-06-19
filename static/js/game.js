@@ -97,13 +97,6 @@ require(["src/server", 'src/entity', "src/world"], function (server, entity, wor
         light1.groundColor = new BABYLON.Color3(0, 0, 0);
         light1.intensity = 0.95;
 
-        var ground = BABYLON.Mesh.CreateGround("ground1", 3232, 3232, 1, scene);
-        var groundMat = new BABYLON.StandardMaterial("texture1", scene);
-        groundMat.diffuseColor = new BABYLON.Color3(0.1, 0.14, 0.25);
-        groundMat.specularColor = new BABYLON.Color3(0.04,0.04,0.04);
-        groundMat.specularPower = 10;
-        ground.material = groundMat;
-
         return scene;
 
     };  // End of createScene function

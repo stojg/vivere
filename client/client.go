@@ -29,7 +29,7 @@ type ClientHandler struct {
 }
 
 // NewClientHandler returns a new instance of a ClientHandler
-func NewClientHandler() *ClientHandler {
+func NewClientManager() *ClientHandler {
 	ch := &ClientHandler{}
 	ch.newClientChan = make(chan *Client)
 	return ch

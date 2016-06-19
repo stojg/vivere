@@ -2,27 +2,47 @@ package main
 
 import (
 	"log"
+	"os"
+	"strconv"
 	"time"
+)
+
+var (
+	verbosity int = VERB_NORM
+)
+
+const (
+	VERB_NORM  int = 0
+	VERB_INFO  int = 1
+	VERB_DEBUG int = 2
 )
 
 func init() {
 	log.SetFlags(log.Ltime | log.Lmicroseconds)
+	envVerbosity := os.Getenv("VERBOSITY")
+	if envVerbosity == "" {
+		verbosity = 0
+	} else {
+		verbosity, _ = strconv.Atoi(envVerbosity)
+	}
 }
 
-func PrintFPS(world *World) {
+func DebugFPS(framesPerSec float64) {
+	warningFPS := (1 / framesPerSec) - 1
+
 	go func() {
 		timer := 1 * time.Second
-		prev := world.Frame
+		prev := Frame
 		prevTime := time.Now()
 		for {
 			currentTime := <-time.After(timer)
-			fps := float64(world.Frame-prev) / float64(currentTime.Sub(prevTime).Seconds())
-			if fps < 30 {
-				Printf("fps: %0.1f frame %d\n", fps, world.Frame)
+			fps := float64(Frame-prev) / float64(currentTime.Sub(prevTime).Seconds())
+			if fps < warningFPS {
+				Printf("fps: %0.1f < %0.1f frame %d\n", fps, warningFPS, Frame)
 			} else {
-				dPrintf("fps: %0.1f frame %d\n", fps, world.Frame)
+				dPrintf("fps: %0.1f frame %d\n", fps, Frame)
 			}
-			prev = world.Frame
+			prev = Frame
 			prevTime = currentTime
 		}
 	}()
