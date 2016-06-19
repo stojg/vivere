@@ -1,6 +1,6 @@
 /* jshint undef: true, unused: true, strict: true */
 /* global define, console, window, document, alert */
-define(function () {
+define(["js/lib/datastream.js"], function (datastream) {
 
     "use strict";
 
@@ -41,7 +41,7 @@ define(function () {
         };
 
         conn.onmessage = function (evt) {
-            var buf = new DataStream(evt.data);
+            var buf = new datastream(evt.data);
             server.timestamp = buf.readFloat64();
             onMessage(buf);
         };
@@ -55,8 +55,8 @@ define(function () {
     };
 
     server.newMessage = function(msgType) {
-        var cmd = new DataStream();
-        cmd.writeFloat64(server.timestamp, DataStream.LITTLE_ENDIAN);
+        var cmd = new datastream();
+        cmd.writeFloat64(server.timestamp, datastream.LITTLE_ENDIAN);
         cmd.writeUint8(msgType);
         return cmd
     }

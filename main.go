@@ -48,7 +48,7 @@ func main() {
 	Println("Creating creatures")
 
 	dragForce := &Drag{k1: 0.05, k2: 0.05 * 0.05}
-	for a := 0; a < 100; a++ {
+	for a := 0; a < 25; a++ {
 		ent := NewAnt(world, rand.Float64()*world.sizeX-world.sizeX/2, 15/2-1, rand.Float64()*world.sizeY-world.sizeY/2)
 		ent.Orientation = QuaternionFromAxisAngle(VectorY(), rand.Float64()*(2*math.Pi)-math.Pi)
 		for world.isColliding(ent) {
