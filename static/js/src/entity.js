@@ -244,14 +244,14 @@ define(["lib/babylon.2.3.max"], function () {
 
     entity.BUNNY = 2;
 
-    entity.create = function (id, interpolationDelay, scene, templates) {
+    entity.create = function (id, interpolationDelay, scene, templates, shadowgenerator) {
         var go;
 
         if (typeof interpolationDelay == 'undefined') {
             interpolationDelay = 0;
         }
 
-        go = new GameObject(id, scene, templates);
+        go = new GameObject(id, scene, templates, shadowgenerator);
         go.interpolationDelay = interpolationDelay;
         return go;
     };

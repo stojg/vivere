@@ -38,6 +38,7 @@ require(["src/server", 'src/entity', "src/world"], function (server, entity, wor
 
     main.world = {};
 
+
     main.createScene = function () {
 
         var scene = new BABYLON.Scene(engine);
@@ -57,33 +58,28 @@ require(["src/server", 'src/entity', "src/world"], function (server, entity, wor
         scene.activeCamera.setTarget(new BABYLON.Vector3(-500, -200,  500));
         scene.activeCamera.attachControl(canvas, false);
 
-        var originBox = BABYLON.Mesh.CreateBox("box", 1.0, scene);
-        originBox.scaling = new BABYLON.Vector3(30, 5, 30);
-        originBox.position = new BABYLON.Vector3(0, -2, 0);
-
-        var front = new BABYLON.StandardMaterial("texture1", scene);
-        front.diffuseColor = new BABYLON.Color3(1.0, 0.0, 0.0);
-
-        var boxXpos = BABYLON.Mesh.CreateBox("box", 1.0, scene);
-        boxXpos.scaling = new BABYLON.Vector3(10, 10, 10);
-        boxXpos.position.x = 300;
-        boxXpos.position.y = 0;
-        boxXpos.position.z = 0;
-        var red = new BABYLON.StandardMaterial("texture1", scene);
-        red.diffuseColor = new BABYLON.Color3(1.0, .2, .2);
-        boxXpos.material = red;
-
-        var boxYpos = boxXpos.clone();
-        boxYpos.position = {x: 0, y: 100, z: 0};
-        var blue = new BABYLON.StandardMaterial("texture1", scene);
-        blue.diffuseColor = new BABYLON.Color3(.4, .5, 1);
-        boxYpos.material = blue ;
-
-        var boxZpos = boxXpos.clone();
-        boxZpos.position = {x: 0, y: 0, z: 300};
-        var green = new BABYLON.StandardMaterial("texture1", scene);
-        green.diffuseColor = new BABYLON.Color3(.5, 1.0, .4);
-        boxZpos.material = green;
+        // debug axis indicators
+        //var originBox = BABYLON.Mesh.CreateBox("box", 1.0, scene);
+        //originBox.scaling = new BABYLON.Vector3(30, 5, 30);
+        //originBox.position = new BABYLON.Vector3(0, -2, 0);
+        //var boxXpos = BABYLON.Mesh.CreateBox("box", 1.0, scene);
+        //boxXpos.scaling = new BABYLON.Vector3(10, 10, 10);
+        //boxXpos.position.x = 300;
+        //boxXpos.position.y = 0;
+        //boxXpos.position.z = 0;
+        //var red = new BABYLON.StandardMaterial("texture1", scene);
+        //red.diffuseColor = new BABYLON.Color3(1.0, .2, .2);
+        //boxXpos.material = red;
+        //var boxYpos = boxXpos.clone();
+        //boxYpos.position = {x: 0, y: 100, z: 0};
+        //var blue = new BABYLON.StandardMaterial("texture1", scene);
+        //blue.diffuseColor = new BABYLON.Color3(.4, .5, 1);
+        //boxYpos.material = blue ;
+        //var boxZpos = boxXpos.clone();
+        //boxZpos.position = {x: 0, y: 0, z: 300};
+        //var green = new BABYLON.StandardMaterial("texture1", scene);
+        //green.diffuseColor = new BABYLON.Color3(.5, 1.0, .4);
+        //boxZpos.material = green;
 
         //scene.debugLayer.show();
 
@@ -103,11 +99,11 @@ require(["src/server", 'src/entity', "src/world"], function (server, entity, wor
 
         var ground = BABYLON.Mesh.CreateGround("ground1", 3232, 3232, 1, scene);
         var groundMat = new BABYLON.StandardMaterial("texture1", scene);
-        groundMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.8);
-        groundMat.alpha = 0.1;
-        groundMat.specularPower = 512;
+        groundMat.diffuseColor = new BABYLON.Color3(0.1, 0.14, 0.25);
+        groundMat.specularColor = new BABYLON.Color3(0.04,0.04,0.04);
+        groundMat.specularPower = 10;
         ground.material = groundMat;
-        // Leave this function
+
         return scene;
 
     };  // End of createScene function
@@ -120,13 +116,13 @@ require(["src/server", 'src/entity', "src/world"], function (server, entity, wor
 
     main.scene = null;
 
-
-
+    info.innerHTML = "connecting";
     /**
      * Behold, the game server starts after the websocket connects
      */
     server.connect(function () {
         main.connected = true;
+        info.innerHTML = "init";
         main.init();
         engine.runRenderLoop(function () {
             var tFrame = window.performance.now();

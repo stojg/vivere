@@ -39,7 +39,7 @@ define(['src/entity', 'lib/babylon.2.3.max'], function (entity) {
         //var sphere = BABYLON.Mesh.CreateSphere("sphere", 20, 1.0, scene);
         pray.scaling = new BABYLON.Vector3(30, 30, 30);
         pray.isVisible = false;
-        //pray.material = pink;
+
         this.templates[2] = pray;
 
         var yellow = new BABYLON.StandardMaterial("yellow", scene);
