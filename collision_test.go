@@ -455,3 +455,12 @@ func (s *CollisionTestSuite) TestCollisionResolveOpposite(c *C) {
 	c.Assert(b.Velocity, DeepEquals, &Vector3{5, 0, 0})
 	c.Assert(b.Position, DeepEquals, &Vector3{8.5, 0, 0})
 }
+
+func TestRaygun (t *testing.T) {
+	collider := &CollisionDetector{}
+
+	origin := &Vector3{}
+	ray := &Vector3{1,0,0}
+
+	collider.raycast(origin, ray)
+}

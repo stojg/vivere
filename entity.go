@@ -49,14 +49,6 @@ func (gol *EntityList) NewEntity() *Entity {
 	return g
 }
 
-func (gol *EntityList) QuadTree() *quadtree.QuadTree {
-	tree := quadtree.NewQuadTree(quadtree.NewBoundingBox(-world.sizeX/2, world.sizeX/2, -world.sizeY/2, world.sizeY/2))
-	for _, b := range gol.GetAll() {
-		tree.Add(b)
-	}
-	return &tree
-}
-
 func (gol *EntityList) Add(i *Entity) bool {
 	_, found := gol.set[i.ID]
 	if gol.set == nil {

@@ -29,10 +29,14 @@ const (
 )
 
 func NewWorld(debug bool, sizeX, sizeY float64) *World {
+	entityList := &EntityList{}
+	collisionDetector := &CollisionDetector{
+		list: entityList,
+	}
 	return &World{
 		debug:         debug,
-		entities:      &EntityList{},
-		collision:     &CollisionDetector{},
+		entities:      entityList,
+		collision:     collisionDetector,
 		forceRegistry: &ForceRegistry{},
 		sizeX:         sizeX,
 		sizeY:         sizeY,
@@ -56,7 +60,9 @@ func (w *World) GameLoop() {
 			entity.Update(elapsed)
 		}
 
-		collisions := w.collision.Collisions(w.entities.GetAll(), w.entities.QuadTree())
+		w.collision.updateCollisionGeometry()
+
+		collisions := w.collision.Collisions()
 		for _, pair := range collisions {
 			pair.Resolve(elapsed)
 		}
@@ -116,28 +122,6 @@ func (w *World) toPosition(tilePos [2]int) *Vector3 {
 	x := (float64(tilePos[0] * 32)) - float64(world.sizeX/2)
 	z := (float64(tilePos[1] * 32)) - float64(world.sizeY/2)
 	return &Vector3{x, 0, z}
-}
-
-func (w *World) isColliding(a *Entity) bool {
-	checked := make(map[string]bool, 0)
-	tree := world.entities.QuadTree()
-	for _, b := range tree.Query(a.BoundingBox()) {
-		if a == b {
-			continue
-		}
-
-		hashA := string(a.ID) + ":" + string(b.(*Entity).ID)
-		hashB := string(b.(*Entity).ID) + ":" + string(a.ID)
-		if checked[hashA] || checked[hashB] {
-			continue
-		}
-		checked[hashA], checked[hashB] = true, true
-		_, hit := w.collision.Detect(a, b.(*Entity))
-		if hit {
-			return true
-		}
-	}
-	return false
 }
 
 func (w *World) findClosest(me *Entity, t EntityType) (*Entity, float64) {

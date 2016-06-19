@@ -5,19 +5,31 @@ import (
 	"math"
 )
 
-type CollisionDetector struct{}
+type CollisionDetector struct{
+	list *EntityList
+	tree *quadtree.QuadTree
+	entities map[uint16]*Entity
+}
 
-func (c *CollisionDetector) Collisions(entities map[uint16]*Entity, tree *quadtree.QuadTree) []*Collision {
+func (c *CollisionDetector) updateCollisionGeometry() {
+	tree := quadtree.NewQuadTree(quadtree.NewBoundingBox(-world.sizeX/2, world.sizeX/2, -world.sizeY/2, world.sizeY/2))
+	for _, b := range c.list.GetAll() {
+		tree.Add(b)
+	}
+	c.tree = &tree
+	c.entities = c.list.GetAll()
+}
 
+func (c *CollisionDetector) Collisions() []*Collision {
 	collisions := make([]*Collision, 0)
 	checked := make(map[string]bool, 0)
 
-	for _, a := range entities {
+	for _, a := range c.entities {
 		if !a.Body.isAwake {
 			continue
 		}
 
-		t := tree.Query(a.BoundingBox())
+		t := c.tree.Query(a.BoundingBox())
 		for _, b := range t {
 			if a == b {
 				continue
@@ -37,6 +49,29 @@ func (c *CollisionDetector) Collisions(entities map[uint16]*Entity, tree *quadtr
 	}
 	return collisions
 }
+
+func (c *CollisionDetector) isColliding(a *Entity) bool{
+	checked := make(map[string]bool, 0)
+
+	for _, b := range c.tree.Query(a.BoundingBox()) {
+		if a == b {
+			continue
+		}
+
+		hashA := string(a.ID) + ":" + string(b.(*Entity).ID)
+		hashB := string(b.(*Entity).ID) + ":" + string(a.ID)
+		if checked[hashA] || checked[hashB] {
+			continue
+		}
+		checked[hashA], checked[hashB] = true, true
+		_, hit := c.Detect(a, b.(*Entity))
+		if hit {
+			return true
+		}
+	}
+	return false
+}
+
 
 func (c *CollisionDetector) Detect(a *Entity, b *Entity) (collision *Collision, hit bool) {
 
@@ -231,6 +266,10 @@ func (c *CollisionDetector) testAxisSeparation(axis Vector3, minA, maxA, minB, m
 		mtvAxis.Set(sep[0], sep[1], sep[2])
 	}
 	return true
+}
+
+func (collision *CollisionDetector) raycast(origin, ray *Vector3) *Collision  {
+	return nil
 }
 
 type Collision struct {
