@@ -27,6 +27,8 @@ func NewLevel() *Level {
 	ground := entities.Create()
 	modelList.New(ground, x, 0.1, y, ENTITY_GROUND)
 
+
+	var list []*Entity
 	for i := 0; i < 100; i++ {
 		e := entities.Create()
 		body := modelList.New(e, 8, 24, 8, ENTITY_PRAY)
@@ -34,12 +36,14 @@ func NewLevel() *Level {
 
 		phi := rand.Float64() * math.Pi * 2
 		body.Orientation.RotateByVector(&vector.Vector3{math.Cos(phi), 0, math.Sin(phi)})
-		rigidList.New(e, 1)
+		rig := rigidList.New(e, 1)
+		rig.MaxAcceleration = &vector.Vector3{1,0,1}
+		list = append(list, e)
 	}
 
 	lvl := &Level{}
 	lvl.systems = append(lvl.systems, &PhysicSystem{})
-	lvl.systems = append(lvl.systems, &AI{})
+	lvl.systems = append(lvl.systems, NewAI(list))
 	return lvl
 }
 

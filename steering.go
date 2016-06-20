@@ -31,9 +31,9 @@ type Seek struct {
 	target    *components.Model
 }
 
-func NewSeek(character, target *components.Model, rigid *components.RigidBody) *Seek {
+func NewSeek(model *components.Model, rigid *components.RigidBody, target *components.Model) *Seek {
 	s := &Seek{}
-	s.character = character
+	s.character = model
 	s.rigidbody = rigid
 	s.target = target
 	return s
