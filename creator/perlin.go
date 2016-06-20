@@ -57,7 +57,6 @@ func (gen *PerlinNoise) At2d(x, y float64) float64 {
 	gradU := gen.grad2d(int(x0), int(y1))
 	gradV := gen.grad2d(int(x1), int(y1))
 
-
 	// dotX := gradX · ((x,y) - (xX,yX))
 	dotS := gradS[0]*(x-x0) + gradS[1]*(y-y0)
 	dotT := gradT[0]*(x-x1) + gradT[1]*(y-y0)

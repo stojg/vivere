@@ -6,9 +6,9 @@ package client
 
 import (
 	"bytes"
-	"golang.org/x/net/websocket"
 	"encoding/binary"
 	"fmt"
+	"golang.org/x/net/websocket"
 	"io"
 	"log"
 	"time"

@@ -3,7 +3,16 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	. "github.com/stojg/vivere/lib/components"
+	"github.com/stojg/vivere/lib/vector"
+	"math"
 	"math/rand"
+)
+
+var (
+	entities  *EntityManager
+	modelList *ModelList
+	rigidList *RigidBodyManager
 )
 
 func NewLevel() *Level {
@@ -11,15 +20,21 @@ func NewLevel() *Level {
 	x := 3200.0
 	y := 3200.0
 
-	ground := entityManager.CreateEntity()
-	groundBody := NewBodyComponent(0,0,0, x, 0.1, y)
-	groundBody.Model = ENTITY_BLOCK
-	entityManager.AddComponent(ground, groundBody)
+	entities = NewEntityManager()
+	modelList = NewModelList()
+	rigidList = NewRigidBodyManager()
+
+	ground := entities.Create()
+	modelList.New(ground, x, 0.1, y, ENTITY_GROUND)
 
 	for i := 0; i < 100; i++ {
-		e := entityManager.CreateEntity()
-		entityManager.AddComponent(e, NewBodyComponent(x*rand.Float64()-x/2, 8, rand.Float64()*y-y/2, 8, 24, 8))
-		entityManager.AddComponent(e, NewMoveComponent(1))
+		e := entities.Create()
+		body := modelList.New(e, 8, 24, 8, ENTITY_PRAY)
+		body.Position.Set(x*rand.Float64()-x/2, 8, rand.Float64()*y-y/2)
+
+		phi := rand.Float64() * math.Pi * 2
+		body.Orientation.RotateByVector(&vector.Vector3{math.Cos(phi), 0, math.Sin(phi)})
+		rigidList.New(e, 1)
 	}
 
 	lvl := &Level{}
@@ -42,14 +57,13 @@ func (l *Level) Draw() *bytes.Buffer {
 	buf := &bytes.Buffer{}
 	binary.Write(buf, binary.LittleEndian, float32(Frame))
 
-	entities := entityManager.EntitiesWith("*main.BodyComponent")
-	for i, id := range entities {
-		component := entityManager.EntityComponent(entities[i], "*main.BodyComponent")
+	//entities := entityManager.EntitiesWith("*main.BodyComponent")
+	for id, component := range modelList.All() {
 		binaryStream(buf, INST_ENTITY_ID, *id)
-		binaryStream(buf, INST_SET_POSITION, component.(*BodyComponent).Position)
-		binaryStream(buf, INST_SET_ORIENTATION, component.(*BodyComponent).Orientation)
-		binaryStream(buf, INST_SET_TYPE, component.(*BodyComponent).Model)
-		binaryStream(buf, INST_SET_SCALE, component.(*BodyComponent).Scale)
+		binaryStream(buf, INST_SET_POSITION, component.Position)
+		binaryStream(buf, INST_SET_ORIENTATION, component.Orientation)
+		binaryStream(buf, INST_SET_TYPE, component.Model)
+		binaryStream(buf, INST_SET_SCALE, component.Scale)
 	}
 
 	return buf

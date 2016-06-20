@@ -1,4 +1,4 @@
-package main
+package vector
 
 import (
 	"math"
@@ -207,18 +207,18 @@ func (a *Vector3) Equals(z *Vector3) bool {
 
 // http://pastebin.com/fAFp6NnN
 func (value *Vector3) Rotate(rotation *Quaternion) *Vector3 {
-	num12 := rotation.i + rotation.i
-	num2 := rotation.j + rotation.j
-	num := rotation.k + rotation.k
-	num11 := rotation.r * num12
-	num10 := rotation.r * num2
-	num9 := rotation.r * num
-	num8 := rotation.i * num12
-	num7 := rotation.i * num2
-	num6 := rotation.i * num
-	num5 := rotation.j * num2
-	num4 := rotation.j * num
-	num3 := rotation.k * num
+	num12 := rotation.I + rotation.I
+	num2 := rotation.J + rotation.J
+	num := rotation.K + rotation.K
+	num11 := rotation.R * num12
+	num10 := rotation.R * num2
+	num9 := rotation.R * num
+	num8 := rotation.I * num12
+	num7 := rotation.I * num2
+	num6 := rotation.I * num
+	num5 := rotation.J * num2
+	num4 := rotation.J * num
+	num3 := rotation.K * num
 	num15 := ((value[0] * ((1.0 - num5) - num3)) + (value[1] * (num7 - num9))) + (value[2] * (num6 + num10))
 	num14 := ((value[0] * (num7 + num9)) + (value[1] * ((1.0 - num8) - num3))) + (value[2] * (num4 - num11))
 	num13 := ((value[0] * (num6 - num10)) + (value[1] * (num4 + num11))) + (value[2] * ((1.0 - num8) - num5))
@@ -349,15 +349,15 @@ func (orig *Matrix3) Transpose(m *Matrix3) *Matrix3 {
 }
 
 func (data *Matrix3) SetOrientation(q *Quaternion) {
-	data[0] = 1 - (2*q.j*q.j + 2*q.k*q.k)
-	data[1] = 2*q.i*q.j + 2*q.k*q.r
-	data[2] = 2*q.i*q.k - 2*q.j*q.r
-	data[3] = 2*q.i*q.j - 2*q.k*q.r
-	data[4] = 1 - (2*q.i*q.i + 2*q.k*q.k)
-	data[5] = 2*q.j*q.k + 2*q.i*q.r
-	data[6] = 2*q.i*q.k + 2*q.j*q.r
-	data[7] = 2*q.j*q.k - 2*q.i*q.r
-	data[8] = 1 - (2*q.i*q.i + 2*q.j*q.j)
+	data[0] = 1 - (2*q.J*q.J + 2*q.K*q.K)
+	data[1] = 2*q.I*q.J + 2*q.K*q.R
+	data[2] = 2*q.I*q.K - 2*q.J*q.R
+	data[3] = 2*q.I*q.J - 2*q.K*q.R
+	data[4] = 1 - (2*q.I*q.I + 2*q.K*q.K)
+	data[5] = 2*q.J*q.K + 2*q.I*q.R
+	data[6] = 2*q.I*q.K + 2*q.J*q.R
+	data[7] = 2*q.J*q.K - 2*q.I*q.R
+	data[8] = 1 - (2*q.I*q.I + 2*q.J*q.J)
 }
 
 func (data *Matrix3) SetOrientationAndPos(q *Quaternion, pos *Vector3) {
@@ -441,19 +441,19 @@ func (m *Matrix4) Inverse() *Matrix4 {
 }
 
 func (data *Matrix4) SetOrientation(q *Quaternion, pos *Vector3) {
-	data[0] = 1 - (2*q.j*q.j + 2*q.k*q.k)
-	data[1] = 2*q.i*q.j + 2*q.k*q.r
-	data[2] = 2*q.i*q.k - 2*q.j*q.r
+	data[0] = 1 - (2*q.J*q.J + 2*q.K*q.K)
+	data[1] = 2*q.I*q.J + 2*q.K*q.R
+	data[2] = 2*q.I*q.K - 2*q.J*q.R
 	data[3] = pos[0]
 
-	data[4] = 2*q.i*q.j - 2*q.k*q.r
-	data[5] = 1 - (2*q.i*q.i + 2*q.k*q.k)
-	data[6] = 2*q.j*q.k + 2*q.i*q.r
+	data[4] = 2*q.I*q.J - 2*q.K*q.R
+	data[5] = 1 - (2*q.I*q.I + 2*q.K*q.K)
+	data[6] = 2*q.J*q.K + 2*q.I*q.R
 	data[7] = pos[1]
 
-	data[8] = 2*q.i*q.k + 2*q.j*q.r
-	data[9] = 2*q.j*q.k - 2*q.i*q.r
-	data[10] = 1 - (2*q.i*q.i + 2*q.j*q.j)
+	data[8] = 2*q.I*q.K + 2*q.J*q.R
+	data[9] = 2*q.J*q.K - 2*q.I*q.R
+	data[10] = 1 - (2*q.I*q.I + 2*q.J*q.J)
 	data[11] = pos[2]
 }
 
@@ -500,10 +500,10 @@ func (data *Matrix4) TransformInverseDirection(vector *Vector3) *Vector3 {
 }
 
 type Quaternion struct {
-	r float64
-	i float64
-	j float64
-	k float64
+	R float64
+	I float64
+	J float64
+	K float64
 }
 
 // zero rotation
@@ -558,32 +558,32 @@ func QuaternionFromVectors(a, b *Vector3) *Quaternion {
 }
 
 func (q *Quaternion) Set(r, i, j, k float64) {
-	q.r = r
-	q.i = i
-	q.j = j
-	q.k = k
+	q.R = r
+	q.I = i
+	q.J = j
+	q.K = k
 }
 
 func (q *Quaternion) Clone() *Quaternion {
 	return &Quaternion{
-		r: q.r,
-		i: q.i,
-		j: q.j,
-		k: q.k,
+		R: q.R,
+		I: q.I,
+		J: q.J,
+		K: q.K,
 	}
 }
 
 func (q *Quaternion) Equals(z *Quaternion) bool {
-	if math.Abs(q.r-z.r) > real_epsilon {
+	if math.Abs(q.R-z.R) > real_epsilon {
 		return false
 	}
-	if math.Abs(q.i-z.i) > real_epsilon {
+	if math.Abs(q.I-z.I) > real_epsilon {
 		return false
 	}
-	if math.Abs(q.j-z.j) > real_epsilon {
+	if math.Abs(q.J-z.J) > real_epsilon {
 		return false
 	}
-	if math.Abs(q.k-z.k) > real_epsilon {
+	if math.Abs(q.K-z.K) > real_epsilon {
 		return false
 	}
 	return true
@@ -591,25 +591,25 @@ func (q *Quaternion) Equals(z *Quaternion) bool {
 
 // Normalises the quaternion to unit length, making it a valid orientation quaternion.
 func (q *Quaternion) Normalize() {
-	d := q.r*q.r + q.i*q.i + q.j*q.j + q.k*q.k
+	d := q.R*q.R + q.I*q.I + q.J*q.J + q.K*q.K
 	// Check for zero length quaternion, and use the no-rotation
 	// quaternion in that case.
 	if d < real_epsilon {
-		q.r = 1
+		q.R = 1
 		return
 	}
 	d = 1.0 / math.Sqrt(d)
-	q.r *= d
-	q.i *= d
-	q.j *= d
-	q.k *= d
+	q.R *= d
+	q.I *= d
+	q.J *= d
+	q.K *= d
 }
 
 // http://www.ncsa.illinois.edu/People/kindr/emtc/quaternions/quaternion.c++
 func (q *Quaternion) Conjugate() *Quaternion {
-	q.i = -q.i
-	q.j = -q.j
-	q.k = -q.k
+	q.I = -q.I
+	q.J = -q.J
+	q.K = -q.K
 	return q
 }
 
@@ -620,28 +620,28 @@ func (q *Quaternion) NewConjugate() *Quaternion {
 func (q *Quaternion) NewInverse() *Quaternion {
 	t := q.SquareLength()
 	return &Quaternion{
-		q.r / t,
-		-q.i / t,
-		-q.j / t,
-		-q.k / t,
+		q.R / t,
+		-q.I / t,
+		-q.J / t,
+		-q.K / t,
 	}
 }
 
 func (q *Quaternion) Dot(q2 *Quaternion) float64 {
-	return q.r*q2.r + q.i*q2.i + q.j*q2.j + q.k*q2.k
+	return q.R*q2.R + q.I*q2.I + q.J*q2.J + q.K*q2.K
 }
 
 func (q *Quaternion) Div(s float64) *Quaternion {
-	return &Quaternion{q.r / s, q.i / s, q.j / s, q.k / s}
+	return &Quaternion{q.R / s, q.I / s, q.J / s, q.K / s}
 }
 
 func (q *Quaternion) Length() float64 {
-	d := q.r*q.r + q.i*q.i + q.j*q.j + q.k*q.k
+	d := q.R*q.R + q.I*q.I + q.J*q.J + q.K*q.K
 	return math.Sqrt(d)
 }
 
 func (q *Quaternion) SquareLength() float64 {
-	return q.r*q.r + q.i*q.i + q.j*q.j + q.k*q.k
+	return q.R*q.R + q.I*q.I + q.J*q.J + q.K*q.K
 }
 
 func (q *Quaternion) Norm() float64 {
@@ -651,10 +651,10 @@ func (q *Quaternion) Norm() float64 {
 // Multiplies the quaternion by the given quaternion.
 func (q *Quaternion) Multiply(o *Quaternion) *Quaternion {
 	*q = Quaternion{
-		-q.i*o.i - q.j*o.j - q.k*o.k + q.r*o.r,
-		q.i*o.r + q.j*o.k - q.k*o.j + q.r*o.i,
-		-q.i*o.k + q.j*o.r + q.k*o.i + q.r*o.j,
-		q.i*o.j - q.j*o.i + q.k*o.r + q.r*o.k,
+		-q.I*o.I - q.J*o.J - q.K*o.K + q.R*o.R,
+		q.I*o.R + q.J*o.K - q.K*o.J + q.R*o.I,
+		-q.I*o.K + q.J*o.R + q.K*o.I + q.R*o.J,
+		q.I*o.J - q.J*o.I + q.K*o.R + q.R*o.K,
 	}
 	return q
 }
@@ -672,10 +672,10 @@ func (q *Quaternion) AddScaledVector(vector *Vector3, scale float64) {
 	result := vectorQ.NewMultiply(q)
 	result.Div(2)
 
-	q.r += result.r
-	q.i += result.i
-	q.j += result.j
-	q.k += result.k
+	q.R += result.R
+	q.I += result.I
+	q.J += result.J
+	q.K += result.K
 }
 
 func (q *Quaternion) RotateByVector(vector *Vector3) *Quaternion {

@@ -1,56 +1,54 @@
-package main
+package components
 
-type EntityType uint16
-
-const (
-	ENTITY_NONE EntityType = iota
-	ENTITY_BLOCK
-	ENTITY_PRAY
-	ENTITY_HUNTER
-	ENTITY_SCARED
-	ENTITY_CAMO
+import (
+	. "github.com/stojg/vivere/lib/vector"
 )
 
-type Component interface{}
-
-func NewBodyComponent(x, y, z float64, w, h, d float64) *BodyComponent {
-	return &BodyComponent{
-		Position:    &Vector3{x, y, z},
-		Orientation: &Quaternion{1, 0, 0, 0},
-		Model:       ENTITY_PRAY,
-		Scale:       &Vector3{w, h, d},
+func NewRigidBodyManager() *RigidBodyManager {
+	return &RigidBodyManager{
+		entity: make(map[*Entity]*RigidBody),
 	}
-
 }
 
-type BodyComponent struct {
-	Position    *Vector3    // Holds the linear position of the rigid body in world space.
-	Orientation *Quaternion // Holds the angular orientation of the rigid body in world space.
-	Scale       *Vector3    // the size of this entity
-	Model       EntityType
+type RigidBodyManager struct {
+	entity map[*Entity]*RigidBody
 }
 
-func NewMoveComponent(invMass float64) *MoveComponent {
-	return &MoveComponent{
+func (b *RigidBodyManager) New(toEntity *Entity, invMass float64) *RigidBody {
+	b.entity[toEntity] = newRidigBody(invMass)
+	return b.entity[toEntity]
+}
+
+func (b *RigidBodyManager) All() map[*Entity]*RigidBody {
+	return b.entity
+}
+
+func (b *RigidBodyManager) Get(fromEntity *Entity) *RigidBody {
+	return b.entity[fromEntity]
+}
+
+func newRidigBody(invMass float64) *RigidBody {
+	return &RigidBody{
 		Velocity:                  &Vector3{},
 		Rotation:                  &Vector3{},
 		forces:                    &Vector3{},
 		transformMatrix:           &Matrix4{},
 		InverseInertiaTensor:      &Matrix3{},
-		inverseInertiaTensorWorld: &Matrix3{},
-		forceAccum:                &Vector3{},
-		torqueAccum:               &Vector3{},
-		acceleration:              &Vector3{},
+		InverseInertiaTensorWorld: &Matrix3{},
+		ForceAccum:                &Vector3{},
+		TorqueAccum:               &Vector3{},
+		MaxAcceleration:           &Vector3{},
+		Acceleration:              &Vector3{},
 		LinearDamping:             0.99,
 		AngularDamping:            0.99,
 		InvMass:                   invMass,
-		canSleep:                  true,
-		isAwake:                   true,
-		sleepEpsilon:              0.01,
+		CanSleep:                  true,
+		IsAwake:                   true,
+		SleepEpsilon:              0.01,
 	}
 }
 
-type MoveComponent struct {
+type RigidBody struct {
 	// Holds the linear velocity of the rigid body in world space.
 	Velocity *Vector3
 	// Holds the angular velocity, or rotation for the rigid body in world space.
@@ -94,18 +92,18 @@ type MoveComponent struct {
 	// space. The inverse inertia tensor member is specified in
 	// the body's local space.
 	//  @see inverseInertiaTensor
-	inverseInertiaTensorWorld *Matrix3
+	InverseInertiaTensorWorld *Matrix3
 	// Holds the amount of motion of the body. This is a recency
 	// weighted mean that can be used to put a body to sleap.
-	motion float64
+	Motion float64
 	// A body can be put to sleep to avoid it being updated
 	// by the integration functions or affected by collisions
 	// with the world.
-	isAwake bool
+	IsAwake bool
 	// Some bodies may never be allowed to fall asleep.
 	// User controlled bodies, for example, should be
 	// always awake.
-	canSleep bool
+	CanSleep bool
 	// Holds a transform matrix for converting body space into
 	// world space and vice versa. This can be achieved by calling
 	// the getPointIn*Space functions.
@@ -124,70 +122,78 @@ type MoveComponent struct {
 
 	// Holds the accumulated force to be applied at the next
 	// integration step.
-	forceAccum *Vector3
+	ForceAccum *Vector3
 
 	// Holds the accumulated torque to be applied at the next
 	// integration step.
-	torqueAccum *Vector3
+	TorqueAccum *Vector3
 
 	// Holds the acceleration of the rigid body.  This value
 	// can be used to set acceleration due to gravity (its primary
 	// use), or any other constant acceleration.
-	acceleration *Vector3
+	Acceleration *Vector3
+
+	MaxAcceleration *Vector3
 
 	// Holds the linear acceleration of the rigid body, for the
 	// previous frame.
-	lastFrameAcceleration *Vector3
+	LastFrameAcceleration *Vector3
 
-	sleepEpsilon float64
+	SleepEpsilon float64
 	forces       *Vector3
 }
 
-func (rb *MoveComponent) Mass() float64 {
+func (rb *RigidBody) Mass() float64 {
 	return 1 / rb.InvMass
 }
 
-func (rb *MoveComponent) SetInertiaTensor(inertiaTensor *Matrix3) {
+func (rb *RigidBody) SetInertiaTensor(inertiaTensor *Matrix3) {
 	rb.InverseInertiaTensor.SetInverse(inertiaTensor)
 }
 
-func (rb *MoveComponent) AddForce(force *Vector3) {
-	rb.forceAccum.Add(force)
-	rb.isAwake = true
+func (rb *RigidBody) AddForce(force *Vector3) {
+	rb.ForceAccum.Add(force)
+	rb.IsAwake = true
 }
 
-func (rb *MoveComponent) AddForceAtBodyPoint(ent *BodyComponent, force, point *Vector3) {
+func (rb *RigidBody) AddForceAtBodyPoint(ent *Model, force, point *Vector3) {
 	// convert to coordinates relative to center of mass
 	pt := rb.getPointInWorldSpace(point)
 	rb.AddForceAtPoint(ent, force, pt)
-	rb.isAwake = true
+	rb.IsAwake = true
 }
 
-func (rb *MoveComponent) AddForceAtPoint(body *BodyComponent, force, point *Vector3) {
+func (rb *RigidBody) AddForceAtPoint(body *Model, force, point *Vector3) {
 	// convert to coordinates relative to center of mass
 	pt := point.NewSub(body.Position)
-	rb.forceAccum.Add(force)
-	rb.torqueAccum.Add(pt.NewCross(force))
-	rb.isAwake = true
+	rb.ForceAccum.Add(force)
+	rb.TorqueAccum.Add(pt.NewCross(force))
+	rb.IsAwake = true
 }
 
-func (rb *MoveComponent) AddTorque(torque *Vector3) {
-	rb.torqueAccum.Add(torque)
-	rb.isAwake = true
+func (rb *RigidBody) AddTorque(torque *Vector3) {
+	rb.TorqueAccum.Add(torque)
+	rb.IsAwake = true
 }
 
-func (rb *MoveComponent) ClearAccumulators() {
+func (rb *RigidBody) ClearAccumulators() {
 	rb.forces.Clear()
-	rb.forceAccum.Clear()
-	rb.torqueAccum.Clear()
+	rb.ForceAccum.Clear()
+	rb.TorqueAccum.Clear()
 }
 
-func (rb *MoveComponent) getPointInWorldSpace(point *Vector3) *Vector3 {
+func (rb *RigidBody) getPointInWorldSpace(point *Vector3) *Vector3 {
 	return rb.transformMatrix.TransformVector3(point)
 }
 
-func (rb *MoveComponent) getTransform() *Matrix4 {
+func (rb *RigidBody) getTransform() *Matrix4 {
 	return rb.transformMatrix
+}
+
+func (rb *RigidBody) CalculateDerivedData(body *Model) {
+	body.Orientation.Normalize()
+	rb.calculateTransformMatrix(rb.transformMatrix, body.Position, body.Orientation)
+	rb.transformInertiaTensor(rb.InverseInertiaTensorWorld, body.Orientation, rb.InverseInertiaTensor, rb.transformMatrix)
 }
 
 /**
@@ -195,7 +201,7 @@ func (rb *MoveComponent) getTransform() *Matrix4 {
  * Note that the implementation of this function was created by an
  * automated code-generator and optimizer.
  */
-func (rb *MoveComponent) transformInertiaTensor(iitWorld *Matrix3, q *Quaternion, iitBody *Matrix3, rotmat *Matrix4) {
+func (rb *RigidBody) transformInertiaTensor(iitWorld *Matrix3, q *Quaternion, iitBody *Matrix3, rotmat *Matrix4) {
 	t4 := rotmat[0]*iitBody[0] + rotmat[1]*iitBody[3] + rotmat[2]*iitBody[6]
 	t9 := rotmat[0]*iitBody[1] + rotmat[1]*iitBody[4] + rotmat[2]*iitBody[7]
 	t14 := rotmat[0]*iitBody[2] + rotmat[1]*iitBody[5] + rotmat[2]*iitBody[8]
@@ -221,26 +227,20 @@ func (rb *MoveComponent) transformInertiaTensor(iitWorld *Matrix3, q *Quaternion
  * Inline function that creates a transform matrix from a
  * position and orientation.
  */
-func (rb *MoveComponent) calculateTransformMatrix(transformMatrix *Matrix4, position *Vector3, orientation *Quaternion) {
+func (rb *RigidBody) calculateTransformMatrix(transformMatrix *Matrix4, position *Vector3, orientation *Quaternion) {
 
-	transformMatrix[0] = 1 - 2*orientation.j*orientation.j - 2*orientation.k*orientation.k
-	transformMatrix[1] = 2*orientation.i*orientation.j - 2*orientation.r*orientation.k
-	transformMatrix[2] = 2*orientation.i*orientation.k + 2*orientation.r*orientation.j
+	transformMatrix[0] = 1 - 2*orientation.J*orientation.J - 2*orientation.K*orientation.K
+	transformMatrix[1] = 2*orientation.I*orientation.J - 2*orientation.R*orientation.K
+	transformMatrix[2] = 2*orientation.I*orientation.K + 2*orientation.R*orientation.J
 	transformMatrix[3] = position[0]
 
-	transformMatrix[4] = 2*orientation.i*orientation.j + 2*orientation.r*orientation.k
-	transformMatrix[5] = 1 - 2*orientation.i*orientation.i - 2*orientation.k*orientation.k
-	transformMatrix[6] = 2*orientation.j*orientation.k - 2*orientation.r*orientation.i
+	transformMatrix[4] = 2*orientation.I*orientation.J + 2*orientation.R*orientation.K
+	transformMatrix[5] = 1 - 2*orientation.I*orientation.I - 2*orientation.K*orientation.K
+	transformMatrix[6] = 2*orientation.J*orientation.K - 2*orientation.R*orientation.I
 	transformMatrix[7] = position[1]
 
-	transformMatrix[8] = 2*orientation.i*orientation.k - 2*orientation.r*orientation.j
-	transformMatrix[9] = 2*orientation.j*orientation.k + 2*orientation.r*orientation.i
-	transformMatrix[10] = 1 - 2*orientation.i*orientation.i - 2*orientation.j*orientation.j
+	transformMatrix[8] = 2*orientation.I*orientation.K - 2*orientation.R*orientation.J
+	transformMatrix[9] = 2*orientation.J*orientation.K + 2*orientation.R*orientation.I
+	transformMatrix[10] = 1 - 2*orientation.I*orientation.I - 2*orientation.J*orientation.J
 	transformMatrix[11] = position[2]
-}
-
-func (rb *MoveComponent) calculateDerivedData(body *BodyComponent) {
-	body.Orientation.Normalize()
-	rb.calculateTransformMatrix(rb.transformMatrix, body.Position, body.Orientation)
-	rb.transformInertiaTensor(rb.inverseInertiaTensorWorld, body.Orientation, rb.InverseInertiaTensor, rb.transformMatrix)
 }

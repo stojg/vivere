@@ -10,11 +10,11 @@ type Tile struct {
 
 func NewTile(size, x, y int, value float64, maxX int) *Tile {
 	return &Tile{
-		Size: size,
-		X: x,
-		Y: y,
+		Size:  size,
+		X:     x,
+		Y:     y,
 		Value: value,
-		MaxX: maxX,
+		MaxX:  maxX,
 	}
 }
 
@@ -25,5 +25,5 @@ func (tile *Tile) Position() (position [2]float64) {
 }
 
 func (tile *Tile) ID() int {
-	return tile.MaxX *tile.Y + tile.X
+	return tile.MaxX*tile.Y + tile.X
 }

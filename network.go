@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/stojg/vivere/client"
+	"github.com/stojg/vivere/lib/client"
+	. "github.com/stojg/vivere/lib/components"
+	. "github.com/stojg/vivere/lib/vector"
 	"golang.org/x/net/websocket"
 	"net/http"
 )
@@ -65,10 +67,10 @@ func binaryStream(buf *bytes.Buffer, lit Literal, val interface{}) {
 		binary.Write(buf, binary.LittleEndian, float32(val.(*Vector3)[1]))
 		binary.Write(buf, binary.LittleEndian, float32(val.(*Vector3)[2]))
 	case *Quaternion:
-		binary.Write(buf, binary.LittleEndian, float32(val.(*Quaternion).r))
-		binary.Write(buf, binary.LittleEndian, float32(val.(*Quaternion).i))
-		binary.Write(buf, binary.LittleEndian, float32(val.(*Quaternion).j))
-		binary.Write(buf, binary.LittleEndian, float32(val.(*Quaternion).k))
+		binary.Write(buf, binary.LittleEndian, float32(val.(*Quaternion).R))
+		binary.Write(buf, binary.LittleEndian, float32(val.(*Quaternion).I))
+		binary.Write(buf, binary.LittleEndian, float32(val.(*Quaternion).J))
+		binary.Write(buf, binary.LittleEndian, float32(val.(*Quaternion).K))
 	default:
 		panic(fmt.Errorf("Havent found out how to serialise literal %v with value of type '%T'", lit, val))
 	}

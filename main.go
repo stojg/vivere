@@ -9,6 +9,10 @@ const (
 	SEC_PER_UPDATE float64 = 0.016
 )
 
+type Updatable interface {
+	Update(elapsed float64)
+}
+
 var (
 	Frame uint
 )

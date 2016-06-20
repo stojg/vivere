@@ -1,13 +1,15 @@
 package main
 
+import (
+//. "github.com/stojg/vivere/lib/vector"
+)
+
 type AI struct {
+	State Updatable
 }
 
 func (s *AI) Update(elapsed float64) {
-
-	entities := entityManager.EntitiesWith("*main.MoveComponent")
-	for i := range entities {
-		move := entityManager.EntityComponent(entities[i], "*main.MoveComponent").(*MoveComponent)
-		move.AddForce(&Vector3{20, 0, 0})
-	}
+	//for _, move := range rigidList.All() {
+	//	move.AddForce(&Vector3{20, 0, 0})
+	//}
 }
