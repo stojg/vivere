@@ -6,10 +6,10 @@ import (
 
 type Matrix3 [9]float64
 
-var real_epsilon float64
+var RealEpsilon float64
 
 func init() {
-	real_epsilon = 0.00001
+	RealEpsilon = 0.00001
 }
 
 type Vector3 [3]float64
@@ -191,15 +191,15 @@ func (a *Vector3) NewHadamardProduct(vector *Vector3) *Vector3 {
 
 func (a *Vector3) Equals(z *Vector3) bool {
 	diff := math.Abs(a[0] - z[0])
-	if diff > real_epsilon {
+	if diff > RealEpsilon {
 		return false
 	}
 	diff = math.Abs(a[1] - z[1])
-	if diff > real_epsilon {
+	if diff > RealEpsilon {
 		return false
 	}
 	diff = math.Abs(a[2] - z[2])
-	if diff > real_epsilon {
+	if diff > RealEpsilon {
 		return false
 	}
 	return true
@@ -516,12 +516,12 @@ func QuaternionToTarget(origin, target *Vector3) *Quaternion {
 
 	source := VectorZ()
 	dot := source.Dot(dest)
-	if math.Abs(dot-(-1.0)) < real_epsilon {
+	if math.Abs(dot-(-1.0)) < RealEpsilon {
 		// vector a and b point exactly in the opposite direction,
 		// so it is a 180 degrees turn around the up-axis
 		//return new Quaternion(up, MathHelper.ToRadians(180.0f));
 		return QuaternionFromAxisAngle(VectorY(), -math.Pi)
-	} else if math.Abs(dot-(1.0)) < real_epsilon {
+	} else if math.Abs(dot-(1.0)) < RealEpsilon {
 		// vector a and b point exactly in the same direction
 		// so we return the identity quaternion
 		return &Quaternion{1, 0, 0, 0}
@@ -574,16 +574,16 @@ func (q *Quaternion) Clone() *Quaternion {
 }
 
 func (q *Quaternion) Equals(z *Quaternion) bool {
-	if math.Abs(q.R-z.R) > real_epsilon {
+	if math.Abs(q.R-z.R) > RealEpsilon {
 		return false
 	}
-	if math.Abs(q.I-z.I) > real_epsilon {
+	if math.Abs(q.I-z.I) > RealEpsilon {
 		return false
 	}
-	if math.Abs(q.J-z.J) > real_epsilon {
+	if math.Abs(q.J-z.J) > RealEpsilon {
 		return false
 	}
-	if math.Abs(q.K-z.K) > real_epsilon {
+	if math.Abs(q.K-z.K) > RealEpsilon {
 		return false
 	}
 	return true
@@ -594,7 +594,7 @@ func (q *Quaternion) Normalize() {
 	d := q.R*q.R + q.I*q.I + q.J*q.J + q.K*q.K
 	// Check for zero length quaternion, and use the no-rotation
 	// quaternion in that case.
-	if d < real_epsilon {
+	if d < RealEpsilon {
 		q.R = 1
 		return
 	}

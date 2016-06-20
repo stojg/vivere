@@ -4,26 +4,26 @@ import (
 	. "github.com/stojg/vivere/lib/vector"
 )
 
-func NewRigidBodyManager() *RigidBodyManager {
-	return &RigidBodyManager{
+func NewRigidBodyManager() *RigidBodyList {
+	return &RigidBodyList{
 		entity: make(map[*Entity]*RigidBody),
 	}
 }
 
-type RigidBodyManager struct {
+type RigidBodyList struct {
 	entity map[*Entity]*RigidBody
 }
 
-func (b *RigidBodyManager) New(toEntity *Entity, invMass float64) *RigidBody {
+func (b *RigidBodyList) New(toEntity *Entity, invMass float64) *RigidBody {
 	b.entity[toEntity] = newRidigBody(invMass)
 	return b.entity[toEntity]
 }
 
-func (b *RigidBodyManager) All() map[*Entity]*RigidBody {
+func (b *RigidBodyList) All() map[*Entity]*RigidBody {
 	return b.entity
 }
 
-func (b *RigidBodyManager) Get(fromEntity *Entity) *RigidBody {
+func (b *RigidBodyList) Get(fromEntity *Entity) *RigidBody {
 	return b.entity[fromEntity]
 }
 
@@ -31,7 +31,7 @@ func newRidigBody(invMass float64) *RigidBody {
 	return &RigidBody{
 		Velocity:                  &Vector3{},
 		Rotation:                  &Vector3{},
-		forces:                    &Vector3{},
+		Forces:                    &Vector3{},
 		transformMatrix:           &Matrix4{},
 		InverseInertiaTensor:      &Matrix3{},
 		InverseInertiaTensorWorld: &Matrix3{},
@@ -140,7 +140,7 @@ type RigidBody struct {
 	LastFrameAcceleration *Vector3
 
 	SleepEpsilon float64
-	forces       *Vector3
+	Forces       *Vector3
 }
 
 func (rb *RigidBody) Mass() float64 {
@@ -177,7 +177,7 @@ func (rb *RigidBody) AddTorque(torque *Vector3) {
 }
 
 func (rb *RigidBody) ClearAccumulators() {
-	rb.forces.Clear()
+	rb.Forces.Clear()
 	rb.ForceAccum.Clear()
 	rb.TorqueAccum.Clear()
 }

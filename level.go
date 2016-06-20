@@ -10,9 +10,10 @@ import (
 )
 
 var (
-	entities  *EntityManager
-	modelList *ModelList
-	rigidList *RigidBodyManager
+	entities      *EntityManager
+	modelList     *ModelList
+	collisionList *CollisionList
+	rigidList     *RigidBodyList
 )
 
 func NewLevel() *Level {
@@ -23,27 +24,32 @@ func NewLevel() *Level {
 	entities = NewEntityManager()
 	modelList = NewModelList()
 	rigidList = NewRigidBodyManager()
+	collisionList = NewCollisionList()
 
 	ground := entities.Create()
 	modelList.New(ground, x, 0.1, y, ENTITY_GROUND)
 
-
-	var list []*Entity
+	var dudeList []*Entity
 	for i := 0; i < 100; i++ {
 		e := entities.Create()
+		dudeList = append(dudeList, e)
+
 		body := modelList.New(e, 8, 24, 8, ENTITY_PRAY)
 		body.Position.Set(x*rand.Float64()-x/2, 8, rand.Float64()*y-y/2)
-
 		phi := rand.Float64() * math.Pi * 2
 		body.Orientation.RotateByVector(&vector.Vector3{math.Cos(phi), 0, math.Sin(phi)})
+
 		rig := rigidList.New(e, 1)
-		rig.MaxAcceleration = &vector.Vector3{1,0,1}
-		list = append(list, e)
+		rig.MaxAcceleration = &vector.Vector3{10, 0, 10}
+
+		collisionList.New(e, 8, 24, 8)
 	}
 
 	lvl := &Level{}
 	lvl.systems = append(lvl.systems, &PhysicSystem{})
-	lvl.systems = append(lvl.systems, NewAI(list))
+	// @todo make an AI component?
+	lvl.systems = append(lvl.systems, NewAI(dudeList))
+	lvl.systems = append(lvl.systems, &CollisionSystem{})
 	return lvl
 }
 
