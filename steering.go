@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/stojg/vivere/lib/components"
 	. "github.com/stojg/vivere/lib/vector"
+	"math"
 )
 
 // SteeringOutput describes wished changes in velocity (linear) and rotation (angular)
@@ -49,6 +50,31 @@ func (s *Seek) GetSteering() *SteeringOutput {
 	steering.linear.HadamardProduct(s.rigidbody.MaxAcceleration)
 	steering.angular = &Vector3{}
 	return steering
+}
+
+func NewLookWhereYoureGoing(character *components.RigidBody, cbody *components.Model) *LookWhereYoureGoing {
+	return &LookWhereYoureGoing{
+		model: character,
+		cbody: cbody,
+	}
+}
+
+// LookWhereYoureGoing turns the character so it faces the direction the character is moving
+type LookWhereYoureGoing struct {
+	model *components.RigidBody
+	cbody *components.Model
+}
+
+// GetSteering returns a angular steering
+func (s *LookWhereYoureGoing) GetSteering() *SteeringOutput {
+	if s.model.Velocity.Length() == 0 {
+		return NewSteeringOutput()
+	}
+	target := &components.Model{}
+	target.Position = s.model.Velocity.NewAdd(s.cbody.Position)
+
+	face := NewFace(s.cbody, target, s.model)
+	return face.GetSteering()
 }
 
 //
@@ -123,168 +149,151 @@ func (s *Seek) GetSteering() *SteeringOutput {
 //	return steering
 //}
 //
-//func NewAlign(c, t *BodyComponent, slowRadius, targetRadius, timeToTarget float64) *Align {
-//	return &Align{
-//		character:    c,
-//		target:       t,
-//		targetRadius: targetRadius,
-//		slowRadius:   slowRadius,
-//		timeToTarget: timeToTarget,
-//	}
-//}
-//
-//// Align ensures that the character have the same orientation as the target
-//type Align struct {
-//	character    *BodyComponent
-//	target       *BodyComponent
-//	targetRadius float64 // 0.02
-//	slowRadius   float64 // 0.1
-//	timeToTarget float64 // 0.1
-//}
-//
-//// GetSteering returns the angular steering to mimic the targets orientation
-//func (align *Align) GetSteering() *SteeringOutput {
-//
-//	steering := NewSteeringOutput()
-//
-//	invInitial := &Quaternion{
-//		r: align.character.Orientation.r,
-//		i: -align.character.Orientation.i,
-//		j: -align.character.Orientation.j,
-//		k: -align.character.Orientation.k,
-//	}
-//
-//	q := align.target.Orientation.NewMultiply(invInitial)
-//	// protect the ArcCos from numerical instabilities
-//	if q.r > 1.0 {
-//		q.r = 1.0
-//	} else if q.r < -1.0 {
-//		q.r = -1.0
-//	}
-//
-//	theta := 2 * math.Acos(q.r)
-//
-//	sin := 1 / (math.Sin(theta / 2))
-//	axis := &Vector3{
-//		sin * q.i,
-//		sin * q.j,
-//		sin * q.k,
-//	}
-//
-//	theta = align.mapToRange(theta)
-//	thetaNoSign := math.Abs(theta)
-//	// Check if we are there, return no steering
-//	if (thetaNoSign) < align.targetRadius {
-//		return steering
-//	}
-//
-//	var targetRotation float64
-//	if thetaNoSign > align.slowRadius {
-//		targetRotation = align.character.MaxRotation
-//	} else {
-//		targetRotation = align.character.MaxRotation * (thetaNoSign / align.slowRadius)
-//	}
-//
-//	targetRotation *= theta / thetaNoSign
-//
-//	axis.Normalize()
-//	axis.Scale(targetRotation)
-//	axis.Sub(align.character.Rotation)
-//	axis.Scale(1 / align.timeToTarget)
-//
-//	steering.angular = axis
-//	return steering
-//
-//}
-//
-//func (align *Align) mapToRange(rotation float64) float64 {
-//	for rotation < -math.Pi {
-//		rotation += math.Pi * 2
-//	}
-//	for rotation > math.Pi {
-//		rotation -= math.Pi * 2
-//	}
-//	return rotation
-//}
-//
-//func NewFace(character, target *BodyComponent) *Face {
-//	return &Face{
-//		character:       character,
-//		target:          target,
-//		baseOrientation: &Quaternion{1, 0, 0, 0},
-//	}
-//}
-//
-//// Face turns the character so it 'looks' at the target
-//type Face struct {
-//	character *BodyComponent
-//	target    *BodyComponent
-//	// @todo fix
-//	baseOrientation *Quaternion
-//}
-//
-//// GetSteering returns a angular steering
-//func (face *Face) GetSteering() *SteeringOutput {
-//
-//	// 1. Calculate the target to delegate to align
-//
-//	// Work out the direction to target
-//	direction := face.target.Position.NewSub(face.character.Position)
-//
-//	// Check for zero direction
-//	if direction.SquareLength() == 0 {
-//		return NewSteeringOutput()
-//	}
-//
-//	target := NewEntity()
-//	target.Orientation = face.calculateOrientation(direction)
-//	align := NewAlign(face.character, target, 0.2, 0.01, 0.1)
-//	return align.GetSteering()
-//}
-//
-//func (face *Face) calculateOrientation(vector *Vector3) *Quaternion {
-//	vector.Normalize()
-//
-//	baseZVector := VectorX().Rotate(face.baseOrientation)
-//
-//	if baseZVector.Equals(vector) {
-//		return face.baseOrientation.Clone()
-//	}
-//	if baseZVector.Equals(vector.NewInverse()) {
-//		// @todo need to fix this is the base orientation isn't 1,0,0,0?
-//		return NewQuaternion(0, 0, 1, 0)
-//	}
-//
-//	// find the minimal rotation from the base to the target
-//	angle := math.Acos(baseZVector.Dot(vector))
-//	axis := baseZVector.NewCross(vector).Normalize()
-//
-//	return QuaternionFromAxisAngle(axis, angle)
-//}
-//
-//func NewLookWhereYoureGoing(character *BodyComponent) *LookWhereYoureGoing {
-//	return &LookWhereYoureGoing{
-//		character: character,
-//	}
-//}
-//
-//// LookWhereYoureGoing turns the character so it faces the direction the character is moving
-//type LookWhereYoureGoing struct {
-//	character *BodyComponent
-//}
-//
-//// GetSteering returns a angular steering
-//func (s *LookWhereYoureGoing) GetSteering() *SteeringOutput {
-//	if s.character.Velocity.Length() == 0 {
-//		return NewSteeringOutput()
-//	}
-//	target := NewEntity()
-//	target.Position = s.character.Velocity.NewAdd(s.character.Position)
-//
-//	face := NewFace(s.character, target)
-//	return face.GetSteering()
-//}
-//
+func NewAlign(c, t *components.Model, cbody *components.RigidBody, slowRadius, targetRadius, timeToTarget float64) *Align {
+	return &Align{
+		character: c,
+		cbody:     cbody,
+
+		target: t,
+
+		targetRadius: targetRadius,
+		slowRadius:   slowRadius,
+		timeToTarget: timeToTarget,
+	}
+}
+
+// Align ensures that the character have the same orientation as the target
+type Align struct {
+	character    *components.Model
+	cbody        *components.RigidBody
+	target       *components.Model
+	targetRadius float64 // 0.02
+	slowRadius   float64 // 0.1
+	timeToTarget float64 // 0.1
+}
+
+// GetSteering returns the angular steering to mimic the targets orientation
+func (align *Align) GetSteering() *SteeringOutput {
+
+	steering := NewSteeringOutput()
+
+	invInitial := &Quaternion{
+		R: align.character.Orientation.R,
+		I: -align.character.Orientation.I,
+		J: -align.character.Orientation.J,
+		K: -align.character.Orientation.K,
+	}
+
+	q := align.target.Orientation.NewMultiply(invInitial)
+	// protect the ArcCos from numerical instabilities
+	if q.R > 1.0 {
+		q.R = 1.0
+	} else if q.R < -1.0 {
+		q.R = -1.0
+	}
+
+	theta := 2 * math.Acos(q.R)
+
+	sin := 1 / (math.Sin(theta / 2))
+	axis := &Vector3{
+		sin * q.I,
+		sin * q.J,
+		sin * q.K,
+	}
+
+	theta = align.mapToRange(theta)
+	thetaNoSign := math.Abs(theta)
+	// Check if we are there, return no steering
+	if (thetaNoSign) < align.targetRadius {
+		return steering
+	}
+
+	var targetRotation float64
+	if thetaNoSign > align.slowRadius {
+		targetRotation = align.cbody.MaxRotation
+	} else {
+		targetRotation = align.cbody.MaxRotation * (thetaNoSign / align.slowRadius)
+	}
+
+	targetRotation *= theta / thetaNoSign
+
+	axis.Normalize()
+	axis.Scale(targetRotation)
+	axis.Sub(align.cbody.Rotation)
+	axis.Scale(1 / align.timeToTarget)
+
+	steering.angular = axis
+	return steering
+
+}
+
+func (align *Align) mapToRange(rotation float64) float64 {
+	for rotation < -math.Pi {
+		rotation += math.Pi * 2
+	}
+	for rotation > math.Pi {
+		rotation -= math.Pi * 2
+	}
+	return rotation
+}
+
+func NewFace(character, target *components.Model, cbody *components.RigidBody) *Face {
+	return &Face{
+		character:       character,
+		cbody:           cbody,
+		target:          target,
+		baseOrientation: &Quaternion{1, 0, 0, 0},
+	}
+}
+
+// Face turns the character so it 'looks' at the target
+type Face struct {
+	character *components.Model
+	cbody     *components.RigidBody
+	target    *components.Model
+	// @todo fix
+	baseOrientation *Quaternion
+}
+
+// GetSteering returns a angular steering
+func (face *Face) GetSteering() *SteeringOutput {
+
+	// 1. Calculate the target to delegate to align
+
+	// Work out the direction to target
+	direction := face.target.Position.NewSub(face.character.Position)
+
+	// Check for zero direction
+	if direction.SquareLength() == 0 {
+		return NewSteeringOutput()
+	}
+
+	target := &components.Model{}
+	target.Orientation = face.calculateOrientation(direction)
+	align := NewAlign(face.character, target, face.cbody, 0.2, 0.01, 0.1)
+	return align.GetSteering()
+}
+
+func (face *Face) calculateOrientation(vector *Vector3) *Quaternion {
+	vector.Normalize()
+
+	baseZVector := VectorX().Rotate(face.baseOrientation)
+
+	if baseZVector.Equals(vector) {
+		return face.baseOrientation.Clone()
+	}
+	if baseZVector.Equals(vector.NewInverse()) {
+		// @todo need to fix this is the base orientation isn't 1,0,0,0?
+		return NewQuaternion(0, 0, 1, 0)
+	}
+
+	// find the minimal rotation from the base to the target
+	angle := math.Acos(baseZVector.Dot(vector))
+	axis := baseZVector.NewCross(vector).Normalize()
+
+	return QuaternionFromAxisAngle(axis, angle)
+}
+
 //// Wander lets the character wander around
 //type Wander struct {
 //	character *BodyComponent

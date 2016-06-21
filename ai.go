@@ -23,6 +23,10 @@ type AI struct {
 func (s *AI) Update(elapsed float64) {
 	for id, ent := range s.states {
 		steering := ent.GetSteering()
-		rigidList.Get(id).AddForce(steering.linear)
+		body := rigidList.Get(id)
+		body.AddForce(steering.linear)
+		model := modelList.Get(id)
+		ste := NewLookWhereYoureGoing(body, model).GetSteering()
+		body.AddTorque(ste.angular)
 	}
 }

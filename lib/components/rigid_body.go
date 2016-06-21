@@ -28,7 +28,7 @@ func (b *RigidBodyList) Get(fromEntity *Entity) *RigidBody {
 }
 
 func newRidigBody(invMass float64) *RigidBody {
-	return &RigidBody{
+	body := &RigidBody{
 		Velocity:                  &Vector3{},
 		Rotation:                  &Vector3{},
 		Forces:                    &Vector3{},
@@ -41,11 +41,17 @@ func newRidigBody(invMass float64) *RigidBody {
 		Acceleration:              &Vector3{},
 		LinearDamping:             0.99,
 		AngularDamping:            0.99,
+		MaxRotation:               3.14,
 		InvMass:                   invMass,
 		CanSleep:                  true,
 		IsAwake:                   true,
 		SleepEpsilon:              0.01,
 	}
+
+	it := &Matrix3{}
+	it.SetBlockInertiaTensor(&Vector3{1, 1, 1}, invMass)
+	body.SetInertiaTensor(it)
+	return body
 }
 
 type RigidBody struct {
@@ -134,6 +140,9 @@ type RigidBody struct {
 	Acceleration *Vector3
 
 	MaxAcceleration *Vector3
+
+	MaxAngularAcceleration *Vector3 // limits the linear acceleration
+	MaxRotation            float64  // limits the angular velocity
 
 	// Holds the linear acceleration of the rigid body, for the
 	// previous frame.

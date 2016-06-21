@@ -78,7 +78,7 @@ func (s *CollisionSystem) Check() []*Contact {
 			collisionPair := &Contact{
 				a:           a,
 				b:           b.(collisonBody),
-				restitution: 0.4,
+				restitution: 0.9,
 				normal:      &Vector3{},
 			}
 

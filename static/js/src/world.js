@@ -25,7 +25,7 @@ define(['src/entity', 'lib/babylon.2.3.max'], function (entity) {
         yellow_material.diffuseColor = new BABYLON.Color3(0.9, 0.8, 0.7);
 
         var blue_material = new BABYLON.StandardMaterial("texture1", scene);
-        blue_material.diffuseColor = new BABYLON.Color3(.4, .5, 1);
+        blue_material.diffuseColor = new BABYLON.Color3(.5, .5, 0.9);
 
         var green_material = new BABYLON.StandardMaterial("texture1", scene);
         green_material.diffuseColor = new BABYLON.Color3(.5, 1.0, .4);
