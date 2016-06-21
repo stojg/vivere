@@ -45,9 +45,15 @@ func NewLevel() *Level {
 		collisionList.New(e, 8, 24, 8)
 	}
 
+	e := entities.Create()
+	m := modelList.New(e, 12, 32, 12, ENTITY_BLOCK)
+	m.Position.Set(0, 16, 0)
+	rigidList.New(e, 0.0)
+	collisionList.New(e, 12, 32, 12)
+
 	lvl := &Level{}
 	lvl.systems = append(lvl.systems, &PhysicSystem{})
-	// @todo make an AI component?
+	//@todo make an AI component?
 	lvl.systems = append(lvl.systems, NewAI(dudeList))
 	lvl.systems = append(lvl.systems, &CollisionSystem{})
 	return lvl
@@ -67,7 +73,6 @@ func (l *Level) Draw() *bytes.Buffer {
 	buf := &bytes.Buffer{}
 	binary.Write(buf, binary.LittleEndian, float32(Frame))
 
-	//entities := entityManager.EntitiesWith("*main.BodyComponent")
 	for id, component := range modelList.All() {
 		binaryStream(buf, INST_ENTITY_ID, *id)
 		binaryStream(buf, INST_SET_POSITION, component.Position)

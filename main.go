@@ -29,6 +29,7 @@ func main() {
 	var lag float64 = 0
 
 	Println("Starting the game loop")
+	// @todo fix race condition on the global Frame var
 	DebugFPS(SEC_PER_UPDATE)
 
 	for {
@@ -43,7 +44,7 @@ func main() {
 		buf := level.Draw()
 		if buf.Len() > 0 {
 			for _, client := range clients {
-				go client.Update(buf)
+				client.Update(buf)
 			}
 		}
 		lag -= SEC_PER_UPDATE
