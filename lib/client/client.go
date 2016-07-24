@@ -59,9 +59,8 @@ func (ch *ClientHandler) Websocket(ws *websocket.Conn) {
 			break
 		}
 
-		if cmd.Actions != 0 {
-			client.cmdBuf <- cmd
-		}
+		client.cmdBuf <- cmd
+
 	}
 }
 
@@ -73,7 +72,8 @@ func (ch *ClientHandler) NewClients() chan *Client {
 // ClientCommand what the client sends to the server, it represents actions
 // that the user issued, for example clicking the up arrow key
 type ClientCommand struct {
-	Actions  uint32
+	Data  uint32
+	Type MessageType
 	Sequence uint32
 	Duration float64
 }
@@ -88,6 +88,10 @@ type Client struct {
 	pingStartTime float64
 	ping          float64
 	serverTime    float64
+}
+
+func (c *Client) Input() chan ClientCommand {
+	return c.cmdBuf
 }
 
 // Write provides a io.reader interface for writing a message to the client
@@ -158,8 +162,8 @@ func (client *Client) timestamp() float64 {
 }
 
 // Updatea
-func (client *Client) Update(buf *bytes.Buffer) {
-	message := client.NewMessage(MSG_UPDATE)
+func (client *Client) Update(buf *bytes.Buffer, msg MessageType) {
+	message := client.NewMessage(msg)
 	message.Write(buf.Bytes())
 	client.Write(message.Bytes())
 }
@@ -192,7 +196,7 @@ func (c *Client) input(reader io.Reader) (cmd ClientCommand, err error) {
 	if err != nil {
 		return cmd, fmt.Errorf("binary.Read() - Couldn't read msec: '%s'", err)
 	}
-	err = binary.Read(buffer, binary.LittleEndian, &cmd.Actions)
+	err = binary.Read(buffer, binary.LittleEndian, &cmd.Data)
 	if err != nil {
 		return cmd, fmt.Errorf("binary.Read() - Couldn't read command: '%s'", err)
 	}
