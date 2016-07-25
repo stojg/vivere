@@ -140,7 +140,7 @@ func (client *Client) NewMessage(msgType MessageType) *bytes.Buffer {
 	return buf
 }
 
-func (client *Client) Input() chan ClientCommand {
+func (client *Client) Inputs() chan ClientCommand {
 	return client.cmdBuf
 }
 
