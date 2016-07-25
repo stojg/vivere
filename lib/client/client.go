@@ -65,8 +65,8 @@ func (ch *ClientHandler) NewClients() chan *Client {
 // ClientCommand what the client sends to the server, it represents actions
 // that the user issued, for example clicking the up arrow key
 type ClientCommand struct {
-	Type     MessageType
-	Data     uint32
+	Data  uint32
+	Type MessageType
 	Sequence uint32
 	Duration float64
 }
@@ -81,6 +81,10 @@ type Client struct {
 	pingStartTime float64
 	ping          float64
 	serverTime    float64
+}
+
+func (c *Client) Input() chan ClientCommand {
+	return c.cmdBuf
 }
 
 // Write provides a io.reader interface for writing a message to the client

@@ -162,6 +162,14 @@ type RigidBody struct {
 	Forces       *Vector3
 }
 
+func (rb *RigidBody) Awake() bool {
+	return rb.IsAwake
+}
+
+func (rb *RigidBody) SetAwake(t bool){
+	rb.IsAwake = t
+}
+
 func (rb *RigidBody) Mass() float64 {
 	return 1 / rb.InvMass
 }
