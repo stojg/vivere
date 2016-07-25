@@ -16,12 +16,6 @@ import (
 
 type MessageType uint8
 
-const (
-	MSG_UPDATE MessageType = 1
-	MSG_PING   MessageType = 2
-	MSG_INPUT  MessageType = 3
-)
-
 // ClientHandler represent a group of connection and wires them all up
 // to individual Clients
 type ClientHandler struct {
@@ -59,9 +53,7 @@ func (ch *ClientHandler) Websocket(ws *websocket.Conn) {
 			break
 		}
 
-		if cmd.Actions != 0 {
-			client.cmdBuf <- cmd
-		}
+		client.cmdBuf <- cmd
 	}
 }
 
@@ -73,7 +65,8 @@ func (ch *ClientHandler) NewClients() chan *Client {
 // ClientCommand what the client sends to the server, it represents actions
 // that the user issued, for example clicking the up arrow key
 type ClientCommand struct {
-	Actions  uint32
+	Type     MessageType
+	Data     uint32
 	Sequence uint32
 	Duration float64
 }
@@ -131,15 +124,7 @@ func (c *Client) Read(reader io.Reader) (cmd ClientCommand, err error) {
 		return cmd, fmt.Errorf("binary.Read() - Couldn't read msgType #: '%s'", err)
 	}
 
-	switch {
-	case msgType == MSG_PING:
-		c.pingResponse(buffer)
-	case msgType == MSG_INPUT:
-		c.input(buffer)
-	default:
-		return cmd, fmt.Errorf("Unknown message type recieved: '%v'\n", msgType)
-	}
-	return
+	return c.input(buffer, msgType)
 }
 
 // NewMessage returns a buffer writer ready for binary writing including
@@ -151,6 +136,10 @@ func (client *Client) NewMessage(msgType MessageType) *bytes.Buffer {
 	return buf
 }
 
+func (client *Client) Input() chan ClientCommand {
+	return client.cmdBuf
+}
+
 // Returns the current unix nano time as float64 since
 // there is some problem reading int64 in javascript
 func (client *Client) timestamp() float64 {
@@ -158,21 +147,21 @@ func (client *Client) timestamp() float64 {
 }
 
 // Updatea
-func (client *Client) Update(buf *bytes.Buffer) {
-	message := client.NewMessage(MSG_UPDATE)
+func (client *Client) Update(buf *bytes.Buffer, msgType MessageType) {
+	message := client.NewMessage(msgType)
 	message.Write(buf.Bytes())
 	client.Write(message.Bytes())
 }
 
 // Ping sends a ping request to the client
-func (client *Client) Ping() {
-	if client.pingStartTime != 0 {
-		return
-	}
-	client.pingStartTime = client.timestamp()
-	buf := client.NewMessage(MSG_PING)
-	client.Write(buf.Bytes())
-}
+//func (client *Client) Ping() {
+//	if client.pingStartTime != 0 {
+//		return
+//	}
+//	client.pingStartTime = client.timestamp()
+//	buf := client.NewMessage(MSG_PING)
+//	client.Write(buf.Bytes())
+//}
 
 // pong updates the client connection with the latest ping response from
 // the client.
@@ -182,19 +171,20 @@ func (client *Client) pingResponse(reader io.Reader) {
 }
 
 // ReadMessage picks the current message from the inbuffer and
-func (c *Client) input(reader io.Reader) (cmd ClientCommand, err error) {
+func (c *Client) input(reader io.Reader, msgType MessageType) (cmd ClientCommand, err error) {
 	buffer := reader
+	cmd.Type = msgType
 	err = binary.Read(buffer, binary.LittleEndian, &cmd.Sequence)
 	if err != nil {
-		return cmd, fmt.Errorf("binary.Read() - Couldn't read sequence #: '%s'", err)
+		return cmd, fmt.Errorf("binary.Read() - Couldn't read uint32 Sequence #: '%s'", err)
 	}
 	err = binary.Read(buffer, binary.LittleEndian, &cmd.Duration)
 	if err != nil {
-		return cmd, fmt.Errorf("binary.Read() - Couldn't read msec: '%s'", err)
+		return cmd, fmt.Errorf("binary.Read() - Couldn't read float64 Duration: '%s'", err)
 	}
-	err = binary.Read(buffer, binary.LittleEndian, &cmd.Actions)
+	err = binary.Read(buffer, binary.LittleEndian, &cmd.Data)
 	if err != nil {
-		return cmd, fmt.Errorf("binary.Read() - Couldn't read command: '%s'", err)
+		return cmd, fmt.Errorf("binary.Read() - Couldn't read Data: '%s'", err)
 	}
 	return cmd, nil
 }

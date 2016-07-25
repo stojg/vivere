@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	entities      *EntityManager
-	modelList     *ModelList
-	collisionList *CollisionList
-	rigidList     *RigidBodyList
+	entities       *EntityManager
+	modelList      *ModelList
+	collisionList  *CollisionList
+	rigidList      *RigidBodyList
+	controllerList *ControllerList
 )
 
 func NewLevel() *Level {
@@ -25,6 +26,7 @@ func NewLevel() *Level {
 	modelList = NewModelList()
 	rigidList = NewRigidBodyManager()
 	collisionList = NewCollisionList()
+	controllerList = NewControllerList()
 
 	ground := entities.Create()
 	modelList.New(ground, x, 0.1, y, ENTITY_GROUND)
@@ -43,6 +45,8 @@ func NewLevel() *Level {
 		rig.MaxAcceleration = &vector.Vector3{10, 0, 10}
 
 		collisionList.New(e, 8, 24, 8)
+
+		controllerList.New(e, NewAI(e))
 	}
 
 	e := entities.Create()
@@ -54,7 +58,7 @@ func NewLevel() *Level {
 	lvl := &Level{}
 	lvl.systems = append(lvl.systems, &PhysicSystem{})
 	//@todo make an AI component?
-	lvl.systems = append(lvl.systems, NewAI(dudeList))
+	lvl.systems = append(lvl.systems, &ControllerSystem{})
 	lvl.systems = append(lvl.systems, &CollisionSystem{})
 	return lvl
 }

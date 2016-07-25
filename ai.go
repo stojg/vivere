@@ -4,15 +4,12 @@ import (
 	. "github.com/stojg/vivere/lib/components"
 )
 
-func NewAI(ents []*Entity) *AI {
+func NewAI(ent *Entity) *AI {
 	ai := &AI{
 		states: make(map[*Entity]Steering),
 	}
-	targetEid := entities.Create()
-	target := modelList.New(targetEid, 1, 1, 1, ENTITY_CAMO)
-	for _, e := range ents {
-		ai.states[e] = NewSeek(modelList.Get(e), rigidList.Get(e), target)
-	}
+	entity := modelList.Rand()
+	ai.states[ent] = NewSeek(modelList.Get(ent), rigidList.Get(ent), entity)
 	return ai
 }
 

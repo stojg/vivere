@@ -2,6 +2,8 @@ package components
 
 import (
 	. "github.com/stojg/vivere/lib/vector"
+	"math/rand"
+	"sync"
 )
 
 type EntityType uint16
@@ -23,20 +25,35 @@ func NewModelList() *ModelList {
 }
 
 type ModelList struct {
+	sync.Mutex
 	entity map[*Entity]*Model
 }
 
 func (b *ModelList) All() map[*Entity]*Model {
+	b.Lock()
+	defer b.Unlock()
 	return b.entity
 }
 
 func (b *ModelList) New(toEntity *Entity, w, h, d float64, model EntityType) *Model {
+	b.Lock()
+	defer b.Unlock()
 	b.entity[toEntity] = NewModel(w, h, d, model)
 	return b.entity[toEntity]
 }
 
 func (b *ModelList) Get(fromEntity *Entity) *Model {
+	b.Lock()
+	defer b.Unlock()
 	return b.entity[fromEntity]
+}
+
+func (b *ModelList) Rand() *Model {
+	all := make([]*Model, 0)
+	for _, t := range b.entity {
+		all = append(all, t)
+	}
+	return all[rand.Intn(len(all))]
 }
 
 func NewModel(w, h, d float64, model EntityType) *Model {

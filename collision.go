@@ -78,7 +78,7 @@ func (s *CollisionSystem) Check() []*Contact {
 			collisionPair := &Contact{
 				a:           a,
 				b:           b.(collisonBody),
-				restitution: 0.9,
+				restitution: 0.3,
 				normal:      &Vector3{},
 			}
 
@@ -125,15 +125,15 @@ type Contact struct {
 	IsIntersecting bool
 }
 
-func (pair *Contact) Resolve(duration float64) {
-	pair.resolveVelocity(duration)
-	pair.resolveInterpenetration()
+func (contact *Contact) Resolve(duration float64) {
+	contact.resolveVelocity(duration)
+	contact.resolveInterpenetration()
 }
 
 // resolveVelocity calculates the new velocity that is the result of the collision
-func (pair *Contact) resolveVelocity(duration float64) {
+func (contact *Contact) resolveVelocity(duration float64) {
 	// Find the velocity in the direction of the contact normal
-	separatingVelocity := pair.SeparatingVelocity()
+	separatingVelocity := contact.SeparatingVelocity()
 
 	// The objects are already separating, NOP
 	if separatingVelocity > 0 {
@@ -141,19 +141,19 @@ func (pair *Contact) resolveVelocity(duration float64) {
 	}
 
 	// Calculate the new separating velocity
-	newSepVelocity := -separatingVelocity * pair.restitution
+	newSepVelocity := -separatingVelocity * contact.restitution
 
 	// Check the velocity build up due to acceleration only
-	accCausedVelocity := pair.a.rigid.Forces.Clone()
-	if pair.b.rigid != nil {
-		accCausedVelocity.Sub(pair.b.rigid.Forces)
+	accCausedVelocity := contact.a.rigid.Forces.Clone()
+	if contact.b.rigid != nil {
+		accCausedVelocity.Sub(contact.b.rigid.Forces)
 	}
 
 	// If we have closing velocity due to acceleration buildup,
 	// remove it from the new separating velocity
-	accCausedSepVelocity := accCausedVelocity.Dot(pair.normal) * duration
+	accCausedSepVelocity := accCausedVelocity.Dot(contact.normal) * duration
 	if accCausedSepVelocity < 0 {
-		newSepVelocity += pair.restitution * accCausedSepVelocity
+		newSepVelocity += contact.restitution * accCausedSepVelocity
 		// make sure that we haven't removed more than was there to begin with
 		if newSepVelocity < 0 {
 			newSepVelocity = 0
@@ -162,9 +162,9 @@ func (pair *Contact) resolveVelocity(duration float64) {
 
 	deltaVelocity := newSepVelocity - separatingVelocity
 
-	totalInvMass := pair.a.rigid.InvMass
-	if pair.b.rigid != nil {
-		totalInvMass += pair.b.rigid.InvMass
+	totalInvMass := contact.a.rigid.InvMass
+	if contact.b.rigid != nil {
+		totalInvMass += contact.b.rigid.InvMass
 	}
 
 	// Both objects have infinite mass, so they can't actually move
@@ -172,55 +172,55 @@ func (pair *Contact) resolveVelocity(duration float64) {
 		return
 	}
 
-	impulsePerIMass := pair.normal.NewScale(deltaVelocity / totalInvMass)
+	impulsePerIMass := contact.normal.NewScale(deltaVelocity / totalInvMass)
 
-	velocityChangeA := impulsePerIMass.NewScale(pair.a.rigid.InvMass)
-	pair.a.rigid.Velocity.Add(velocityChangeA)
-	if pair.b.rigid != nil {
-		velocityChangeB := impulsePerIMass.NewScale(-pair.b.rigid.InvMass)
-		pair.b.rigid.Velocity.Add(velocityChangeB)
+	velocityChangeA := impulsePerIMass.NewScale(contact.a.rigid.InvMass)
+	contact.a.rigid.Velocity.Add(velocityChangeA)
+	if contact.b.rigid != nil {
+		velocityChangeB := impulsePerIMass.NewScale(-contact.b.rigid.InvMass)
+		contact.b.rigid.Velocity.Add(velocityChangeB)
 	}
 }
 
-func (c *Contact) SeparatingVelocity() float64 {
-	relativeVel := c.a.rigid.Velocity.Clone()
-	if c.b.rigid != nil {
-		relativeVel.Sub(c.b.rigid.Velocity)
+func (contact *Contact) SeparatingVelocity() float64 {
+	relativeVel := contact.a.rigid.Velocity.Clone()
+	if contact.b.rigid != nil {
+		relativeVel.Sub(contact.b.rigid.Velocity)
 	}
-	return relativeVel.Dot(c.normal)
+	return relativeVel.Dot(contact.normal)
 }
 
 // resolveInterpenetration separates two objects that has penetrated
-func (c *Contact) resolveInterpenetration() {
+func (contact *Contact) resolveInterpenetration() {
 
-	if c.penetration <= 0 {
+	if contact.penetration <= 0 {
 		return
 	}
 
-	totalInvMass := c.a.rigid.InvMass
-	if c.b.rigid != nil {
-		totalInvMass += c.b.rigid.InvMass
+	totalInvMass := contact.a.rigid.InvMass
+	if contact.b.rigid != nil {
+		totalInvMass += contact.b.rigid.InvMass
 	}
 	// Both objects have infinite mass, so no velocity
 	if totalInvMass == 0 {
 		return
 	}
 
-	movePerIMass := c.normal.NewScale(c.penetration / totalInvMass)
+	movePerIMass := contact.normal.NewScale(contact.penetration / totalInvMass)
 
-	c.a.model.Position.Add(movePerIMass.NewScale(c.a.rigid.InvMass))
-	if c.b.rigid != nil {
-		c.b.model.Position.Add(movePerIMass.NewScale(-c.b.rigid.InvMass))
+	contact.a.model.Position.Add(movePerIMass.NewScale(contact.a.rigid.InvMass))
+	if contact.b.rigid != nil {
+		contact.b.model.Position.Add(movePerIMass.NewScale(-contact.b.rigid.InvMass))
 	}
 }
 
-func CircleVsCircle(c *Contact) {
-	cA := c.a.geometry.(*components.Circle)
-	cB := c.b.geometry.(*components.Circle)
+func CircleVsCircle(contact *Contact) {
+	cA := contact.a.geometry.(*components.Circle)
+	cB := contact.b.geometry.(*components.Circle)
 
 	var d [3]float64
 	for i := range d {
-		d[i] = c.a.model.Position[i] - c.b.model.Position[i]
+		d[i] = contact.a.model.Position[i] - contact.b.model.Position[i]
 	}
 
 	sqrLength := d[0]*d[0] + d[1]*d[1] + d[2]*d[2]
@@ -239,26 +239,26 @@ func CircleVsCircle(c *Contact) {
 		d[i] *= 1 / length
 	}
 
-	c.penetration = cA.Radius + cB.Radius - length
-	c.normal = &Vector3{d[0], d[1], d[2]}
-	c.IsIntersecting = true
+	contact.penetration = cA.Radius + cB.Radius - length
+	contact.normal = &Vector3{d[0], d[1], d[2]}
+	contact.IsIntersecting = true
 }
 
-func CircleVsRectangle(c *Contact) {
-	c.a, c.b = c.b, c.a
-	RectangleVsCircle(c)
+func CircleVsRectangle(contact *Contact) {
+	contact.a, contact.b = contact.b, contact.a
+	RectangleVsCircle(contact)
 }
 
-func RectangleVsCircle(c *Contact) {
-	rA := c.a.geometry.(*components.Rectangle)
-	rA.ToWorld(c.a.model.Position)
+func RectangleVsCircle(contact *Contact) {
+	rA := contact.a.geometry.(*components.Rectangle)
+	rA.ToWorld(contact.a.model.Position)
 
-	cB := c.b.geometry.(*components.Circle)
-	c.normal = &Vector3{}
+	cB := contact.b.geometry.(*components.Circle)
+	contact.normal = &Vector3{}
 
 	closestPoint := &Vector3{}
 	for i := 0; i < 3; i++ {
-		closestPoint[i] = c.b.model.Position[i]
+		closestPoint[i] = contact.b.model.Position[i]
 		if closestPoint[i] < rA.MinPoint[i] {
 			closestPoint[i] = rA.MinPoint[i]
 		} else if closestPoint[i] > rA.MaxPoint[i] {
@@ -268,7 +268,7 @@ func RectangleVsCircle(c *Contact) {
 
 	var d [3]float64
 	for i := range d {
-		d[i] = closestPoint[i] - c.b.model.Position[i]
+		d[i] = closestPoint[i] - contact.b.model.Position[i]
 	}
 
 	sqrLength := d[0]*d[0] + d[1]*d[1] + d[2]*d[2]
@@ -287,17 +287,17 @@ func RectangleVsCircle(c *Contact) {
 		d[i] *= 1 / length
 	}
 
-	c.penetration = length - cB.Radius
-	c.normal = &Vector3{d[0], d[1], d[2]}
-	c.IsIntersecting = true
+	contact.penetration = length - cB.Radius
+	contact.normal = &Vector3{d[0], d[1], d[2]}
+	contact.IsIntersecting = true
 }
 
-func RectangleVsRectangle(c *Contact) {
-	rA := c.a.geometry.(*components.Rectangle)
-	rB := c.b.geometry.(*components.Rectangle)
+func RectangleVsRectangle(contact *Contact) {
+	rA := contact.a.geometry.(*components.Rectangle)
+	rB := contact.b.geometry.(*components.Rectangle)
 
-	rA.ToWorld(c.a.model.Position)
-	rB.ToWorld(c.b.model.Position)
+	rA.ToWorld(contact.a.model.Position)
+	rB.ToWorld(contact.b.model.Position)
 
 	// [Minimum Translation Vector]
 	mtvDistance := math.MaxFloat32 // Set current minimum distance (max float value so next value is always less)
@@ -319,9 +319,9 @@ func RectangleVsRectangle(c *Contact) {
 		return
 	}
 
-	c.penetration = mtvDistance * 1.001
-	c.normal = mtvAxis.Normalize()
-	c.IsIntersecting = true
+	contact.penetration = mtvDistance * 1.001
+	contact.normal = mtvAxis.Normalize()
+	contact.IsIntersecting = true
 }
 
 // TestAxisStatic checks if two axis overlaps and in that case calculates how much

@@ -2,6 +2,7 @@ package components
 
 import (
 	. "github.com/stojg/vivere/lib/vector"
+	"sync"
 )
 
 func NewCollisionList() *CollisionList {
@@ -11,24 +12,35 @@ func NewCollisionList() *CollisionList {
 }
 
 type CollisionList struct {
+	sync.Mutex
 	entity map[*Entity]*Collision
 }
 
 func (b *CollisionList) All() map[*Entity]*Collision {
+	b.Lock()
+	defer b.Unlock()
 	return b.entity
 }
 
 func (b *CollisionList) New(toEntity *Entity, x, y, z float64) *Collision {
+	b.Lock()
 	b.entity[toEntity] = &Collision{
-		Geometry: &Rectangle{
-			HalfSize: Vector3{x / 2, y / 2, z / 2},
+		//Geometry: &Rectangle{
+		//	HalfSize: Vector3{x / 2, y / 2, z / 2},
+		//},
+		Geometry: &Circle{
+			Radius: x,
 		},
 	}
+	b.Unlock()
 	return b.entity[toEntity]
 }
 
 func (b *CollisionList) Get(fromEntity *Entity) *Collision {
-	return b.entity[fromEntity]
+	b.Lock()
+	t := b.entity[fromEntity]
+	b.Unlock()
+	return t
 }
 
 type Collision struct {

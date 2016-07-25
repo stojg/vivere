@@ -77,20 +77,19 @@ func (s *LookWhereYoureGoing) GetSteering() *SteeringOutput {
 	return face.GetSteering()
 }
 
-//
 //func NewFlee(character, target *BodyComponent) *Flee {
 //	return &Flee{
 //		character: character,
 //		target:    target,
 //	}
 //}
-//
+
 //// Flee makes the character to flee from the target
 //type Flee struct {
 //	character *BodyComponent
 //	target *BodyComponent
 //}
-//
+
 //// GetSteering returns a linear steering
 //func (s *Flee) GetSteering() *SteeringOutput {
 //	steering := &SteeringOutput{}
@@ -100,7 +99,7 @@ func (s *LookWhereYoureGoing) GetSteering() *SteeringOutput {
 //	steering.angular = &Vector3{}
 //	return steering
 //}
-//
+
 //func NewArrive(character, target *BodyComponent) *Arrive {
 //	return &Arrive{
 //		character:    character,
@@ -110,7 +109,7 @@ func (s *LookWhereYoureGoing) GetSteering() *SteeringOutput {
 //		timeToTarget: 0.1,
 //	}
 //}
-//
+
 //// Arrive tries to get the character to arrive slowly at a target
 //type Arrive struct {
 //	character    *BodyComponent
@@ -119,7 +118,7 @@ func (s *LookWhereYoureGoing) GetSteering() *SteeringOutput {
 //	slowRadius   float64
 //	timeToTarget float64
 //}
-//
+
 //// GetSteering returns a linear steering
 //func (s *Arrive) GetSteering() *SteeringOutput {
 //	// Get a new steering output

@@ -2,6 +2,7 @@ package components
 
 import (
 	. "github.com/stojg/vivere/lib/vector"
+	"sync"
 )
 
 func NewRigidBodyManager() *RigidBodyList {
@@ -11,20 +12,28 @@ func NewRigidBodyManager() *RigidBodyList {
 }
 
 type RigidBodyList struct {
+	sync.Mutex
 	entity map[*Entity]*RigidBody
 }
 
 func (b *RigidBodyList) New(toEntity *Entity, invMass float64) *RigidBody {
+	b.Lock()
 	b.entity[toEntity] = newRidigBody(invMass)
+	b.Unlock()
 	return b.entity[toEntity]
 }
 
 func (b *RigidBodyList) All() map[*Entity]*RigidBody {
+	b.Lock()
+	defer b.Unlock()
 	return b.entity
 }
 
 func (b *RigidBodyList) Get(fromEntity *Entity) *RigidBody {
-	return b.entity[fromEntity]
+	b.Lock()
+	e := b.entity[fromEntity]
+	b.Unlock()
+	return e
 }
 
 func newRidigBody(invMass float64) *RigidBody {
@@ -44,7 +53,7 @@ func newRidigBody(invMass float64) *RigidBody {
 		MaxRotation:               3.14,
 		InvMass:                   invMass,
 		CanSleep:                  true,
-		IsAwake:                   true,
+		isAwake:                   true,
 		SleepEpsilon:              0.01,
 	}
 
@@ -55,6 +64,7 @@ func newRidigBody(invMass float64) *RigidBody {
 }
 
 type RigidBody struct {
+	sync.Mutex
 	// Holds the linear velocity of the rigid body in world space.
 	Velocity *Vector3
 	// Holds the angular velocity, or rotation for the rigid body in world space.
@@ -101,19 +111,19 @@ type RigidBody struct {
 	InverseInertiaTensorWorld *Matrix3
 	// Holds the amount of motion of the body. This is a recency
 	// weighted mean that can be used to put a body to sleap.
-	Motion float64
+	Motion                    float64
 	// A body can be put to sleep to avoid it being updated
 	// by the integration functions or affected by collisions
 	// with the world.
-	IsAwake bool
+	isAwake                   bool
 	// Some bodies may never be allowed to fall asleep.
 	// User controlled bodies, for example, should be
 	// always awake.
-	CanSleep bool
+	CanSleep                  bool
 	// Holds a transform matrix for converting body space into
 	// world space and vice versa. This can be achieved by calling
 	// the getPointIn*Space functions.
-	transformMatrix *Matrix4
+	transformMatrix           *Matrix4
 
 	/**
 	 * Force and Torque Accumulators
@@ -162,14 +172,14 @@ func (rb *RigidBody) SetInertiaTensor(inertiaTensor *Matrix3) {
 
 func (rb *RigidBody) AddForce(force *Vector3) {
 	rb.ForceAccum.Add(force)
-	rb.IsAwake = true
+	rb.isAwake = true
 }
 
 func (rb *RigidBody) AddForceAtBodyPoint(ent *Model, force, point *Vector3) {
 	// convert to coordinates relative to center of mass
 	pt := rb.getPointInWorldSpace(point)
 	rb.AddForceAtPoint(ent, force, pt)
-	rb.IsAwake = true
+	rb.isAwake = true
 }
 
 func (rb *RigidBody) AddForceAtPoint(body *Model, force, point *Vector3) {
@@ -177,12 +187,12 @@ func (rb *RigidBody) AddForceAtPoint(body *Model, force, point *Vector3) {
 	pt := point.NewSub(body.Position)
 	rb.ForceAccum.Add(force)
 	rb.TorqueAccum.Add(pt.NewCross(force))
-	rb.IsAwake = true
+	rb.isAwake = true
 }
 
 func (rb *RigidBody) AddTorque(torque *Vector3) {
 	rb.TorqueAccum.Add(torque)
-	rb.IsAwake = true
+	rb.isAwake = true
 }
 
 func (rb *RigidBody) ClearAccumulators() {
@@ -203,6 +213,18 @@ func (rb *RigidBody) CalculateDerivedData(body *Model) {
 	body.Orientation.Normalize()
 	rb.calculateTransformMatrix(rb.transformMatrix, body.Position, body.Orientation)
 	rb.transformInertiaTensor(rb.InverseInertiaTensorWorld, body.Orientation, rb.InverseInertiaTensor, rb.transformMatrix)
+}
+
+func (rb *RigidBody) Awake() bool {
+	rb.Lock()
+	defer rb.Unlock()
+	return rb.isAwake
+}
+
+func (rb *RigidBody) SetAwake(t bool) {
+	rb.Lock()
+	defer rb.Unlock()
+	rb.isAwake = t
 }
 
 /**
