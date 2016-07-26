@@ -172,14 +172,14 @@ func (rb *RigidBody) SetInertiaTensor(inertiaTensor *Matrix3) {
 
 func (rb *RigidBody) AddForce(force *Vector3) {
 	rb.ForceAccum.Add(force)
-	rb.isAwake = true
+	rb.SetAwake(true)
 }
 
 func (rb *RigidBody) AddForceAtBodyPoint(ent *Model, force, point *Vector3) {
 	// convert to coordinates relative to center of mass
-	pt := rb.getPointInWorldSpace(point)
+	pt := rb.GetPointInWorldSpace(point)
 	rb.AddForceAtPoint(ent, force, pt)
-	rb.isAwake = true
+	rb.SetAwake(true)
 }
 
 func (rb *RigidBody) AddForceAtPoint(body *Model, force, point *Vector3) {
@@ -187,12 +187,12 @@ func (rb *RigidBody) AddForceAtPoint(body *Model, force, point *Vector3) {
 	pt := point.NewSub(body.Position)
 	rb.ForceAccum.Add(force)
 	rb.TorqueAccum.Add(pt.NewCross(force))
-	rb.isAwake = true
+	rb.SetAwake(true)
 }
 
 func (rb *RigidBody) AddTorque(torque *Vector3) {
 	rb.TorqueAccum.Add(torque)
-	rb.isAwake = true
+	rb.SetAwake(true)
 }
 
 func (rb *RigidBody) ClearAccumulators() {
@@ -201,7 +201,7 @@ func (rb *RigidBody) ClearAccumulators() {
 	rb.TorqueAccum.Clear()
 }
 
-func (rb *RigidBody) getPointInWorldSpace(point *Vector3) *Vector3 {
+func (rb *RigidBody) GetPointInWorldSpace(point *Vector3) *Vector3 {
 	return rb.transformMatrix.TransformVector3(point)
 }
 
