@@ -17,20 +17,24 @@ type CollisionList struct {
 }
 
 func (b *CollisionList) All() map[*Entity]*Collision {
+	result := make(map[*Entity]*Collision)
 	b.Lock()
-	defer b.Unlock()
-	return b.entity
+	for k,v := range b.entity {
+		result[k] = v
+	}
+	b.Unlock()
+	return result
 }
 
 func (b *CollisionList) New(toEntity *Entity, x, y, z float64) *Collision {
 	b.Lock()
 	b.entity[toEntity] = &Collision{
-		//Geometry: &Rectangle{
-		//	HalfSize: Vector3{x / 2, y / 2, z / 2},
-		//},
-		Geometry: &Circle{
-			Radius: x,
+		Geometry: &Rectangle{
+			HalfSize: Vector3{x / 2, y / 2, z / 2},
 		},
+		//Geometry: &Circle{
+		//	Radius: x,
+		//},
 	}
 	b.Unlock()
 	return b.entity[toEntity]
