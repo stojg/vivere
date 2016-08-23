@@ -54,11 +54,11 @@ func newRidigBody(invMass float64) *RigidBody {
 		Acceleration:              &Vector3{},
 		LinearDamping:             0.99,
 		AngularDamping:            0.99,
-		MaxRotation:               3.14,
+		MaxRotation:               3.14/10,
 		InvMass:                   invMass,
 		CanSleep:                  true,
 		isAwake:                   true,
-		SleepEpsilon:              0.01,
+		SleepEpsilon:              0.00001,
 	}
 
 	it := &Matrix3{}
@@ -74,92 +74,74 @@ type RigidBody struct {
 	// Holds the angular velocity, or rotation for the rigid body in world space.
 	Rotation *Vector3
 
-	// Holds the inverse of the mass of the rigid body. It
-	// is more useful to hold the inverse mass because
-	// integration is simpler, and because in real time
-	// simulation it is more useful to have bodies with
-	// infinite mass (immovable) than zero mass
-	// (completely unstable in numerical simulation).
+	// Holds the inverse of the mass of the rigid body. It is more useful to hold the inverse mass
+	// because integration is simpler, and because in real time simulation it is more useful to have
+	// bodies with infinite mass (immovable) than zero mass (completely unstable in numerical
+	// simulation).
 	InvMass float64
-	// Holds the inverse of the body's inertia tensor. The
-	// inertia tensor provided must not be degenerate
-	// (that would mean the body had zero inertia for
-	// spinning along one axis). As long as the tensor is
-	// finite, it will be invertible. The inverse tensor
-	// is used for similar reasons to the use of inverse
-	// mass.
-	//
-	// The inertia tensor, unlike the other variables that
-	// define a rigid body, is given in body space.
+	// Holds the inverse of the body's inertia tensor. The inertia tensor provided must not be
+	// degenerate (that would mean the body had zero inertia for spinning along one axis). As long
+	// as the tensor is finite, it will be invertible. The inverse tensor is used for similar
+	// reasons to the use of inverse mass.
+	// The inertia tensor, unlike the other variables that define a rigid body, is given in body
+	// space.
 	InverseInertiaTensor *Matrix3
-	// Holds the amount of damping applied to linear
-	// motion.  Damping is required to remove energy added
-	// through numerical instability in the integrator.
+	// Holds the amount of damping applied to linear motion.  Damping is required to remove energy
+	// added through numerical instability in the integrator.
 	LinearDamping float64
-	// Holds the amount of damping applied to angular
-	// motion.  Damping is required to remove energy added
-	// through numerical instability in the integrator.
+	// Holds the amount of damping applied to angular motion.  Damping is required to remove energy
+	// added through numerical instability in the integrator.
 	AngularDamping float64
 
 	/**
 	 * Derived Data
 	 *
-	 * These data members hold information that is derived from
-	 * the other data in the class.
+	 * These data members hold information that is derived from the other data in the class.
 	 */
 
-	// Holds the inverse inertia tensor of the body in world
-	// space. The inverse inertia tensor member is specified in
-	// the body's local space.
-	//  @see inverseInertiaTensor
+	// Holds the inverse inertia tensor of the body in world space. The inverse inertia tensor
+	// member is specified in the body's local space. @see inverseInertiaTensor
 	InverseInertiaTensorWorld *Matrix3
-	// Holds the amount of motion of the body. This is a recency
-	// weighted mean that can be used to put a body to sleap.
+	// Holds the amount of motion of the body. This is a recency weighted mean that can be used to
+	// put a body to sleap.
 	Motion                    float64
-	// A body can be put to sleep to avoid it being updated
-	// by the integration functions or affected by collisions
-	// with the world.
+	// A body can be put to sleep to avoid it being updated by the integration functions or affected
+	// by collisions with the world.
 	isAwake                   bool
-	// Some bodies may never be allowed to fall asleep.
-	// User controlled bodies, for example, should be
-	// always awake.
+	// Some bodies may never be allowed to fall asleep. User controlled bodies, for example, should
+	// be always awake.
 	CanSleep                  bool
-	// Holds a transform matrix for converting body space into
-	// world space and vice versa. This can be achieved by calling
-	// the getPointIn*Space functions.
+	// Holds a transform matrix for converting body space into world space and vice versa. This can
+	// be achieved by calling the getPointIn*Space functions.
 	transformMatrix           *Matrix4
 
 	/**
 	 * Force and Torque Accumulators
 	 *
-	 * These data members store the current force, torque and
-	 * acceleration of the rigid body. Forces can be added to the
-	 * rigid body in any order, and the class decomposes them into
-	 * their constituents, accumulating them for the next
-	 * simulation step. At the simulation step, the accelerations
-	 * are calculated and stored to be applied to the rigid body.
+	 * These data members store the current force, torque and acceleration of the rigid body. Forces
+	 * can be added to the rigid body in any order, and the class decomposes them into their
+	 * constituents, accumulating them for the next simulation step. At the simulation step, the
+	 * accelerations are calculated and stored to be applied to the rigid body.
 	 */
 
-	// Holds the accumulated force to be applied at the next
-	// integration step.
+	// Holds the accumulated force to be applied at the next integration step.
 	ForceAccum *Vector3
 
-	// Holds the accumulated torque to be applied at the next
-	// integration step.
+	// Holds the accumulated torque to be applied at the next integration step.
 	TorqueAccum *Vector3
 
-	// Holds the acceleration of the rigid body.  This value
-	// can be used to set acceleration due to gravity (its primary
-	// use), or any other constant acceleration.
+	// Holds the acceleration of the rigid body.  This value can be used to set acceleration due to
+	// gravity (its primary use), or any other constant acceleration.
 	Acceleration *Vector3
 
 	MaxAcceleration *Vector3
 
-	MaxAngularAcceleration *Vector3 // limits the linear acceleration
-	MaxRotation            float64  // limits the angular velocity
+	// limits the linear acceleration
+	MaxAngularAcceleration *Vector3
+	// limits the angular velocity
+	MaxRotation            float64
 
-	// Holds the linear acceleration of the rigid body, for the
-	// previous frame.
+	// Holds the linear acceleration of the rigid body, for the previous frame.
 	LastFrameAcceleration *Vector3
 
 	SleepEpsilon float64
@@ -188,7 +170,7 @@ func (rb *RigidBody) AddForceAtBodyPoint(ent *Model, force, point *Vector3) {
 
 func (rb *RigidBody) AddForceAtPoint(body *Model, force, point *Vector3) {
 	// convert to coordinates relative to center of mass
-	pt := point.NewSub(body.Position)
+	pt := point.NewSub(body.position)
 	rb.ForceAccum.Add(force)
 	rb.TorqueAccum.Add(pt.NewCross(force))
 	rb.SetAwake(true)
@@ -214,9 +196,9 @@ func (rb *RigidBody) getTransform() *Matrix4 {
 }
 
 func (rb *RigidBody) CalculateDerivedData(body *Model) {
-	body.Orientation.Normalize()
-	rb.calculateTransformMatrix(rb.transformMatrix, body.Position, body.Orientation)
-	rb.transformInertiaTensor(rb.InverseInertiaTensorWorld, body.Orientation, rb.InverseInertiaTensor, rb.transformMatrix)
+	body.orientation.Normalize()
+	rb.calculateTransformMatrix(rb.transformMatrix, body.position, body.orientation)
+	rb.transformInertiaTensor(rb.InverseInertiaTensorWorld, body.orientation, rb.InverseInertiaTensor, rb.transformMatrix)
 }
 
 func (rb *RigidBody) Awake() bool {

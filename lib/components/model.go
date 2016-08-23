@@ -62,16 +62,24 @@ func (b *ModelList) Rand() *Model {
 
 func NewModel(w, h, d float64, model EntityType) *Model {
 	return &Model{
-		Position:    &Vector3{0, 0, 0},
-		Orientation: NewQuaternion(1, 0, 0, 0),
+		position:    &Vector3{0, 0, 0},
+		orientation: NewQuaternion(1, 0, 0, 0),
 		Model:       model,
 		Scale:       &Vector3{w, h, d},
 	}
 }
 
 type Model struct {
-	Position    *Vector3    // Holds the linear position of the rigid body in world space.
-	Orientation *Quaternion // Holds the angular orientation of the rigid body in world space.
+	position    *Vector3    // Holds the linear position of the rigid body in world space.
+	orientation *Quaternion // Holds the angular orientation of the rigid body in world space.
 	Scale       *Vector3    // the size of this entity
 	Model       EntityType
+}
+
+func (m *Model) Orientation() *Quaternion {
+	return m.orientation
+}
+
+func (m *Model) Position() *Vector3 {
+	return m.position
 }

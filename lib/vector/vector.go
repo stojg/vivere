@@ -1,6 +1,7 @@
 package vector
 
 import (
+	"fmt"
 	"math"
 )
 
@@ -13,6 +14,10 @@ func init() {
 }
 
 type Vector3 [3]float64
+
+func (v *Vector3) String() string {
+	return fmt.Sprintf("[%0.5f, %0.5f, %0.5f]", v[0], v[1], v[2])
+}
 
 var (
 	UnitX = Vector3{1, 0, 0}
@@ -98,6 +103,9 @@ func (a *Vector3) NewSub(b *Vector3) *Vector3 {
 }
 
 func (a *Vector3) AddScaledVector(b *Vector3, t float64) *Vector3 {
+	if math.IsNaN(t) {
+		panic("scale value passed to Vector3.AddScaledVector() is NaN")
+	}
 	a[0] += b[0] * t
 	a[1] += b[1] * t
 	a[2] += b[2] * t
@@ -684,6 +692,10 @@ func (q *Quaternion) RotateByVector(vector *Vector3) *Quaternion {
 
 func (q *Quaternion) NewRotateByVector(vector *Vector3) *Quaternion {
 	return q.NewMultiply(&Quaternion{0, vector[0], vector[1], vector[2]})
+}
+
+func (q *Quaternion) AsMatrix() *Matrix4 {
+	return &Matrix4{}
 }
 
 func LocalToWorld(local *Vector3, transform *Matrix4) *Vector3 {
