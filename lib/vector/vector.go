@@ -198,17 +198,11 @@ func (a *Vector3) NewHadamardProduct(vector *Vector3) *Vector3 {
 }
 
 func (a *Vector3) Equals(z *Vector3) bool {
-	diff := math.Abs(a[0] - z[0])
-	if diff > RealEpsilon {
-		return false
-	}
-	diff = math.Abs(a[1] - z[1])
-	if diff > RealEpsilon {
-		return false
-	}
-	diff = math.Abs(a[2] - z[2])
-	if diff > RealEpsilon {
-		return false
+	for i := range a {
+		diff := math.Abs(a[i] - z[i])
+		if math.IsNaN(diff) || diff > RealEpsilon {
+			return false
+		}
 	}
 	return true
 }
