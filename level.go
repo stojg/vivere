@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	. "github.com/stojg/vivere/lib/components"
-	"github.com/stojg/vivere/lib/vector"
+	"github.com/stojg/vector"
 	"math"
 	"math/rand"
 )

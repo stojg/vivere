@@ -1,7 +1,7 @@
 package components
 
 import (
-	. "github.com/stojg/vivere/lib/vector"
+	. "github.com/stojg/vector"
 	"sync"
 )
 

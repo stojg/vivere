@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/stojg/vivere/lib/client"
 	. "github.com/stojg/vivere/lib/components"
-	. "github.com/stojg/vivere/lib/vector"
+	. "github.com/stojg/vector"
 	"golang.org/x/net/websocket"
 	"net/http"
 )
