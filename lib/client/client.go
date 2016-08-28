@@ -151,10 +151,10 @@ func (client *Client) timestamp() float64 {
 }
 
 // Updatea
-func (client *Client) Update(buf *bytes.Buffer, msgType MessageType) {
+func (client *Client) Update(data []byte, msgType MessageType) (n int, err error) {
 	message := client.NewMessage(msgType)
-	message.Write(buf.Bytes())
-	client.Write(message.Bytes())
+	message.Write(data)
+	return client.Write(message.Bytes())
 }
 
 // Ping sends a ping request to the client
