@@ -30,7 +30,7 @@ type ModelList struct {
 }
 
 func (b *ModelList) All() map[*Entity]*Model {
-	result := make(map[*Entity]*Model)
+	result := make(map[*Entity]*Model, len(b.entity))
 	b.Lock()
 	for k,v := range b.entity {
 		result[k] = v

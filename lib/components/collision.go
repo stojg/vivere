@@ -17,7 +17,7 @@ type CollisionList struct {
 }
 
 func (b *CollisionList) All() map[*Entity]*Collision {
-	result := make(map[*Entity]*Collision)
+	result := make(map[*Entity]*Collision, len(b.entity))
 	b.Lock()
 	for k,v := range b.entity {
 		result[k] = v

@@ -14,7 +14,7 @@ type ControllerList struct {
 }
 
 func (b *ControllerList) All() map[*Entity]Controller {
-	result := make(map[*Entity]Controller)
+	result := make(map[*Entity]Controller, len(b.entity))
 	b.Lock()
 	for k,v := range b.entity {
 		result[k] = v

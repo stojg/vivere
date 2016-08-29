@@ -24,7 +24,7 @@ func (b *RigidBodyList) New(toEntity *Entity, invMass float64) *RigidBody {
 }
 
 func (b *RigidBodyList) All() map[*Entity]*RigidBody {
-	result := make(map[*Entity]*RigidBody)
+	result := make(map[*Entity]*RigidBody, len(b.entity))
 	b.Lock()
 	for k,v := range b.entity {
 		result[k] = v
