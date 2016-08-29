@@ -50,7 +50,7 @@ func NewRidigBody(invMass float64) *RigidBody {
 		InverseInertiaTensorWorld: &Matrix3{},
 		ForceAccum:                &Vector3{},
 		TorqueAccum:               &Vector3{},
-		MaxAcceleration:           &Vector3{1,1,1},
+		MaxAcceleration:           &Vector3{100, 100, 100},
 		Acceleration:              &Vector3{},
 		LinearDamping:             0.99,
 		AngularDamping:            0.99,
