@@ -90,14 +90,13 @@ func (c *Client) Input() chan ClientCommand {
 // Write provides a io.reader interface for writing a message to the client
 func (c *Client) Write(p []byte) (n int, err error) {
 	n = len(p)
-	err = nil
 	if n == 0 {
 		err = fmt.Errorf("Write() - zero length message")
 		return
 	}
-	err = websocket.Message.Send(c.ws, p)
-	if err != nil {
-		err = fmt.Errorf("Write() - error during send %v", err)
+
+	if err = websocket.Message.Send(c.ws, p); err != nil {
+		err = fmt.Errorf("client.Write() - %v", err)
 		return
 	}
 	return
@@ -134,7 +133,7 @@ func (c *Client) Read(reader io.Reader) (cmd ClientCommand, err error) {
 // NewMessage returns a buffer writer ready for binary writing including
 // the message type and the current server timestamp
 func (client *Client) NewMessage(msgType MessageType) *bytes.Buffer {
-	buf := new(bytes.Buffer)
+	buf := &bytes.Buffer{}
 	binary.Write(buf, binary.LittleEndian, client.timestamp())
 	binary.Write(buf, binary.LittleEndian, msgType)
 	return buf

@@ -18,7 +18,7 @@ type RigidBodyList struct {
 
 func (b *RigidBodyList) New(toEntity *Entity, invMass float64) *RigidBody {
 	b.Lock()
-	b.entity[toEntity] = newRidigBody(invMass)
+	b.entity[toEntity] = NewRidigBody(invMass)
 	b.Unlock()
 	return b.entity[toEntity]
 }
@@ -40,7 +40,7 @@ func (b *RigidBodyList) Get(fromEntity *Entity) *RigidBody {
 	return e
 }
 
-func newRidigBody(invMass float64) *RigidBody {
+func NewRidigBody(invMass float64) *RigidBody {
 	body := &RigidBody{
 		Velocity:                  &Vector3{},
 		Rotation:                  &Vector3{},
@@ -50,7 +50,7 @@ func newRidigBody(invMass float64) *RigidBody {
 		InverseInertiaTensorWorld: &Matrix3{},
 		ForceAccum:                &Vector3{},
 		TorqueAccum:               &Vector3{},
-		MaxAcceleration:           &Vector3{},
+		MaxAcceleration:           &Vector3{1,1,1},
 		Acceleration:              &Vector3{},
 		LinearDamping:             0.99,
 		AngularDamping:            0.99,
