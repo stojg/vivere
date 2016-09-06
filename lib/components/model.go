@@ -46,6 +46,12 @@ func (b *ModelList) New(toEntity *Entity, w, h, d float64, model EntityType) *Mo
 	return b.entity[toEntity]
 }
 
+func (b *ModelList) Delete(id *Entity) {
+	b.Lock()
+	delete(b.entity, id)
+	b.Unlock()
+}
+
 func (b *ModelList) Get(fromEntity *Entity) *Model {
 	b.Lock()
 	defer b.Unlock()

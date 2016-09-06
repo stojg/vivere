@@ -23,6 +23,12 @@ func (b *RigidBodyList) New(toEntity *Entity, invMass float64) *RigidBody {
 	return b.entity[toEntity]
 }
 
+func (b *RigidBodyList) Delete(id *Entity) {
+	b.Lock()
+	delete(b.entity, id)
+	b.Unlock()
+}
+
 func (b *RigidBodyList) All() map[*Entity]*RigidBody {
 	result := make(map[*Entity]*RigidBody, len(b.entity))
 	b.Lock()

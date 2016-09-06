@@ -32,12 +32,15 @@ func (b *CollisionList) New(toEntity *Entity, x, y, z float64) *Collision {
 		Geometry: &Rectangle{
 			HalfSize: Vector3{x / 2, y / 2, z / 2},
 		},
-		//Geometry: &Circle{
-		//	Radius: x,
-		//},
 	}
 	b.Unlock()
 	return b.entity[toEntity]
+}
+
+func (b *CollisionList) Delete(id *Entity) {
+	b.Lock()
+	delete(b.entity, id)
+	b.Unlock()
 }
 
 func (b *CollisionList) Get(fromEntity *Entity) *Collision {
